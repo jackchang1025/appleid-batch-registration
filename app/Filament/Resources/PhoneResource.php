@@ -24,15 +24,6 @@ class PhoneResource extends Resource
 
     protected static ?string $label = '手机管理';
 
-
-    protected function getHeaderActions(): array
-    {
-        return [
-
-            CreateAction::make(),
-        ];
-    }
-
     public static function form(Form $form): Form
     {
         return $form
