@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $name
@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Database\Factories\ProxyConfigurationFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|ProxyConfiguration whereIpaddressEnabled($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ProxyConfiguration whereProxyEnabled($value)
+ * @property bool $status {0:关闭, 1:开启}
  * @mixin \Eloquent
  */
 class ProxyConfiguration extends Model
