@@ -9175,19 +9175,20 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/http-proxy-manager.git",
-                "reference": "869ea93dd8002a40b7f27bb6e587fb48a68f1e71"
+                "reference": "4eabd75f9b0dcc4b970bf2f70672ded88b1f40ac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/869ea93dd8002a40b7f27bb6e587fb48a68f1e71",
-                "reference": "869ea93dd8002a40b7f27bb6e587fb48a68f1e71",
+                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/4eabd75f9b0dcc4b970bf2f70672ded88b1f40ac",
+                "reference": "4eabd75f9b0dcc4b970bf2f70672ded88b1f40ac",
                 "shasum": ""
             },
             "require": {
                 "illuminate/collections": "^9.0|^10.0|^11.0|^12.0",
                 "illuminate/support": "^9.0|^10.0|^11.0|^12.0",
                 "php": "^8.1",
-                "saloonphp/saloon": "^3.0"
+                "saloonphp/saloon": "^3.0",
+                "weijiajia/saloonphp-logs-plugin": "@dev"
             },
             "require-dev": {
                 "laravel/pint": "^1.0",
@@ -9237,7 +9238,7 @@
                 "issues": "https://github.com/jackchang1025/http-proxy-manager/issues",
                 "source": "https://github.com/jackchang1025/http-proxy-manager/tree/main"
             },
-            "time": "2025-03-08T15:51:22+00:00"
+            "time": "2025-03-09T07:08:25+00:00"
         },
         {
             "name": "weijiajia/saloonphp-apple-client",
