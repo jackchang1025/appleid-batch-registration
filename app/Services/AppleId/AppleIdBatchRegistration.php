@@ -4,21 +4,25 @@ namespace App\Services\AppleId;
 
 use App\Models\Email;
 use App\Models\Phone;
+use Exception;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Cookie\FileCookieJar;
-use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use JsonException;
 use libphonenumber\PhoneNumberFormat;
 use Propaganistas\LaravelPhone\Exceptions\NumberFormatException;
 use Psr\Log\LoggerInterface;
 use Random\RandomException;
 use RuntimeException;
 use Saloon\Exceptions\Request\ClientException;
+use Saloon\Exceptions\Request\FatalRequestException;
+use Saloon\Exceptions\Request\RequestException;
 use Saloon\Http\Response;
 use Weijiajia\DecryptVerificationCode\CloudCode\CloudCodeConnector;
+use Weijiajia\DecryptVerificationCode\Exception\DecryptCloudCodeException;
 use Weijiajia\HttpProxyManager\Contracts\ProxyInterface;
 use Weijiajia\HttpProxyManager\ProxyManager;
 use Weijiajia\SaloonphpAppleClient\Exception\CaptchaException;
@@ -60,6 +64,8 @@ class AppleIdBatchRegistration
 
     protected CookieJarInterface $cookieJar;
 
+    protected Phone $phone;
+
     //使用过的手机号码
     protected array $usedPhones = [];
 
@@ -76,44 +82,8 @@ class AppleIdBatchRegistration
         protected LoggerInterface $logger,
         protected AppleIdConnector $connector = new AppleIdConnector(),
         protected CloudCodeConnector $cloudCodeConnector = new CloudCodeConnector(),
-    )
-    {
+    ) {
 
-    }
-
-    public function getPhone(): Phone
-    {
-        return DB::transaction(function () {
-
-            $phone = Phone::query()
-                ->where('status', Phone::STATUS_NORMAL)
-                ->whereNotNull(['phone_address', 'phone'])
-                ->whereNotIn('id', $this->usedPhones)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $phone->update(['status' => Phone::STATUS_BINDING]);
-
-            return $phone;
-        });
-    }
-
-    protected function initProxy(): void
-    {
-        $proxyConnector = $this->proxyManager->driver();
-        $proxyConnector->withLogger($this->logger);
-        $proxyConnector->debug();
-
-        $proxy = $proxyConnector->default();
-
-        $this->queue = new ProxySplQueue();
-        if ($proxy instanceof Collection){
-
-            $proxy->each(fn (ProxyInterface $item) => $this->queue->enqueue($item->getUrl()));
-
-        }else {
-            $this->queue->enqueue($proxy->getUrl());
-        }
     }
 
     /**
@@ -121,18 +91,20 @@ class AppleIdBatchRegistration
      * @param bool $isUseProxy
      * @return void
      * @throws ClientException
-     * @throws PhoneException
-     * @throws \JsonException
+     * @throws DecryptCloudCodeException
+     * @throws FatalRequestException
+     * @throws JsonException
      * @throws NumberFormatException
      * @throws RandomException
+     * @throws RequestException
      */
-    public function run(Email $email,bool $isUseProxy = false): void
+    public function run(Email $email, bool $isUseProxy = false): void
     {
         $this->email = $email;
 
         $this->cookieJar = new FileCookieJar(storage_path("app/public/{$this->email->email}.json"), true);
 
-        if ($isUseProxy){
+        if ($isUseProxy) {
             $this->initProxy();
             $this->connector->withSplQueue($this->queue);
         }
@@ -195,18 +167,16 @@ class AppleIdBatchRegistration
         $this->connector->headers()->add('x-apple-request-context', 'create');
         $this->connector->headers()->add('x-apple-id-session-id', $XAppleSessionId);
 
-        $phone              = $this->getPhone();
+        $this->phone = $this->getPhone();
 
         try {
-
-            $this->usedPhones[] = $phone->id;
 
             $this->phoneNumberVerification = PhoneNumberVerification::from([
                 'phoneNumber' => [
                     'id'              => 1,
-                    'number'          => $phone->getPhoneNumberService()->format(PhoneNumberFormat::NATIONAL),
-                    'countryCode'     => $phone->country_code,
-                    'countryDialCode' => $phone->country_dial_code,
+                    'number'          => $this->phone->getPhoneNumberService()->format(PhoneNumberFormat::NATIONAL),
+                    'countryCode'     => $this->phone->country_code,
+                    'countryDialCode' => $this->phone->country_dial_code,
                     'nonFTEU'         => true,
                 ],
                 'mode'        => 'sms',
@@ -220,67 +190,113 @@ class AppleIdBatchRegistration
 
             $this->validate = new Validate($this->phoneNumberVerification, $this->verificationAccount, $this->captcha);
 
-            $this->captcha();
+            $this->attemptsCaptcha();
 
-            while (true) {
+            $response = $this->sendVerificationEmail();
 
-                try {
+            $this->verificationInfo->id = $response->verificationId;
 
-                    $this->verificationEmail();
+            $this->attemptVerificationEmailCode();
 
-                    //获取手机号码信息
-                    $this->resource->sendVerificationPhone($this->validate);
+            //获取手机号码信息
+            $this->attemptsSendVerificationPhoneCode();
 
-                    $code = $this->attemptGetPhoneCode($phone);
+            $this->attemptVerificationPhoneCode();
 
-                    $securityCode = SecurityCode::from([
-                        'code' => $code,
-                    ]);
+            $accountResponse = $this->resource->account($this->validate);
 
-                    $this->phoneNumberVerification->securityCode = $securityCode;
+            $this->phone->update(['status' => Phone::STATUS_BOUND]);
+            //注册成功
+            dd($accountResponse->json());
 
-                    $this->resource->verificationPhone($this->validate);
+        } catch (Exception $e) {
 
-                    $accountResponse = $this->resource->account($this->validate);
-
-                    $phone->update(['status' => Phone::STATUS_BOUND]);
-                    //注册成功
-                    dd($accountResponse->json());
-
-                } catch (PhoneException $e) {
-
-                    $phone->update(['status' => Phone::STATUS_NORMAL]);
-
-                    $phone                         = $this->getPhone();
-                    $this->phoneNumberVerification = PhoneNumberVerification::from([
-                        'phoneNumber' => [
-                            'id'              => 1,
-                            'number'          => $phone->getPhoneNumberService()->format(PhoneNumberFormat::NATIONAL),
-                            'countryCode'     => $phone->country_code,
-                            'countryDialCode' => $phone->country_dial_code,
-                            'nonFTEU'         => true,
-                        ],
-                        'mode'        => 'sms',
-                    ]);
-                    $this->usedPhones[]            = $phone->id;
-
-                    dump($e->getMessage());
-
-                }
-            }
-        }catch (\Exception $e){
-
-            $phone->update(['status' => Phone::STATUS_NORMAL]);
+            $this->phone->update(['status' => Phone::STATUS_NORMAL]);
             throw $e;
         }
     }
 
-    public function captcha(int $attempts = 5): Response
+    protected function initProxy(): void
+    {
+        $proxyConnector = $this->proxyManager->driver();
+        $proxyConnector->withLogger($this->logger);
+        $proxyConnector->debug();
+
+        $proxy = $proxyConnector->default();
+
+        $this->queue = new ProxySplQueue();
+        if ($proxy instanceof Collection) {
+
+            $proxy->each(fn(ProxyInterface $item) => $this->queue->enqueue($item->getUrl()));
+
+        } else {
+            $this->queue->enqueue($proxy->getUrl());
+        }
+    }
+
+    /**
+     * @return string
+     * @throws RandomException
+     */
+    public static function generatePassword(): string
+    {
+        $length     = random_int(8, 20);
+        $uppercase  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $lowercase  = 'abcdefghijklmnopqrstuvwxyz';
+        $numbers    = '0123456789';
+        $characters = $uppercase.$lowercase.$numbers;
+
+        $password = '';
+        // 确保至少包含一个大写字母
+        $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
+        // 确保至少包含一个小写字母
+        $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
+        // 确保至少包含一个数字
+        $password .= $numbers[random_int(0, strlen($numbers) - 1)];
+
+        // 填充剩余长度
+        for ($i = 3; $i < $length; $i++) {
+            $password .= $characters[random_int(0, strlen($characters) - 1)];
+        }
+
+        // 打乱密码字符顺序
+        return str_shuffle($password);
+    }
+
+    public function getPhone(): Phone
+    {
+        return DB::transaction(function () {
+
+            $phone = Phone::query()
+                ->where('status', Phone::STATUS_NORMAL)
+                ->whereNotNull(['phone_address', 'phone'])
+                ->whereNotIn('id', $this->usedPhones)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $phone->update(['status' => Phone::STATUS_BINDING]);
+
+            $this->usedPhones[] = $phone->id;
+
+            return $phone;
+        });
+    }
+
+    /**
+     * @param int $attempts
+     * @return Response
+     * @throws ClientException
+     * @throws JsonException
+     * @throws FatalRequestException
+     * @throws RequestException
+     * @throws DecryptCloudCodeException
+     */
+    public function attemptsCaptcha(int $attempts = 5): Response
     {
 
         for ($i = 0; $i < $attempts; $i++) {
 
-            sleep($i);
+            sleep($i * 3);
 
             try {
 
@@ -318,19 +334,10 @@ class AppleIdBatchRegistration
     }
 
     /**
-     * @return Response
-     * @throws ClientException
+     * @return SendVerificationEmailResponse
+     * @throws FatalRequestException
+     * @throws RequestException
      */
-    public function verificationEmail(): Response
-    {
-        $response = $this->sendVerificationEmail();
-
-        $this->verificationInfo->id = $response->verificationId;
-
-        return $this->attemptVerificationEmailCode();
-
-    }
-
     protected function sendVerificationEmail(): SendVerificationEmailResponse
     {
         return $this->resource
@@ -355,15 +362,20 @@ class AppleIdBatchRegistration
      * @param int $attempts
      * @return Response
      * @throws ClientException
+     * @throws JsonException
+     * @throws FatalRequestException
+     * @throws RequestException
      */
-    public function attemptVerificationEmailCode(int $attempts = 3): Response
+    public function attemptVerificationEmailCode(int $attempts = 5): Response
     {
 
         for ($i = 0; $i < $attempts; $i++) {
 
+            sleep($i * 3);
+
             try {
 
-                $emailCode = $this->getEmailCode($this->email->email, $this->email->email_uri);
+                $emailCode = $this->attemptGetEmailCode($this->email->email, $this->email->email_uri);
 
                 $this->verificationInfo->answer = $emailCode;
 
@@ -383,7 +395,7 @@ class AppleIdBatchRegistration
         throw new RuntimeException("verification email code failed of attempt {$attempts} times");
     }
 
-    public function getEmailCode(string $email, string $uri, int $attempts = 10)
+    public function attemptGetEmailCode(string $email, string $uri, int $attempts = 5)
     {
 
         $isSuccess = false;
@@ -422,10 +434,85 @@ class AppleIdBatchRegistration
         throw new RuntimeException('get email code failed of attempt '.$attempts.' times');
     }
 
+    /**
+     * @param int $attempts
+     * @return Response
+     * @throws ClientException
+     * @throws FatalRequestException
+     * @throws NumberFormatException
+     * @throws RequestException
+     * @throws JsonException
+     */
+    public function attemptsSendVerificationPhoneCode(int $attempts = 5): Response
+    {
+        for ($i = 0; $i < $attempts; $i++) {
+            sleep($i * 3);
+
+            try {
+
+                return $this->resource->sendVerificationPhone($this->validate);
+
+            } catch (PhoneException $e) {
+
+                $this->phone->update(['status' => Phone::STATUS_NORMAL]);
+                $this->phone                   = $this->getPhone();
+
+                $this->validate->phoneNumberVerification =  PhoneNumberVerification::from([
+                    'phoneNumber' => [
+                        'id'              => 1,
+                        'number'          => $this->phone->getPhoneNumberService()->format(PhoneNumberFormat::NATIONAL),
+                        'countryCode'     => $this->phone->country_code,
+                        'countryDialCode' => $this->phone->country_dial_code,
+                        'nonFTEU'         => true,
+                    ],
+                    'mode'        => 'sms',
+                ]);
+            }
+        }
+
+        throw new RuntimeException('Failed to send verification phone code after '.$attempts.' times');
+    }
+
+    /**
+     * @param int $attempts
+     * @return Response
+     * @throws ClientException
+     * @throws FatalRequestException
+     * @throws RequestException
+     * @throws JsonException
+     */
+    public function attemptVerificationPhoneCode(int $attempts = 5): Response
+    {
+        for ($i = 0; $i < $attempts; $i++) {
+
+            sleep($i * 3);
+
+            try {
+
+                $code = $this->attemptGetPhoneCode($this->phone);
+
+                $securityCode = SecurityCode::from([
+                    'code' => $code,
+                ]);
+
+                $this->phoneNumberVerification->securityCode = $securityCode;
+
+                return $this->resource->verificationPhone($this->validate);
+
+            } catch (VerificationCodeException $e) {
+
+            }
+        }
+
+        throw new RuntimeException("verification phone code failed of attempt {$attempts} times");
+    }
+
     public function attemptGetPhoneCode(Phone $phone, int $attempts = 10): string
     {
 
         for ($i = 0; $i < $attempts; $i++) {
+
+            sleep($i * 3);
 
             $response = Http::get($phone->phone_address);
 
@@ -434,8 +521,6 @@ class AppleIdBatchRegistration
             if ($code) {
                 return $code;
             }
-
-            sleep(3);
         }
 
         throw new RuntimeException("Attempt {$attempts} times failed to get phone code");
@@ -448,35 +533,6 @@ class AppleIdBatchRegistration
         }
 
         return null;
-    }
-
-    /**
-     * @return string
-     * @throws \Random\RandomException
-     */
-    public static function generatePassword(): string
-    {
-        $length     = random_int(8, 20);
-        $uppercase  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $lowercase  = 'abcdefghijklmnopqrstuvwxyz';
-        $numbers    = '0123456789';
-        $characters = $uppercase.$lowercase.$numbers;
-
-        $password = '';
-        // 确保至少包含一个大写字母
-        $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
-        // 确保至少包含一个小写字母
-        $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
-        // 确保至少包含一个数字
-        $password .= $numbers[random_int(0, strlen($numbers) - 1)];
-
-        // 填充剩余长度
-        for ($i = 3; $i < $length; $i++) {
-            $password .= $characters[random_int(0, strlen($characters) - 1)];
-        }
-
-        // 打乱密码字符顺序
-        return str_shuffle($password);
     }
 
 }
