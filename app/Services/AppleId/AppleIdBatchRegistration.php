@@ -4,6 +4,7 @@ namespace App\Services\AppleId;
 
 use App\Models\Email;
 use App\Models\Phone;
+use App\Models\EmailLog;
 use Exception;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Cookie\FileCookieJar;
@@ -40,6 +41,8 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Veri
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Account\Verification\SendVerificationEmail as SendVerificationEmailResponse;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Resources\AccountResource;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
+use App\Enums\EmailStatus;
+use Throwable;
 
 class AppleIdBatchRegistration
 {
@@ -71,6 +74,8 @@ class AppleIdBatchRegistration
 
     protected Email $email;
 
+    protected ?EmailLog $emailLog = null;
+
     /**
      * @param ProxyManager $proxyManager
      * @param LoggerInterface $logger
@@ -98,78 +103,95 @@ class AppleIdBatchRegistration
      * @throws RandomException
      * @throws RequestException
      */
-    public function run(Email $email, bool $isUseProxy = false): void
+    public function run(Email $email, bool $isUseProxy = false): bool
     {
         $this->email = $email;
 
-        $this->cookieJar = new FileCookieJar(storage_path("app/public/{$this->email->email}.json"), true);
-
-        if ($isUseProxy) {
-            $this->initProxy();
-            $this->connector->withSplQueue($this->queue);
-        }
-
-        $this->connector->withLogger($this->logger);
-        $this->connector->withCookies($this->cookieJar);
-        $this->connector->debug();
-
-        $this->cloudCodeConnector->debug();
-        $this->cloudCodeConnector->withLogger($this->logger);
-
-        $this->verificationInfo = VerificationInfo::from([
-            'id'     => '',
-            'answer' => '',
-        ]);
-
-        //生成长度为8-20的密码的大小写混合加数字的密码
-        $password  = self::generatePassword();
-        $firstName = fake()->firstName();
-        $lastName  = fake()->lastName();
-
-        $this->verificationAccount = VerificationAccount::from([
-            'name'             => $this->email->email,
-            'password'         => $password,
-            'person'           => [
-                'name'           => [
-                    'firstName' => $firstName,
-                    'lastName'  => $lastName,
-                ],
-                'birthday'       => '1996-06-12',
-                'primaryAddress' => [
-                    'country' => 'USA',
-                ],
-            ],
-            'preferences'      => [
-                'preferredLanguage'    => 'en_US',
-                'marketingPreferences' => [
-                    'appleNews'     => false,
-                    'appleUpdates'  => true,
-                    'iTunesUpdates' => true,
-                ],
-            ],
-            'verificationInfo' => $this->verificationInfo,
-        ]);
-
-        $this->resource = $this->connector->getAccountResource();
-
-        $response = $this->resource->widgetAccount();
-
-        $XAppleSessionId = $this->cookieJar->getCookieByName('aidsp')?->getValue();
-
-        if (!$XAppleSessionId) {
-            throw new RuntimeException('X-Apple-Session-Id not found');
-        }
-
-        $this->connector->headers()->add(
-            'X-Apple-Widget-Key',
-            'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d'
-        );
-        $this->connector->headers()->add('x-apple-request-context', 'create');
-        $this->connector->headers()->add('x-apple-id-session-id', $XAppleSessionId);
-
-        $this->phone = $this->getPhone();
-
         try {
+
+            // 更新邮箱状态为处理中
+            $email->update(['status' => EmailStatus::PROCESSING]);
+
+            $cookiePath = storage_path("app/public/{$this->email->email}.json");
+            
+            $this->cookieJar = new FileCookieJar($cookiePath, true);
+
+            if ($isUseProxy) {
+                $this->initProxy();
+                $this->connector->withSplQueue($this->queue);
+            }
+
+            $this->connector->withLogger($this->logger);
+            $this->connector->withCookies($this->cookieJar);
+            $this->connector->debug();
+
+            $this->cloudCodeConnector->debug();
+            $this->cloudCodeConnector->withLogger($this->logger);
+
+            $this->log('开始注册 Apple ID',[
+                'cookie_path' => $cookiePath,
+                'proxy' => [
+                    'isUseProxy' => $isUseProxy,
+                    'proxy' => $this->queue ? $this->queue->getAllProxies() : null]
+                ]);
+
+            $this->verificationInfo = VerificationInfo::from([
+                'id'     => '',
+                'answer' => '',
+            ]);
+
+            //生成长度为8-20的密码的大小写混合加数字的密码
+            $password  = self::generatePassword();
+            $firstName = fake()->firstName();
+            $lastName  = fake()->lastName();
+
+            $this->verificationAccount = VerificationAccount::from([
+                'name'             => $this->email->email,
+                'password'         => $password,
+                'person'           => [
+                    'name'           => [
+                        'firstName' => $firstName,
+                        'lastName'  => $lastName,
+                    ],
+                    'birthday'       => '1996-06-12',
+                    'primaryAddress' => [
+                        'country' => 'USA',
+                    ],
+                ],
+                'preferences'      => [
+                    'preferredLanguage'    => 'en_US',
+                    'marketingPreferences' => [
+                        'appleNews'     => false,
+                        'appleUpdates'  => true,
+                        'iTunesUpdates' => true,
+                    ],
+                ],
+                'verificationInfo' => $this->verificationInfo,
+            ]);
+
+
+            $this->resource = $this->connector->getAccountResource();
+
+            $response = $this->resource->widgetAccount();
+
+            $this->log('初始化 session_id',['response' => $response->headers()->all()]);
+
+            $XAppleSessionId = $this->cookieJar->getCookieByName('aidsp')?->getValue();
+
+            if (!$XAppleSessionId) {
+                throw new RuntimeException('X-Apple-Session-Id not found');
+            }
+
+            $this->connector->headers()->add(
+                'X-Apple-Widget-Key',
+                'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d'
+            );
+            $this->connector->headers()->add('x-apple-request-context', 'create');
+            $this->connector->headers()->add('x-apple-id-session-id', $XAppleSessionId);
+
+            
+            $this->phone = $this->getPhone();
+            $this->log('获取手机号码成功',['phone' => $this->phone->toArray()]);
 
             $this->phoneNumberVerification = PhoneNumberVerification::from([
                 'phoneNumber' => [
@@ -188,30 +210,37 @@ class AppleIdBatchRegistration
                 'answer' => '',
             ]);
 
-            $this->validate = new Validate($this->phoneNumberVerification, $this->verificationAccount, $this->captcha);
+            $this->validate = new Validate($this->phoneNumberVerification, $this->verificationAccount, $this->captcha,true);
 
+            
             $this->attemptsCaptcha();
 
+            
             $response = $this->sendVerificationEmail();
 
             $this->verificationInfo->id = $response->verificationId;
 
             $this->attemptVerificationEmailCode();
 
-            //获取手机号码信息
+            
             $this->attemptsSendVerificationPhoneCode();
 
             $this->attemptVerificationPhoneCode();
 
+            $this->log('提交注册表单');
             $accountResponse = $this->resource->account($this->validate);
 
+            // 注册成功，更新状态
+            $email->update(['status' => EmailStatus::REGISTERED]);
             $this->phone->update(['status' => Phone::STATUS_BOUND]);
-            //注册成功
-            dd($accountResponse->json());
+            $this->log('注册成功', ['account_details' => $accountResponse->json()]);
 
-        } catch (Exception $e) {
-
+            // 注册成功，返回 true
+            return true;
+        } catch (Exception|Throwable $e) {
             $this->phone->update(['status' => Phone::STATUS_NORMAL]);
+            $this->email->update(['status' => EmailStatus::FAILED]);
+            $this->log('注册失败', ['message' => $e->getMessage()]);
             throw $e;
         }
     }
@@ -300,6 +329,7 @@ class AppleIdBatchRegistration
 
             try {
 
+                $this->log("第 {$i} 次获取验证码");
                 $captcha = $this->resource->captcha()->dto();
 
                 // 获取验证码图片
@@ -325,7 +355,7 @@ class AppleIdBatchRegistration
 
             } catch (CaptchaException $e) {
 
-                var_dump($e->getMessage());
+                $this->log("第{$i}次验证验证码失败", ['message' => $e->getMessage()]);
             }
 
         }
@@ -340,22 +370,27 @@ class AppleIdBatchRegistration
      */
     protected function sendVerificationEmail(): SendVerificationEmailResponse
     {
-        return $this->resource
-            ->sendVerificationEmail(
-                SendVerificationEmail::from([
-                    'account'     => [
-                        'name'   => $this->email->email,
-                        'person' => [
-                            'name' => [
-                                'firstName' => $this->verificationAccount->person->name->firstName,
-                                'lastName'  => $this->verificationAccount->person->name->lastName,
-                            ],
-                        ],
+
+        $data = SendVerificationEmail::from([
+            'account'     => [
+                'name'   => $this->email->email,
+                'person' => [
+                    'name' => [
+                        'firstName' => $this->verificationAccount->person->name->firstName,
+                        'lastName'  => $this->verificationAccount->person->name->lastName,
                     ],
-                    'countryCode' => 'USA',
-                ])
-            )
+                ],
+            ],
+            'countryCode' => 'USA',
+        ]);
+
+        $response = $this->resource
+            ->sendVerificationEmail($data)
             ->dto();
+
+        $this->log('发送邮箱验证码',['request' => $data,'response' => $response]);
+
+        return $response;
     }
 
     /**
@@ -375,6 +410,8 @@ class AppleIdBatchRegistration
 
             try {
 
+                $this->log("第 {$i} 次验证邮箱验证码");
+
                 $emailCode = $this->attemptGetEmailCode($this->email->email, $this->email->email_uri);
 
                 $this->verificationInfo->answer = $emailCode;
@@ -388,7 +425,7 @@ class AppleIdBatchRegistration
                 return $this->resource->verificationEmail($verificationPutDto);
             } catch (VerificationCodeException $e) {
 
-                var_dump($e->getMessage());
+                $this->log("第 {$i} 次验证邮箱验证码失败", ['message' => $e->getMessage()]);
             }
         }
 
@@ -446,13 +483,20 @@ class AppleIdBatchRegistration
     public function attemptsSendVerificationPhoneCode(int $attempts = 5): Response
     {
         for ($i = 0; $i < $attempts; $i++) {
+
             sleep($i * 3);
 
             try {
 
-                return $this->resource->sendVerificationPhone($this->validate);
+                $response = $this->resource->sendVerificationPhone($this->validate);
+
+                $this->log("第 {$i} 次发送手机验证码成功",['request' => $this->validate,'response' => $response]);
+
+                return $response;
 
             } catch (PhoneException $e) {
+
+                $this->log("第 {$i} 次发送手机验证码失败", ['message' => $e->getMessage()]);
 
                 $this->phone->update(['status' => Phone::STATUS_NORMAL]);
                 $this->phone                   = $this->getPhone();
@@ -467,6 +511,7 @@ class AppleIdBatchRegistration
                     ],
                     'mode'        => 'sms',
                 ]);
+                
             }
         }
 
@@ -497,10 +542,15 @@ class AppleIdBatchRegistration
 
                 $this->phoneNumberVerification->securityCode = $securityCode;
 
-                return $this->resource->verificationPhone($this->validate);
+                $response = $this->resource->verificationPhone($this->validate);
+
+                $this->log("第 {$i} 次验证手机验证码成功",['request' => $this->validate,'response' => $response]);
+
+                return $response;
 
             } catch (VerificationCodeException $e) {
 
+                $this->log("第{$i}次验证手机验证码失败", ['message' => $e->getMessage()]);
             }
         }
 
@@ -535,6 +585,15 @@ class AppleIdBatchRegistration
         return null;
     }
 
+    /**
+     * 记录日志
+     */
+    protected function log(string $message, array $data = []): void
+    {
+        $this->email->createLog($message, $data);
+        
+        $this->logger->info($message, $data);
+    }
 }
 
 

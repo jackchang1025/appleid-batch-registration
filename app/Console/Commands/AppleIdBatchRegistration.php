@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Models\Email;
 use Illuminate\Contracts\Cache\Lock;
 use App\Services\AppleId\AppleIdBatchRegistration as AppleIdBatchRegistrationService;
-
+use App\Enums\EmailStatus;
 class AppleIdBatchRegistration extends Command
 {
     /**
@@ -51,7 +51,11 @@ class AppleIdBatchRegistration extends Command
      */
     public function handle(AppleIdBatchRegistrationService $appleIdBatchRegistration): void
     {
-        $email = Email::where('email', $this->argument('email'))->where('status',true)->firstOrFail();
+        // dd(Email::all()->toArray());
+
+        $email = Email::where('email', $this->argument('email'))
+        ->where('status',EmailStatus::AVAILABLE)
+        ->firstOrFail();
 
         //判断邮箱是否真正注册
         $this->lock = Cache::lock('domain_check_lock', 60 * 10);

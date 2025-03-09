@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\EmailStatus;
 use App\Filament\Resources\EmailResource\Pages;
 use App\Filament\Resources\EmailResource\RelationManagers;
 use App\Models\Email;
@@ -31,10 +32,10 @@ class EmailResource extends Resource
                 Forms\Components\Textarea::make('email_uri')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Toggle::make('status')
-                    ->required()
-                    ->default(true),
-                        
+                Forms\Components\Select::make('status')
+                    ->options(EmailStatus::labels())
+                    ->default(EmailStatus::AVAILABLE->value)
+                    ->required(),
             ]);
     }
 
@@ -42,26 +43,27 @@ class EmailResource extends Resource
     {
         return $table
             ->columns([
-
                 Tables\Columns\TextColumn::make('email')
-                ->searchable(),
-
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('email_uri'),
-
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->formatStateUsing(fn (string $state): string => $state ? '正常' : '失效'),
+                
+                Tables\Columns\BadgeColumn::make('status')
+                    ->formatStateUsing(fn ($state) => $state->label())
+                    ->colors(EmailStatus::colors()),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->options([
-                        true => '正常',
-                        false => '失效',
-                    ])
+                    ->options(EmailStatus::labels())
                     ->placeholder('选择状态'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('logs')
+                    ->label('查看日志')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->url(fn ($record) => EmailLogResource::getUrl('index', [
+                        'tableFilters[email][value]' => $record->email,
+                    ])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

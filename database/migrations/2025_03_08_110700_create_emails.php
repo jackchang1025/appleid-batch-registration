@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('email')->comment('邮箱');
             $table->text('email_uri')->comment('邮箱地址');
-            $table->boolean('status')->default(true)->comment('{true:正常,false:失效}');
+            $table->text('status')->comment('状态');
             $table->timestamps();
 
             $table->unique('email');
