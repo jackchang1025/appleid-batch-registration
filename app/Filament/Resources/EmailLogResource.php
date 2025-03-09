@@ -10,7 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-
+use Novadaemon\FilamentPrettyJson\PrettyJson;
 class EmailLogResource extends Resource
 {
     protected static ?string $model = EmailLog::class;
@@ -36,9 +36,8 @@ class EmailLogResource extends Resource
                     ->label('消息')
                     ->disabled(),
                     
-                Forms\Components\Textarea::make('data')
-                    ->label('其他数据')
-                    ->disabled(),
+                    PrettyJson::make('data')
+                    ->label('其他数据'),
             ]);
     }
 
@@ -63,6 +62,32 @@ class EmailLogResource extends Resource
                         $state = $column->getState();
                         return strlen($state) > 50 ? $state : null;
                     }),
+                    
+                Tables\Columns\TextColumn::make('data')
+                    ->label('数据')
+                    ->formatStateUsing(function ($state) {
+                        if (empty($state)) return null;
+                        
+                        // 尝试将JSON字符串转换为数组
+                        $array = is_array($state) ? $state : json_decode(json_encode($state), true);
+                        
+                        if (!is_array($array)) return $state;
+                        
+                        // 只显示数组的键作为概览
+                        $keys = array_keys($array);
+                        return implode(', ', array_slice($keys, 0, 3)) . (count($keys) > 3 ? '...' : '');
+                    })
+                    ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
+                        $state = $column->getRecord()->data;
+                        if (empty($state)) return null;
+                        
+                        if (is_array($state) || is_object($state)) {
+                            return json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                        }
+                        
+                        return $state;
+                    })
+                    ->searchable(false),
                     
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('创建时间')
