@@ -27,6 +27,23 @@ services:
             - meilisearch
             - mailpit
             - selenium
+    supervisor:
+        build:
+            context: './docker/supervisor'
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+        volumes:
+            - '.:/var/www/html'
+            - './docker/supervisor/horizon.conf:/etc/supervisor/conf.d/horizon.conf'
+        networks:
+            - sail
+        depends_on:
+            - mysql
+            - redis
+            - laravel.test
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
