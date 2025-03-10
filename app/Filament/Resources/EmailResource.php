@@ -85,32 +85,27 @@ class EmailResource extends Resource
                                 ->required(),
                         ])
                         ->action(function ($records, array $data) {
-                            $count = $records->count();
-                            $recordsUpdated = 0;
-                            
+
+                            /** @var Email $record */
                             foreach ($records as $record) {
                                 try {
                                     $record->update([
                                         'status' => $data['status'],
                                     ]);
-                                    
-                                    // 创建日志记录
-                                    $record->createLog(
-                                        "状态从 {$record->status->label()} 修改为 " . EmailStatus::from($data['status'])->label(),
-                                        ['old_status' => $record->status->value, 'new_status' => $data['status']]
-                                    );
-                                    
-                                    $recordsUpdated++;
+
+                                    Notification::make()
+                                        ->title('状态更新成功')
+                                        ->body("{$record->email} 状态更新为 {$data['status']}")
+                                        ->success()
+                                        ->send();
                                 } catch (\Exception $e) {
-                                    // 处理异常
+                                    Notification::make()
+                                        ->title('状态更新失败')
+                                        ->body("{$record->email} 状态更新失败 {$e->getMessage()}")
+                                        ->warning()
+                                        ->send();
                                 }
                             }
-                            
-                            Notification::make()
-                                ->title('状态更新成功')
-                                ->body("已成功更新 {$recordsUpdated}/{$count} 个邮箱的状态")
-                                ->success()
-                                ->send();
                         }),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),

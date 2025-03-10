@@ -17,11 +17,16 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-
+use Filament\Tables\Columns\TextColumn;
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+        TextColumn::configureUsing(function (TextColumn $column): void {
+            $column->toggleable();
+        });
+        
+
         return $panel
             ->default()
             ->id('admin')

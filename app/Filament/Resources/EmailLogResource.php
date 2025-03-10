@@ -11,6 +11,9 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Novadaemon\FilamentPrettyJson\PrettyJson;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+
 class EmailLogResource extends Resource
 {
     protected static ?string $model = EmailLog::class;
@@ -53,16 +56,14 @@ class EmailLogResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-
-
                 Tables\Columns\TextColumn::make('message')
                     ->label('消息')
                     ->limit(50)
+                    ->searchable()
                     ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
                         $state = $column->getState();
                         return strlen($state) > 50 ? $state : null;
                     }),
-
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('创建时间')
@@ -75,25 +76,45 @@ class EmailLogResource extends Resource
                     ->sortable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('email')
+                    ->label('按邮箱筛选')
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->options(function () {
+                        return EmailLog::query()
+                            ->select('email')
+                            ->distinct()
+                            ->pluck('email', 'email')
+                            ->toArray();
+                    })
+                    ->indicateUsing(function (array $state): array {
+                        if (empty($state['values'])) {
+                            return [];
+                        }
 
+                        return array_map(
+                            fn (string $email) => "邮箱: {$email}",
+                            $state['values'],
+                        );
+                    }),
 
-                Tables\Filters\Filter::make('created_at')
-                    ->form([
-                        Forms\Components\DatePicker::make('created_from')
-                            ->label('开始日期'),
-                        Forms\Components\DatePicker::make('created_until')
-                            ->label('结束日期'),
-                    ])
-                    ->query(function (Tables\Filters\Filter $filter, $query) {
-                        return $query
-                            ->when(
-                                $filter->getState()['created_from'],
-                                fn ($query, $date) => $query->whereDate('created_at', '>=', $date)
-                            )
-                            ->when(
-                                $filter->getState()['created_until'],
-                                fn ($query, $date) => $query->whereDate('created_at', '<=', $date)
-                            );
+                // 添加消息内容关键字筛选
+                Tables\Filters\SelectFilter::make('message_type')
+                    ->label('消息类型')
+                    ->options(function () {
+                        return EmailLog::query()
+                            ->groupBy('message')
+                            ->select('message')
+                            ->pluck('message', 'message')
+                            ->toArray();
+                    })
+                    ->query(function ($query, array $data) {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+
+                        return $query->where('message', 'like', "%{$data['value']}%");
                     }),
             ])
             ->actions([

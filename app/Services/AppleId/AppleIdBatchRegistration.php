@@ -259,7 +259,7 @@ class AppleIdBatchRegistration
             return true;
         } catch (Exception|Throwable $e) {
             $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
-            $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
+            $this->email && $this->email->update(['status' => EmailStatus::AVAILABLE]);
             $this->log('注册失败', ['message' => $e->getMessage()]);
             throw $e;
         }
