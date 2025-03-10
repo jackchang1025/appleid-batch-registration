@@ -54,7 +54,7 @@ class AppleIdBatchRegistration extends Command
         // dd(Email::all()->toArray());
 
         $email = Email::where('email', $this->argument('email'))
-        ->where('status',EmailStatus::AVAILABLE)
+        ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
         ->firstOrFail();
 
         //判断邮箱是否真正注册

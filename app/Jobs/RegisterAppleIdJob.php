@@ -13,7 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-
+use Filament\Notifications\Notification;
 class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -60,7 +60,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     {
         try {
             $email = Email::where('email', $this->email)
-                ->where('status', EmailStatus::AVAILABLE)
+                ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
                 ->firstOrFail();
             
             
@@ -72,11 +72,24 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
            $appleIdBatchRegistration->run($email, $proxyInfo && $proxyInfo->status);
             
             Log::info("AppleID registration successful for email: {$this->email}");
+
+             // 显示通知
+             Notification::make()
+             ->title("{$this->email} 注册成功")
+             ->success()
+             ->send();
+
         } catch (\Exception $e) {
 
             // 处理错误情况
             Log::error("AppleID registration failed for email: {$this->email}: {$e}");
-            
+
+            // 显示通知
+            Notification::make()
+            ->title("{$this->email} 注册失败")
+            ->danger()
+            ->send();
+
             throw $e;
         }
     }

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\EmailResource\Pages;
 
 use App\Filament\Resources\EmailResource;
-use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\TextEntry;
@@ -22,6 +21,14 @@ class ViewEmail extends ViewRecord
                         TextEntry::make('email_uri'),
                         TextEntry::make('status')
                             ->formatStateUsing(fn ($state) => $state->label()),
+                    ]),
+                Section::make('邮箱日志')
+                    ->schema([
+
+                        TextEntry::make('logs')
+                            ->label('所有日志记录')
+                            ->columnSpanFull()
+                            ->view('filament.email-logs-detail-view'),
                     ]),
             ]);
     }

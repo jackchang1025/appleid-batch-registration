@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Enums\EmailStatus;
 use App\Filament\Resources\EmailResource\Pages;
-use App\Filament\Resources\EmailResource\RelationManagers;
 use App\Models\Email;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -115,7 +114,6 @@ class EmailResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\LogsRelationManager::class,
         ];
     }
 
