@@ -16,6 +16,9 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\Section;
+use Filament\Notifications\Notification;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Actions\BulkAction;
 
 class EmailResource extends Resource
 {
@@ -71,6 +74,44 @@ class EmailResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    BulkAction::make('update_status')
+                        ->label('批量修改状态')
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('primary')
+                        ->form([
+                            Forms\Components\Select::make('status')
+                                ->label('状态')
+                                ->options(EmailStatus::labels())
+                                ->required(),
+                        ])
+                        ->action(function ($records, array $data) {
+                            $count = $records->count();
+                            $recordsUpdated = 0;
+                            
+                            foreach ($records as $record) {
+                                try {
+                                    $record->update([
+                                        'status' => $data['status'],
+                                    ]);
+                                    
+                                    // 创建日志记录
+                                    $record->createLog(
+                                        "状态从 {$record->status->label()} 修改为 " . EmailStatus::from($data['status'])->label(),
+                                        ['old_status' => $record->status->value, 'new_status' => $data['status']]
+                                    );
+                                    
+                                    $recordsUpdated++;
+                                } catch (\Exception $e) {
+                                    // 处理异常
+                                }
+                            }
+                            
+                            Notification::make()
+                                ->title('状态更新成功')
+                                ->body("已成功更新 {$recordsUpdated}/{$count} 个邮箱的状态")
+                                ->success()
+                                ->send();
+                        }),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
