@@ -13,6 +13,9 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\Section;
 
 class EmailResource extends Resource
 {
@@ -46,7 +49,7 @@ class EmailResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email_uri'),
-                
+
                 Tables\Columns\BadgeColumn::make('status')
                     ->formatStateUsing(fn ($state) => $state->label())
                     ->colors(EmailStatus::colors()),
@@ -58,12 +61,13 @@ class EmailResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('logs')
-                    ->label('查看日志')
-                    ->icon('heroicon-o-clipboard-document-list')
-                    ->url(fn ($record) => EmailLogResource::getUrl('index', [
-                        'tableFilters[email][value]' => $record->email,
-                    ])),
+                Tables\Actions\ViewAction::make(),
+                // Tables\Actions\Action::make('logs')
+                //     ->label('查看日志')
+                //     ->icon('heroicon-o-clipboard-document-list')
+                //     ->url(fn ($record) => EmailLogResource::getUrl('index', [
+                //         'tableFilters[email][value]' => $record->email,
+                //     ])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -75,7 +79,7 @@ class EmailResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\LogsRelationManager::class,
         ];
     }
 
@@ -85,6 +89,7 @@ class EmailResource extends Resource
             'index' => Pages\ListEmails::route('/'),
             'create' => Pages\CreateEmail::route('/create'),
             'edit' => Pages\EditEmail::route('/{record}/edit'),
+            'view'   => Pages\ViewEmail::route('/{record}'),
         ];
     }
 }

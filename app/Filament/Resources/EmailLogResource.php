@@ -29,13 +29,13 @@ class EmailLogResource extends Resource
                 Forms\Components\TextInput::make('email')
                     ->label('邮箱地址')
                     ->disabled(),
-                    
-                
-                    
+
+
+
                 Forms\Components\Textarea::make('message')
                     ->label('消息')
                     ->disabled(),
-                    
+
                     PrettyJson::make('data')
                     ->label('其他数据'),
             ]);
@@ -47,14 +47,14 @@ class EmailLogResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('email')
                     ->label('邮箱')
                     ->searchable()
                     ->sortable(),
-                    
-               
-                    
+
+
+
                 Tables\Columns\TextColumn::make('message')
                     ->label('消息')
                     ->limit(50)
@@ -62,46 +62,21 @@ class EmailLogResource extends Resource
                         $state = $column->getState();
                         return strlen($state) > 50 ? $state : null;
                     }),
-                    
-                Tables\Columns\TextColumn::make('data')
-                    ->label('数据')
-                    ->formatStateUsing(function ($state) {
-                        if (empty($state)) return null;
-                        
-                        // 尝试将JSON字符串转换为数组
-                        $array = is_array($state) ? $state : json_decode(json_encode($state), true);
-                        
-                        if (!is_array($array)) return $state;
-                        
-                        // 只显示数组的键作为概览
-                        $keys = array_keys($array);
-                        return implode(', ', array_slice($keys, 0, 3)) . (count($keys) > 3 ? '...' : '');
-                    })
-                    ->tooltip(function (Tables\Columns\TextColumn $column): ?string {
-                        $state = $column->getRecord()->data;
-                        if (empty($state)) return null;
-                        
-                        if (is_array($state) || is_object($state)) {
-                            return json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-                        }
-                        
-                        return $state;
-                    })
-                    ->searchable(false),
-                    
+
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('创建时间')
                     ->dateTime('Y-m-d H:i:s')
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('更新时间')
                     ->dateTime('Y-m-d H:i:s')
                     ->sortable(),
             ])
             ->filters([
-                
-                    
+
+
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
@@ -146,4 +121,4 @@ class EmailLogResource extends Resource
             'view' => Pages\ViewEmailLog::route('/{record}'),
         ];
     }
-} 
+}

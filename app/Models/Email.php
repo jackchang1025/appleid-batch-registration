@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Email whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Email whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Email whereUpdatedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EmailLog> $logs
+ * @property-read int|null $logs_count
  * @mixin \Eloquent
  */
 class Email extends Model
