@@ -452,7 +452,6 @@ class AppleIdBatchRegistration
 
             } catch (CaptchaException $e) {
 
-                $this->log("第{$i}次验证验证码失败", ['message' => $e->getMessage()]);
             }
 
         }
@@ -515,7 +514,6 @@ class AppleIdBatchRegistration
                 return $this->resource->verificationEmail($verificationPutDto);
             } catch (VerificationCodeException $e) {
 
-                $this->log("第 {$i} 次验证邮箱验证码失败", ['message' => $e->getMessage()]);
             }
         }
 
@@ -584,7 +582,6 @@ class AppleIdBatchRegistration
 
             } catch (PhoneException $e) {
 
-                $this->log("第 {$i} 次发送手机验证码失败", ['message' => $e->getMessage()]);
 
                 $this->phone->update(['status' => Phone::STATUS_NORMAL]);
                 $this->phone = $this->getPhone();
@@ -634,7 +631,6 @@ class AppleIdBatchRegistration
 
             } catch (VerificationCodeException $e) {
 
-                $this->log("第{$i}次验证手机验证码失败", ['message' => $e->getMessage()]);
             }
         }
 

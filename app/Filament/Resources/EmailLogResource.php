@@ -33,8 +33,6 @@ class EmailLogResource extends Resource
                     ->label('邮箱地址')
                     ->disabled(),
 
-
-
                 Forms\Components\Textarea::make('message')
                     ->label('消息')
                     ->disabled(),
@@ -100,7 +98,7 @@ class EmailLogResource extends Resource
                     }),
 
                 // 添加消息内容关键字筛选
-                Tables\Filters\SelectFilter::make('message_type')
+                Tables\Filters\SelectFilter::make('message')
                     ->label('消息类型')
                     ->options(function () {
                         return EmailLog::query()
@@ -139,7 +137,7 @@ class EmailLogResource extends Resource
     {
         return [
             'index' => Pages\ListEmailLogs::route('/'),
-            'view' => Pages\ViewEmailLog::route('/{record}'),
+            // 'view' => Pages\ViewEmailLog::route('/{record}'),
         ];
     }
 }
