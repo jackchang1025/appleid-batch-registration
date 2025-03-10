@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class CreateAppleid extends CreateRecord
 {
     protected static string $resource = AppleidResource::class;
-    
+
     /**
      * 重写整个创建方法，不创建数据库记录
      */
@@ -30,11 +30,11 @@ class CreateAppleid extends CreateRecord
             if (isset($data['emails']) && is_array($data['emails'])) {
                 $count = count($data['emails']);
 
-                
+
                 foreach ($data['emails'] as $email) {
                     RegisterAppleIdJob::dispatch($email)->onQueue('default');
                 }
-                
+
                 // 显示通知
                 Notification::make()
                     ->title("{$count} 个 Apple ID 注册任务已加入队列")
@@ -52,7 +52,7 @@ class CreateAppleid extends CreateRecord
                 ->send();
         }
     }
-    
+
     /**
      * 创建记录的方法 (此方法必须实现，但我们不会使用它)
      */
@@ -61,12 +61,12 @@ class CreateAppleid extends CreateRecord
         // 此方法永远不会被调用，因为我们重写了 create 方法
         throw new \Exception('This method should not be called');
     }
-    
+
     /**
      * 获取重定向 URL
      */
     protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index');
+        return self::getResource()::getUrl('index');
     }
 }
