@@ -350,6 +350,11 @@ class AppleIdBatchRegistration
                 $jsonBody = json_decode($response->body() ?: '{}', true, 512, JSON_THROW_ON_ERROR);
             } catch (JsonException) {
                 $jsonBody = $response->body();
+
+                //避免字符串过长
+                if (strlen($jsonBody) > 1000) {
+                    $jsonBody = substr($jsonBody, 0, 1000).'...';
+                }
             }
 
             $this->log("{$label} 响应", [
