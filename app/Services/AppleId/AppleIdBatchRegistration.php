@@ -202,7 +202,13 @@ class AppleIdBatchRegistration
 
             $this->resource = $this->connector->getAccountResource();
 
-            $response        = $this->resource->widgetAccount();
+            $response        = $this->resource->widgetAccount(
+                appContext: 'icloud',
+                widgetKey: 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d',
+                lv: '0.3.16',
+                referer: 'https://www.icloud.com/'
+            );
+
             $XAppleSessionId = $this->cookieJar->getCookieByName('aidsp')?->getValue();
 
             if (!$XAppleSessionId) {
@@ -213,8 +219,8 @@ class AppleIdBatchRegistration
                 'X-Apple-Widget-Key',
                 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d'
             );
-            $this->connector->headers()->add('x-apple-request-context', 'create');
-            $this->connector->headers()->add('x-apple-id-session-id', $XAppleSessionId);
+            $this->connector->headers()->add('X-Apple-Request-Context', 'create');
+            $this->connector->headers()->add('X-Apple-Id-Session-Id', $XAppleSessionId);
 
             $this->phoneNumberVerification = PhoneNumberVerification::from([
                 'phoneNumber' => [
@@ -553,7 +559,7 @@ class AppleIdBatchRegistration
                     ],
                 ],
             ],
-            'countryCode' => 'USA',
+            'countryCode' => $this->country,
         ]);
 
         return $this->resource
@@ -602,15 +608,15 @@ class AppleIdBatchRegistration
             try {
                 $emailCode = $this->attemptGetEmailCode($this->email->email, $this->email->email_uri);
 
-                $this->verificationInfo->answer = $emailCode;
+                $this->validate->account->verificationInfo->answer = $emailCode;
 
-                $verificationPutDto = VerificationEmail::from([
+                $verificationPut = VerificationEmail::from([
                     'name'             => $this->email->email,
-                    'verificationInfo' => $this->verificationInfo,
+                    'verificationInfo' => $this->validate->account->verificationInfo,
                 ]);
 
                 //验证邮箱验证码
-                return $this->resource->verificationEmail($verificationPutDto);
+                return $this->resource->verificationEmail($verificationPut);
 
             } catch (VerificationCodeException $e) {
 

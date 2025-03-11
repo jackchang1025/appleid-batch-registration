@@ -61,7 +61,7 @@ class AppleIdRegistration extends Command
     public function handle(): void
     {
 
-      
+
 
         $email = Email::where('email', $this->argument('email'))
         ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
@@ -87,7 +87,7 @@ class AppleIdRegistration extends Command
 
                 $appleIdBatchRegistration->run($email,$proxyInfo && $proxyInfo->status, $this->option('country'));
 
-            }catch (RegistrationException | ServiceUnavailableException $e){}
+            }catch (RegistrationException | ServiceUnavailableException |FatalRequestException $e){}
 
             sleep(5);
         }
