@@ -159,7 +159,6 @@ class AppleIdBatchRegistration
             $this->connector->debugRequest($this->debugRequest());
             $this->connector->debugResponse($this->debugResponse());
 
-
             $this->cloudCodeConnector->debug();
             $this->cloudCodeConnector->withLogger($this->logger);
             $this->cloudCodeConnector->debugRequest($this->debugRequest());
@@ -229,8 +228,14 @@ class AppleIdBatchRegistration
                 'X-Apple-Widget-Key',
                 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d'
             );
+
             $this->connector->headers()->add('X-Apple-Request-Context', 'create');
             $this->connector->headers()->add('X-Apple-Id-Session-Id', $XAppleSessionId);
+            $this->connector->headers()->add('Accept-Language', "en-{$this->phone->country_code},en;q=0.9");
+            $this->connector->headers()->add('Sec-Ch-Ua', '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"');
+            $this->connector->headers()->add('Sec-Ch-Mobile', '?0');
+            $this->connector->headers()->add('Sec-Ch-Mobile', '?0');
+            $this->connector->headers()->add('Sec-Ch-Platform', 'Windows');
 
             $this->phoneNumberVerification = PhoneNumberVerification::from([
                 'phoneNumber' => [
@@ -269,6 +274,7 @@ class AppleIdBatchRegistration
 
             $this->attemptVerificationPhoneCode();
 
+            $this->connector->headers()->add('X-Apple-I-Fd-Client-Info','{"U":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36","L":"en-CA","Z":"GMT-06:00","V":"1.1","F":"kla44j1e3NlY5BNlY5BSs5uQ32SCVgcHmkxF91.1Qs8QkmbFVDJhCixGMuJjkW5BRhkeNH0VdIcJb9WJQSwEOyPKz13NlY5BNp55BNlan0Os5Apw.AZ7"}');
             $accountResponse = $this->resource->account($this->validate);
 
             Appleid::create([
