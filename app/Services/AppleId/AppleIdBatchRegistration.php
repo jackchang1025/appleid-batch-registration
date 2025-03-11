@@ -122,6 +122,11 @@ class AppleIdBatchRegistration
 
             $cookiePath = storage_path("app/public/{$this->email->email}.json");
 
+            //清除cookie
+            if (file_exists($cookiePath)) {
+                unlink($cookiePath);
+            }
+
             $this->cookieJar = new FileCookieJar($cookiePath, true);
 
             if ($isUseProxy) {

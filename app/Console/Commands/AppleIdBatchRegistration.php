@@ -21,7 +21,7 @@ class AppleIdBatchRegistration extends Command
      *
      * @var string
      */
-    protected $signature = 'app:apple-id-batch-registration {email}';
+    protected $signature = 'app:apple-id-batch-registration {email} {--country=USA}';
 
     /**
      * The console command description.
@@ -69,7 +69,7 @@ class AppleIdBatchRegistration extends Command
 
         $proxyInfo = ProxyConfiguration::first();
 
-        $appleIdBatchRegistration->run($email,$proxyInfo && $proxyInfo->status);
+        $appleIdBatchRegistration->run($email,$proxyInfo && $proxyInfo->status, $this->option('country'));
     }
 
 }
