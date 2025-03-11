@@ -374,13 +374,15 @@ class AppleIdBatchRegistration
      * @return string
      * @throws RandomException
      */
-    public static function generatePassword(): string
+    public static function generatePassword(int $minLength = 8, int $maxLength = 20): string
     {
-        $length     = random_int(8, 20);
+        $length     = random_int($minLength, $maxLength);
         $uppercase  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $lowercase  = 'abcdefghijklmnopqrstuvwxyz';
         $numbers    = '0123456789';
-        $characters = $uppercase.$lowercase.$numbers;
+        // 确保至少包含一个特殊字符
+        $special    = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+        $characters = $uppercase.$lowercase.$numbers.$special;
 
         $password = '';
         // 确保至少包含一个大写字母
@@ -389,9 +391,11 @@ class AppleIdBatchRegistration
         $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
         // 确保至少包含一个数字
         $password .= $numbers[random_int(0, strlen($numbers) - 1)];
+        // 确保至少包含一个特殊字符
+        $password .= $special[random_int(0, strlen($special) - 1)];
 
         // 填充剩余长度
-        for ($i = 3; $i < $length; $i++) {
+        for ($i = 4; $i < $length; $i++) {
             $password .= $characters[random_int(0, strlen($characters) - 1)];
         }
 
