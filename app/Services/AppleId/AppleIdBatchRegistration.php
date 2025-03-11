@@ -5,7 +5,7 @@ namespace App\Services\AppleId;
 use App\Models\Appleid;
 use App\Models\Email;
 use App\Models\Phone;
-use App\Models\EmailLog;
+use App\Services\Exception\RegistrationException;
 use Exception;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\FileCookieJar;
@@ -13,6 +13,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Redis;
 use JsonException;
 use libphonenumber\PhoneNumberFormat;
 use Propaganistas\LaravelPhone\Exceptions\NumberFormatException;
@@ -22,12 +23,14 @@ use RuntimeException;
 use Saloon\Exceptions\Request\ClientException;
 use Saloon\Exceptions\Request\FatalRequestException;
 use Saloon\Exceptions\Request\RequestException;
+use Saloon\Exceptions\Request\Statuses\ServiceUnavailableException;
 use Saloon\Http\Response;
 use Weijiajia\DecryptVerificationCode\CloudCode\CloudCodeConnector;
 use Weijiajia\DecryptVerificationCode\Exception\DecryptCloudCodeException;
 use Weijiajia\HttpProxyManager\Contracts\ProxyInterface;
 use Weijiajia\HttpProxyManager\ProxyManager;
 use Weijiajia\SaloonphpAppleClient\Exception\CaptchaException;
+use Weijiajia\SaloonphpAppleClient\Exception\MaxRetryAttemptsException;
 use Weijiajia\SaloonphpAppleClient\Exception\Phone\PhoneException;
 use Weijiajia\SaloonphpAppleClient\Exception\VerificationCodeException;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\AppleIdConnector;
@@ -80,6 +83,11 @@ class AppleIdBatchRegistration
     protected ?Email $email = null;
 
     protected ?string $country = null;
+
+    // 添加类常量
+    public const string PHONE_BLACKLIST_KEY = 'phone_code_blacklist';
+    public const int BLACKLIST_EXPIRE_SECONDS = 3600; // 1小时过期
+
 
     /**
      * @param ProxyManager $proxyManager
@@ -140,6 +148,7 @@ class AppleIdBatchRegistration
             $this->connector->debug();
             $this->connector->debugRequest($this->debugRequest());
             $this->connector->debugResponse($this->debugResponse());
+
 
             $this->cloudCodeConnector->debug();
             $this->cloudCodeConnector->withLogger($this->logger);
@@ -240,7 +249,6 @@ class AppleIdBatchRegistration
 
             $this->attemptVerificationEmailCode();
 
-
             $this->attemptsSendVerificationPhoneCode();
 
             $this->attemptVerificationPhoneCode();
@@ -267,6 +275,30 @@ class AppleIdBatchRegistration
 
             // 注册成功，返回 true
             return true;
+        }catch (ClientException | MaxRetryAttemptsException $e){
+
+            $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
+
+            if ($e instanceof MaxRetryAttemptsException){
+                $this->email && $this->email->update(['status' => EmailStatus::INVALID]);
+            }else{
+                $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
+            }
+
+            $this->log('注册失败', ['message' => $e->getMessage()]);
+
+            $validationErrors = $e->getResponse()->json('service_errors');
+            if ($validationErrors[0]['code'] ?? '' === '-34607001') {
+                throw new RegistrationException(message: json_encode($validationErrors, JSON_THROW_ON_ERROR));
+            }
+
+            $validationErrors = $e->getResponse()->json('validationErrors');
+            if ($validationErrors[0]['code'] ?? '' === 'captchaAnswer.Invalid') {
+                throw new RegistrationException(message: json_encode($validationErrors, JSON_THROW_ON_ERROR));
+            }
+
+            throw $e;
+
         } catch (Exception|Throwable $e) {
             $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
             $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
@@ -434,10 +466,14 @@ class AppleIdBatchRegistration
     {
         return DB::transaction(function () {
 
+            // 获取有效黑名单ID
+            $blacklistIds = $this->getActiveBlacklistIds();
+
             $phone = Phone::query()
                 ->where('status', Phone::STATUS_NORMAL)
                 ->whereNotNull(['phone_address', 'phone'])
                 ->whereNotIn('id', $this->usedPhones)
+//                ->whereNotIn('id', $blacklistIds)
                 ->where('country_code_alpha3', $this->country)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -526,12 +562,35 @@ class AppleIdBatchRegistration
     }
 
     /**
+     * 获取当前有效的黑名单手机号ID
+     *
+     * @return array
+     */
+    protected function getActiveBlacklistIds(): array
+    {
+
+        // 获取所有黑名单记录
+        $blacklist = Redis::hgetall(self::PHONE_BLACKLIST_KEY);
+
+        // 过滤出未过期的黑名单手机号ID
+        return array_keys(array_filter($blacklist, function ($timestamp) {
+            return (now()->timestamp - $timestamp) < self::BLACKLIST_EXPIRE_SECONDS;
+        }));
+    }
+
+    protected function addActiveBlacklistIds(int $id): void
+    {
+        Redis::hset(self::PHONE_BLACKLIST_KEY, $id, now()->timestamp);
+        Redis::expire(self::PHONE_BLACKLIST_KEY, self::BLACKLIST_EXPIRE_SECONDS);
+    }
+
+    /**
      * @param int $attempts
      * @return Response
      * @throws ClientException
      * @throws JsonException
      * @throws FatalRequestException
-     * @throws RequestException
+     * @throws RequestException|MaxRetryAttemptsException
      */
     public function attemptVerificationEmailCode(int $attempts = 5): Response
     {
@@ -552,31 +611,43 @@ class AppleIdBatchRegistration
 
                 //验证邮箱验证码
                 return $this->resource->verificationEmail($verificationPutDto);
+
             } catch (VerificationCodeException $e) {
 
+                //重新发送邮件
+                $response = $this->sendVerificationEmail();
+
+                $this->validate->account->verificationInfo->id = $response->verificationId;
             }
         }
 
         throw new RuntimeException("verification email code failed of attempt {$attempts} times");
     }
 
-    public function attemptGetEmailCode(string $email, string $uri, int $attempts = 5)
+    /**
+     * @param string $email
+     * @param string $uri
+     * @param int $attempts
+     * @return string
+     * @throws MaxRetryAttemptsException
+     */
+    public function attemptGetEmailCode(string $email, string $uri, int $attempts = 5): string
     {
 
         $isSuccess = false;
         for ($i = 0; $i < $attempts; $i++) {
 
-            sleep($i * 3);
+            sleep($i * 5);
 
             $response = Http::get($uri);
 
             $this->log('获取邮箱验证码', ['request' => $uri, 'response' => $response->json()]);
 
-            if ($response->json('status') !== 1) {
+            if ($response->json('status') !== 1 && $response->json('statusCode') !== 200) {
                 continue;
             }
 
-            $code = $response->json('message.email_code');
+            $code = $response->json('message.email_code') ?: $response->json('data.code');
 
             if (empty($code)) {
                 continue;
@@ -598,7 +669,7 @@ class AppleIdBatchRegistration
             return $code;
         }
 
-        throw new RuntimeException('get email code failed of attempt '.$attempts.' times');
+        throw new MaxRetryAttemptsException('get email code failed of attempt '.$attempts.' times');
     }
 
     /**
@@ -610,11 +681,11 @@ class AppleIdBatchRegistration
      * @throws RequestException
      * @throws JsonException
      */
-    public function attemptsSendVerificationPhoneCode(int $attempts = 5): Response
+    public function attemptsSendVerificationPhoneCode(int $attempts = 10): Response
     {
         for ($i = 0; $i < $attempts; $i++) {
 
-            sleep($i * 3);
+            sleep(5);
 
             try {
 
@@ -622,6 +693,8 @@ class AppleIdBatchRegistration
 
             } catch (PhoneException $e) {
 
+                // 添加黑名单
+                $this->addActiveBlacklistIds($this->phone->id);
 
                 $this->phone->update(['status' => Phone::STATUS_NORMAL]);
                 $this->phone = $this->getPhone();
@@ -649,7 +722,7 @@ class AppleIdBatchRegistration
      * @throws ClientException
      * @throws FatalRequestException
      * @throws RequestException
-     * @throws JsonException
+     * @throws JsonException|MaxRetryAttemptsException
      */
     public function attemptVerificationPhoneCode(int $attempts = 5): Response
     {
@@ -661,11 +734,9 @@ class AppleIdBatchRegistration
 
                 $code = $this->attemptGetPhoneCode($this->phone);
 
-                $securityCode = SecurityCode::from([
+                $this->validate->phoneNumberVerification->securityCode = SecurityCode::from([
                     'code' => $code,
                 ]);
-
-                $this->phoneNumberVerification->securityCode = $securityCode;
 
                 return $this->resource->verificationPhone($this->validate);
 
@@ -677,6 +748,12 @@ class AppleIdBatchRegistration
         throw new RuntimeException("verification phone code failed of attempt {$attempts} times");
     }
 
+    /**
+     * @param Phone $phone
+     * @param int $attempts
+     * @return string
+     * @throws MaxRetryAttemptsException
+     */
     public function attemptGetPhoneCode(Phone $phone, int $attempts = 10): string
     {
 
@@ -694,8 +771,7 @@ class AppleIdBatchRegistration
                 return $code;
             }
         }
-
-        throw new RuntimeException("Attempt {$attempts} times failed to get phone code");
+        throw new MaxRetryAttemptsException("Attempt {$attempts} times failed to get phone code");
     }
 
     public function parse(string $str): ?string

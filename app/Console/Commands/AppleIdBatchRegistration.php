@@ -2,18 +2,15 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ProxyConfiguration;
-use Illuminate\Console\Command;
-use JsonException;
-use Propaganistas\LaravelPhone\Exceptions\NumberFormatException;
-use Random\RandomException;
-use Saloon\Exceptions\Request\ClientException;
-use Weijiajia\SaloonphpAppleClient\Exception\Phone\PhoneException;
-use Illuminate\Support\Facades\Cache;
-use App\Models\Email;
-use Illuminate\Contracts\Cache\Lock;
-use App\Services\AppleId\AppleIdBatchRegistration as AppleIdBatchRegistrationService;
 use App\Enums\EmailStatus;
+use App\Models\Email;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Auth;
+use Filament\Notifications\Notification;
+use Filament\Notifications\Actions\Action;
+use App\Models\User;
+use App\Filament\Resources\EmailResource\Pages\ViewEmail;
+
 class AppleIdBatchRegistration extends Command
 {
     /**
@@ -21,55 +18,45 @@ class AppleIdBatchRegistration extends Command
      *
      * @var string
      */
-    protected $signature = 'app:apple-id-batch-registration {email} {--country=USA}';
+    protected $signature = 'app:apple-id-batch-registration';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = '注册苹果账号';
-
-
-    //锁
-    protected ?Lock $lock = null;
-
-
-    public function __destruct()
-    {
-        $this->lock && $this->lock->release();
-    }
+    protected $description = 'Command description';
 
     /**
-     * @param AppleIdBatchRegistrationService $appleIdBatchRegistration
-     * @return void
-     * @throws ClientException
-     * @throws JsonException
-     * @throws NumberFormatException
-     * @throws PhoneException
-     * @throws RandomException
+     * Execute the console command.
      */
-    public function handle(AppleIdBatchRegistrationService $appleIdBatchRegistration): void
+    public function handle()
     {
-        // dd(Email::all()->toArray());
 
-        $email = Email::where('email', $this->argument('email'))
-        ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
-        ->firstOrFail();
 
-        //判断邮箱是否真正注册
-        $this->lock = Cache::lock('domain_check_lock', 60 * 10);
+        Email::whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])->get()->each(function (Email $email) {
 
-        if (!$this->lock->get()) {
-            //邮箱正在注册中
-            $this->error('email is  registered');
+            try {
 
-            return;
-        }
+                $this->call('app:apple-id-registration', ['email' => $email->email]);
 
-        $proxyInfo = ProxyConfiguration::first();
+            }catch (\Exception $e){
 
-        $appleIdBatchRegistration->run($email,$proxyInfo && $proxyInfo->status, $this->option('country'));
+                $this->error($e->getMessage());
+                
+                    Notification::make()
+                    ->title("{$email->email} 注册失败")
+                    ->body($e->getMessage())
+                    ->actions([
+                            Action::make('view')
+                                ->button()
+                            ->url(ViewEmail::getUrl([
+                                'record' => $email->id,
+                            ]), shouldOpenInNewTab: true),
+                    ])
+                    ->sendToDatabase(User::first());
+
+            }
+        });
     }
-
 }

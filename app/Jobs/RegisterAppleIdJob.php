@@ -5,15 +5,24 @@ namespace App\Jobs;
 use App\Enums\EmailStatus;
 use App\Models\Email;
 use App\Models\ProxyConfiguration;
+use App\Models\User;
 use App\Services\AppleId\AppleIdBatchRegistration;
+use App\Services\Exception\RegistrationException;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Filament\Notifications\Notification;
+use Saloon\Exceptions\Request\Statuses\ServiceUnavailableException;
+use Filament\Notifications\Actions\Action;
+use App\Filament\Resources\EmailResource;
+use App\Filament\Resources\EmailResource\Pages\ViewEmail;
+
 class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -21,18 +30,18 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     /**
      * 重试次数
      */
-    public $tries = 1;
+    public int $tries = 5;
 
     /**
      * 任务超时时间（秒）
      */
-    public $timeout = 600;
+    public int|float $timeout = 60 * 10;
 
     /**
      * 创建一个新的任务实例
      */
     public function __construct(
-        protected string $email,
+        protected Email $email,
         protected string $country = 'USA'
     ) {
         $this->onQueue('default');
@@ -43,7 +52,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'apple_id_registration_' . $this->email;
+        return 'apple_id_registration_'.$this->email->email;
     }
 
     /**
@@ -51,47 +60,93 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueFor(): int
     {
-        return 60 * 5; // 5分钟
+        return 60 * 10; // 5分钟
     }
 
     /**
-     * 执行任务
+     * 计算重试任务之前要等待的秒数
+     *
+     * @return int
+     */
+    public function backoff(): int
+    {
+        return 5;
+    }
+
+    /**
+     * @param AppleIdBatchRegistration $appleIdBatchRegistration
+     * @return void
+     * @throws RegistrationException
+     * @throws ServiceUnavailableException
+     * @throws \Throwable
      */
     public function handle(AppleIdBatchRegistration $appleIdBatchRegistration): void
     {
         try {
-            $email = Email::where('email', $this->email)
-                ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
-                ->firstOrFail();
-            
-            
+
             // 获取代理配置
             $proxyInfo = ProxyConfiguration::first();
 
-    
             // 运行注册
-           $appleIdBatchRegistration->run($email, $proxyInfo && $proxyInfo->status,$this->country);
-            
-            Log::info("AppleID registration successful for email: {$this->email}");
+            $appleIdBatchRegistration->run($this->email, $proxyInfo && $proxyInfo->status, $this->country);
 
-             // 显示通知
-             Notification::make()
-             ->title("{$this->email} 注册成功")
-             ->success()
-             ->send();
+            Log::info("AppleID registration successful for email: {$this->email->email}");
 
-        } catch (\Exception $e) {
+            // 显示通知
+            Notification::make()
+                ->title("{$this->email->email} 注册成功")
+                ->success()
+                ->actions([
+                    Action::make('view')
+                        ->button()
+                        ->url(ViewEmail::getUrl([
+                            'record' => $this->email->id,
+                        ]), shouldOpenInNewTab: true),
+                ])
+                ->sendToDatabase(User::first());
+
+        } catch (RegistrationException|ServiceUnavailableException $e) {
+
+            //抛出异常
+            throw $e;
+
+        } catch (Exception $e) {
 
             // 处理错误情况
             Log::error("AppleID registration failed for email: {$this->email}: {$e}");
 
             // 显示通知
             Notification::make()
-            ->title("{$this->email} 注册失败")
-            ->danger()
-            ->send();
+                ->title("{$this->email->email} 注册失败")
+                ->body($e->getMessage())
+                ->danger()
+                ->actions([
+                    Action::make('view')
+                        ->button()
+                        ->url(ViewEmail::getUrl([
+                            'record' => $this->email->id,
+                        ]), shouldOpenInNewTab: true),
+                ])
+                ->sendToDatabase(User::first());
 
-            throw $e;
         }
     }
-} 
+
+    public function failed(Exception $exception): void
+    {
+        Log::error("AppleID registration failed for email: {$this->email}: {$exception}");
+
+        Notification::make()
+            ->title("{$this->email->email} 注册失败")
+            ->body($exception->getMessage())
+            ->danger()
+            ->actions([
+                Action::make('view')
+                    ->button()
+                    ->url(ViewEmail::getUrl([
+                        'record' => $this->email->id,
+                    ]), shouldOpenInNewTab: true),
+            ])
+            ->sendToDatabase(User::first());
+    }
+}

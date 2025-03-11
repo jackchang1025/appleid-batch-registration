@@ -3,14 +3,19 @@
 namespace App\Filament\Resources;
 
 
+use App\Enums\EmailStatus;
 use App\Filament\Resources\PhoneResource\Pages;
+use App\Models\Email;
 use App\Models\Phone;
 use Filament\Actions\CreateAction;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
@@ -67,7 +72,7 @@ class PhoneResource extends Resource
 
                 Tables\Columns\TextColumn::make('country_code')
                     ->toggleable(),
-                
+
                 Tables\Columns\TextColumn::make('country_code_alpha3')
                     ->toggleable(),
 
@@ -95,6 +100,44 @@ class PhoneResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
+                BulkAction::make('update_status')
+                    ->label('批量修改状态')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\Select::make('status')
+                            ->label('状态')
+                            ->options(Phone::STATUS)
+                            ->required(),
+                    ])
+                    ->action(function (Collection $records, array $data) {
+
+                        $count = 0;
+                        /** @var Phone $record */
+                        foreach ($records as $record) {
+                            try {
+
+                                $record->update([
+                                    'status' => $data['status'],
+                                ]);
+
+                                $count++;
+
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('状态更新失败')
+                                    ->body("{$record->phone} 状态更新失败 {$e->getMessage()}")
+                                    ->warning()
+                                    ->send();
+                            }
+                        }
+
+                        Notification::make()
+                            ->title("批量更新状态完成")
+                            ->body("成功更新 {$count} 条数据")
+                            ->success()
+                            ->send();
+                    }),
             ]);
     }
 

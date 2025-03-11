@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\EmailStatus;
 use App\Filament\Resources\EmailResource\Pages;
+use App\Jobs\RegisterAppleIdJob;
 use App\Models\Email;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -50,11 +51,16 @@ class EmailResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email_uri'),
+                Tables\Columns\TextColumn::make('email_uri')
+                ->searchable(),
 
                 Tables\Columns\BadgeColumn::make('status')
                     ->formatStateUsing(fn ($state) => $state->label())
                     ->colors(EmailStatus::colors()),
+
+                Tables\Columns\TextColumn::make('created_at'),
+
+                Tables\Columns\TextColumn::make('updated_at'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -85,6 +91,8 @@ class EmailResource extends Resource
                         ])
                         ->action(function ($records, array $data) {
 
+                            $count = 0;
+
                             /** @var Email $record */
                             foreach ($records as $record) {
                                 try {
@@ -92,11 +100,8 @@ class EmailResource extends Resource
                                         'status' => $data['status'],
                                     ]);
 
-                                    Notification::make()
-                                        ->title('状态更新成功')
-                                        ->body("{$record->email} 状态更新为 {$data['status']}")
-                                        ->success()
-                                        ->send();
+                                    $count++;
+
                                 } catch (\Exception $e) {
                                     Notification::make()
                                         ->title('状态更新失败')
@@ -105,10 +110,76 @@ class EmailResource extends Resource
                                         ->send();
                                 }
                             }
+
+                            Notification::make()
+                            ->title('状态更新成功')
+                            ->body("成功更新 {$count} 条数据")
+                            ->success()
+                            ->send();
+                        }),
+                    BulkAction::make('register_appleid')
+                        ->label('批量注册 Apple ID')
+                        ->icon('heroicon-o-user-plus')
+                        ->color('success')
+                        ->form([
+                            Forms\Components\Select::make('country')
+                                ->label('国家')
+                                ->required()
+                                ->searchable()
+                                ->options([
+                                    'USA' => '美国',
+                                    'CAN' => '加拿大',
+                                    'GBR' => '英国',
+                                    'AUS' => '澳大利亚',
+                                    'NZL' => '新西兰',
+                                    'DEU' => '德国',
+                                    'FRA' => '法国',
+                                    'ITA' => '意大利',
+                                    'ESP' => '西班牙',
+                                    'JPN' => '日本',
+                                    'KOR' => '韩国',
+                                    'TWN' => '台湾',
+                                    'HKG' => '香港',
+                                    'MAC' => '澳门',
+                                    'CHN' => '中国大陆',
+                                ])
+                                ->default('USA')
+                                ->helperText('选择需要注册 Apple ID 的国家'),
+                        ])
+                        ->action(function ($records, array $data) {
+
+                            $count = 0;
+
+                            foreach ($records as $record) {
+                                try {
+
+                                    /** @var Email $record */
+                                    if ($record->status->value === EmailStatus::AVAILABLE->value || $record->status->value === EmailStatus::FAILED->value){
+                                        $count++;
+
+                                        RegisterAppleIdJob::dispatch($record,$data['country']);
+                                        continue;
+                                    }
+
+                                    throw new \RuntimeException("邮箱 {$record->email} 状态 {$record->status->value}，无法注册 Apple ID");
+
+                                } catch (\Exception $e) {
+                                    Notification::make()
+                                        ->title('Apple ID 注册失败')
+                                        ->body("{$record->email} 的 Apple ID 注册失败: {$e->getMessage()}")
+                                        ->warning()
+                                        ->send();
+                                }
+                            }
+
+                            $count && Notification::make()
+                                ->title("{$count} 个 Apple ID 注册任务已加入队列")
+                                ->success()
+                                ->send();
                         }),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])->defaultSort('updated_at', 'desc');
     }
 
     public static function getRelations(): array

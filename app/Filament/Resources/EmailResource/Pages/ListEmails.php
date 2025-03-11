@@ -33,42 +33,48 @@ https://api.acemail.co/lastemail/v2?project_id=1&extend_b64=RBH0zjjlTlF17zqgJUC9
                     $lines = explode("\n", trim($data['emails_data']));
                     $successCount = 0;
                     $failedEntries = [];
-                    
+
                     foreach ($lines as $line) {
                         $line = trim($line);
                         if (empty($line)) {
                             continue;
                         }
-                        
+
                         $parts = explode('----', $line);
                         if (count($parts) !== 2) {
                             $failedEntries[] = $line . ' (格式错误)';
                             continue;
                         }
-                        
-                        $emailUri = trim($parts[0]);
-                        $email = trim($parts[1]);
-                        
+
+                        //判断是否 http uri 格式
+                        if (filter_var($parts[0], FILTER_VALIDATE_URL)) {
+                            $emailUri = trim($parts[0]);
+                            $email = trim($parts[1]);
+                        } else {
+                            $emailUri = trim($parts[1]);
+                            $email = trim($parts[0]);
+                        }
+
                         try {
                             // Check if email already exists
                             if (Email::where('email', $email)->exists()) {
                                 $failedEntries[] = $email . ' (已存在)';
                                 continue;
                             }
-                            
+
                             // Create new email record
                             $emailObj = Email::create([
                                 'email' => $email,
                                 'email_uri' => $emailUri,
                                 'status' => EmailStatus::AVAILABLE->value,
                             ]);
-                            
+
                             $successCount++;
                         } catch (\Exception $e) {
                             $failedEntries[] = $email . ' (' . $e->getMessage() . ')';
                         }
                     }
-                    
+
                     // Show notification
                     $message = "成功导入 {$successCount} 个邮箱";
                     if (!empty($failedEntries)) {
@@ -77,13 +83,13 @@ https://api.acemail.co/lastemail/v2?project_id=1&extend_b64=RBH0zjjlTlF17zqgJUC9
                             $message .= "...等";
                         }
                     }
-                    
+
                     Notification::make()
                         ->title('批量导入完成')
                         ->body($message)
                         ->success()
                         ->send();
-                    
+
                     // Refresh the table
                     $this->resetTable();
                 }),

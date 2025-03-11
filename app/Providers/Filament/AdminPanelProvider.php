@@ -6,6 +6,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Notifications\Livewire\DatabaseNotifications;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -25,7 +26,8 @@ class AdminPanelProvider extends PanelProvider
         TextColumn::configureUsing(function (TextColumn $column): void {
             $column->toggleable();
         });
-        
+
+        DatabaseNotifications::pollingInterval('30s');
 
         return $panel
             ->default()
@@ -58,6 +60,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])->databaseNotifications();
     }
 }

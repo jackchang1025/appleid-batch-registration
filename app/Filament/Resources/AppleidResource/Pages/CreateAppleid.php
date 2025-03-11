@@ -7,6 +7,8 @@ use App\Jobs\RegisterAppleIdJob;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Email;
+use App\Enums\EmailStatus;
 
 class CreateAppleid extends CreateRecord
 {
@@ -31,8 +33,16 @@ class CreateAppleid extends CreateRecord
                 $count = count($data['emails']);
 
 
+            
                 foreach ($data['emails'] as $email) {
-                    RegisterAppleIdJob::dispatch($email,$data['country'])->onQueue('default');
+
+                    $email = Email::where('email', $email)->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])->first();
+
+                    if (!$email) {
+                        throw new \Exception("邮箱 {$email} 不存在");
+                    }
+
+                    RegisterAppleIdJob::dispatch($email,$data['country']);
                 }
 
                 // 显示通知
