@@ -88,6 +88,10 @@ class AppleIdBatchRegistration
     public const string PHONE_BLACKLIST_KEY = 'phone_code_blacklist';
     public const int BLACKLIST_EXPIRE_SECONDS = 3600; // 1小时过期
 
+    public static array $preferredLanguage = [
+        'USA' => 'en_US',
+        'CAN' => 'en_GB',
+    ];
 
     /**
      * @param ProxyManager $proxyManager
@@ -102,6 +106,12 @@ class AppleIdBatchRegistration
         protected CloudCodeConnector $cloudCodeConnector = new CloudCodeConnector(),
     ) {
 
+    }
+
+
+    public static function preferredLanguage(string $country): string
+    {
+        return self::$preferredLanguage[$country] ?? 'en_US';
     }
 
     /**
@@ -187,7 +197,7 @@ class AppleIdBatchRegistration
                     ],
                 ],
                 'preferences'      => [
-                    'preferredLanguage'    => 'en_US',
+                    'preferredLanguage'    => self::preferredLanguage($country),
                     'marketingPreferences' => [
                         'appleNews'     => false,
                         'appleUpdates'  => true,
@@ -243,7 +253,7 @@ class AppleIdBatchRegistration
                 $this->phoneNumberVerification,
                 $this->verificationAccount,
                 $this->captcha,
-                true
+                false
             );
 
             $this->attemptsCaptcha();
