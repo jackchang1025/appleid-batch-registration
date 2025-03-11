@@ -9327,12 +9327,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/http-proxy-manager.git",
-                "reference": "4eabd75f9b0dcc4b970bf2f70672ded88b1f40ac"
+                "reference": "5a0defe35c53380ede8ea274c07f0b833c893e31"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/4eabd75f9b0dcc4b970bf2f70672ded88b1f40ac",
-                "reference": "4eabd75f9b0dcc4b970bf2f70672ded88b1f40ac",
+                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/5a0defe35c53380ede8ea274c07f0b833c893e31",
+                "reference": "5a0defe35c53380ede8ea274c07f0b833c893e31",
                 "shasum": ""
             },
             "require": {
@@ -9390,7 +9390,7 @@
                 "issues": "https://github.com/jackchang1025/http-proxy-manager/issues",
                 "source": "https://github.com/jackchang1025/http-proxy-manager/tree/main"
             },
-            "time": "2025-03-09T07:08:25+00:00"
+            "time": "2025-03-11T04:52:34+00:00"
         },
         {
             "name": "weijiajia/saloonphp-apple-client",

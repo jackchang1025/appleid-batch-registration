@@ -55,6 +55,9 @@ class ProxyConfigurationResource extends Resource
 
                                     Forms\Components\Tabs\Tab::make('Smartdaili')
                                         ->schema(self::getSmartdailiSchema()),
+
+                                    Forms\Components\Tabs\Tab::make('smartproxy')
+                                    ->schema(self::getSmartProxySchema()),
                                 ]),
                         ])
                         ->columnSpan(['lg' => 3]),
@@ -70,6 +73,7 @@ class ProxyConfigurationResource extends Resource
                                     'wandou'        => '豌豆代理',
                                     'iproyal'       => 'IPRoyal',
                                     'smartdaili'    => 'Smartdaili',
+                                    'smartproxy'    => 'SmartProxy',
                                 ])
                                 ->required()
                                 ->default('stormproxies')
@@ -490,6 +494,77 @@ class ProxyConfigurationResource extends Resource
                 ->helperText('选择代理协议类型'),
         ];
     }
+
+    protected static function getSmartProxySchema(): array
+    {
+        return [
+
+            Forms\Components\Select::make('configuration.smartproxy.mode')
+                ->options([
+                    'flow' => '账密模式',
+                    // 'dynamic' => '提取模式',
+                ])
+                ->default('flow')
+                ->helperText('选择代理模式'),
+
+            Forms\Components\TextInput::make('configuration.smartproxy.username')
+                ->label('套餐账号')
+                ->helperText('套餐账号'),
+
+            Forms\Components\TextInput::make('configuration.smartproxy.password')
+                ->label('密码')
+                ->helperText('SmartProxy代理密码'),
+
+            Forms\Components\TextInput::make('configuration.smartproxy.host')
+                ->label('代理服务器')
+                ->helperText('SmartProxy代理服务器地址'),
+
+            Forms\Components\TextInput::make('configuration.smartproxy.port')
+                ->label('端口')
+                ->numeric()
+                ->helperText('SmartProxy代理端口'),
+
+            Forms\Components\Select::make('configuration.smartproxy.protocol')
+                ->label('代理协议')
+                ->options([
+                    'http'   => 'HTTP/HTTPS',
+                    'socks5' => 'SOCKS5',
+                ])
+                ->default('http')
+                ->helperText('选择代理协议类型'),
+
+            Forms\Components\TextInput::make('configuration.smartproxy.area')
+            ->helperText('国家代码,如:us,cn等,留空表示随机')
+            ->default(''),
+
+            Forms\Components\TextInput::make('configuration.smartproxy.city')
+                ->helperText('州/省代码,留空表示随机')
+                ->default(''),
+
+            Forms\Components\TextInput::make('configuration.smartproxy.state')
+                ->helperText('区域代码,留空表示随机')
+                ->default(''),
+
+            Forms\Components\Toggle::make('configuration.smartproxy.sticky_session')
+                ->label('启用粘性会话')
+                ->helperText('开启后将尽可能使用相同的IP')
+                ->default(false),
+
+            Forms\Components\TextInput::make('configuration.smartproxy.life')
+                ->helperText('尽可能保持一个ip的使用时间(分钟),仅在开启粘性会话时有效')
+                ->numeric()
+                ->default(10)
+                ->visible(fn(Forms\Get $get) => $get('configuration.smartproxy.sticky_session')),
+
+            Forms\Components\TextInput::make('configuration.smartproxy.ip')
+            ->helperText('指定数据中心地址'),
+
+        ];
+    }
+                
+                
+
+    
     public static function getPages(): array
     {
         return [

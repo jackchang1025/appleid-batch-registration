@@ -1,9 +1,6 @@
 <?php
 
 return [
-
-    'name'      => 'proxyManager',
-
     /*
     |--------------------------------------------------------------------------
     | 默认代理驱动
@@ -144,5 +141,26 @@ return [
                 ],
             ],
         ],
+        'smartproxy' => [
+            'default_mode' => 'flow',
+            'connector' => \Weijiajia\HttpProxyManager\Proxys\SmartProxy\SmartProxyConnector::class,
+            'mode'      => [
+                'dynamic' => [
+                    'request'        => \Weijiajia\HttpProxyManager\Proxys\SmartProxy\Request\Dynamic::class,
+                    'dto'            => \Weijiajia\HttpProxyManager\Proxys\SmartProxy\Data\Dynamic::class,
+                    'default_config' => [
+
+                    ],
+                ],
+                'flow' => [
+                    'request'        => \Weijiajia\HttpProxyManager\Proxys\SmartProxy\Request\AccountPassword::class,
+                    'dto'            => \Weijiajia\HttpProxyManager\Proxys\SmartProxy\Data\AccountPassword::class,
+                    'default_config' => [
+
+                    ],
+                ],
+            ],
+        ],
+        
     ],
 ];
