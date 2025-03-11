@@ -5,7 +5,7 @@ namespace App\Services\Phone;
 use libphonenumber\PhoneNumberFormat;
 use Propaganistas\LaravelPhone\Exceptions\NumberFormatException;
 use Propaganistas\LaravelPhone\PhoneNumber;
-
+use Symfony\Component\Intl\Countries;
 /**
  * @mixin PhoneNumber
  */
@@ -69,5 +69,19 @@ class PhoneService
     public function getNationalNumber(): ?int
     {
         return $this->phone->toLibPhoneObject()?->getNationalNumber();
+    }
+
+    /**
+     * 获取国家代码的 alpha3 码
+     *
+     * @return string|null
+     */
+    public function getCountryCodeAlpha3(): ?string
+    {
+        $alpha2Code = $this->getCountry();
+
+        $alpha3Code = Countries::getAlpha3Code($alpha2Code);
+
+        return $alpha3Code;
     }
 }

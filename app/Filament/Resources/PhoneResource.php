@@ -67,6 +67,9 @@ class PhoneResource extends Resource
 
                 Tables\Columns\TextColumn::make('country_code')
                     ->toggleable(),
+                
+                Tables\Columns\TextColumn::make('country_code_alpha3')
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()

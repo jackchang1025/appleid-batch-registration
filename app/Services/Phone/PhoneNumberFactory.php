@@ -15,28 +15,9 @@ class PhoneNumberFactory
      */
     public function create(
         string $phoneNumber,
-        ?array $countryCode = null,
+        ?array $countryCode = [],
         ?int $phoneNumberFormat = PhoneNumberFormat::INTERNATIONAL
     ): PhoneService {
-
-        $phoneNumberFormat = $phoneNumberFormat ?: config('phone.format');
-
-        $defaultCountryCode = $this->getDefaultCountryCode($countryCode);
-
-        return new PhoneService($phoneNumber, $defaultCountryCode, $phoneNumberFormat);
-    }
-
-    private function getDefaultCountryCode(?array $countryCode): array
-    {
-        if ($countryCode) {
-            return $countryCode;
-        }
-
-        $securitySetting = SecuritySetting::first();
-        if ($securitySetting && isset($securitySetting->configuration['country_code'])) {
-            return [$securitySetting->configuration['country_code']];
-        }
-
-        return config('phone.country_code');
+        return new PhoneService($phoneNumber, $countryCode, $phoneNumberFormat);
     }
 }

@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Saloon\Exceptions\Request\FatalRequestException;
-use Saloon\Exceptions\Request\RequestException;
 use App\Services\Phone\PhoneService;
 use App\Services\Phone\PhoneNumberFactory;
 
@@ -43,7 +41,7 @@ class Phone extends Model
     use HasFactory;
 
 
-    protected $fillable = ['phone','phone_address','country_code','country_dial_code','status'];
+    protected $fillable = ['phone','phone_address','country_code','country_dial_code','status','country_code_alpha3'];
 
     //'{normal:正常,invalid:失效,bound:已绑定,Binding:绑定中}'
     const string STATUS_NORMAL = 'normal';
@@ -96,6 +94,15 @@ class Phone extends Model
         );
     }
 
+    protected function countryCodeAlpha3(): Attribute
+    {
+        return Attribute::make(
+            set: function (?string $value, array $attributes) {
+                return $this->getPhoneNumberService($attributes['phone'])->getCountryCodeAlpha3();
+            }
+        );
+    }
+
     protected function label ():Attribute
     {
         return Attribute::make(
@@ -115,16 +122,6 @@ class Phone extends Model
     public function getPhoneNumberService(?string $countryCode = null): PhoneService
     {
         return app(PhoneNumberFactory::class)->create($this->phone, [$countryCode]);
-    }
-
-    /**
-     * @return Response
-     * @throws FatalRequestException
-     * @throws RequestException
-     */
-    public function getPhoneCode(): Response
-    {
-        return app(PhoneCodeService::class)->getPhoneCode($this->phone_address);
     }
 
     public function getCountryCode(): string
