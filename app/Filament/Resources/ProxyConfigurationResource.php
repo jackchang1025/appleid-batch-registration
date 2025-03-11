@@ -394,7 +394,6 @@ class ProxyConfigurationResource extends Resource
 
                     Forms\Components\TextInput::make('configuration.iproyal.password')
                         ->label('密码')
-                        ->password()
                         ->helperText('住宅代理密码')
                         ->dehydrated(true),
 
@@ -561,10 +560,10 @@ class ProxyConfigurationResource extends Resource
 
         ];
     }
-                
-                
 
-    
+
+
+
     public static function getPages(): array
     {
         return [

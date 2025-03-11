@@ -99,6 +99,7 @@ class AppleIdBatchRegistration
     /**
      * @param Email $email
      * @param bool $isUseProxy
+     * @param string $country
      * @return bool
      * @throws ClientException
      * @throws DecryptCloudCodeException
@@ -116,7 +117,7 @@ class AppleIdBatchRegistration
 
         try {
 
-            
+
             // 更新邮箱状态为处理中
             $email->update(['status' => EmailStatus::PROCESSING]);
 
@@ -390,7 +391,7 @@ class AppleIdBatchRegistration
         if ($minLength < 8) {
             throw new \InvalidArgumentException('Minimum length must be at least 8 to accommodate required character types');
         }
-        
+
         if ($minLength > $maxLength) {
             throw new \InvalidArgumentException('Minimum length cannot be greater than maximum length');
         }
@@ -402,29 +403,29 @@ class AppleIdBatchRegistration
             'numbers'   => '0123456789',
             'special'   => '!@#$%^&*()_+-=[]{}|;:,.<>?'
         ];
-        
+
         // Determine password length
         $length = random_int($minLength, $maxLength);
-        
+
         // Start with empty password
         $password = '';
-        
+
         // Add one character from each required set
         foreach ($charSets as $type => $chars) {
             $randomIndex = random_int(0, strlen($chars) - 1);
             $password .= $chars[$randomIndex];
         }
-        
+
         // Create a combined character set for remaining characters
         $allChars = implode('', $charSets);
         $allCharsLength = strlen($allChars) - 1;
-        
+
         // Fill the remaining length with random characters
         $remainingLength = $length - count($charSets);
         for ($i = 0; $i < $remainingLength; $i++) {
             $password .= $allChars[random_int(0, $allCharsLength)];
         }
-        
+
         // Shuffle the password to avoid predictable patterns
         return str_shuffle($password);
     }
@@ -456,7 +457,6 @@ class AppleIdBatchRegistration
      * @throws JsonException
      * @throws FatalRequestException
      * @throws RequestException
-     * @throws DecryptCloudCodeException
      */
     public function attemptsCaptcha(int $attempts = 5): Response
     {
@@ -490,7 +490,7 @@ class AppleIdBatchRegistration
 
                 return $this->resource->validate($this->validate);
 
-            } catch (CaptchaException $e) {
+            } catch (CaptchaException|DecryptCloudCodeException $e) {
 
             }
 
