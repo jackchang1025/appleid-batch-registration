@@ -79,6 +79,8 @@ class AppleIdBatchRegistration
 
     protected ?Email $email = null;
 
+    protected ?string $country = null;
+
     /**
      * @param ProxyManager $proxyManager
      * @param LoggerInterface $logger
@@ -107,12 +109,14 @@ class AppleIdBatchRegistration
      * @throws RequestException
      * @throws Throwable
      */
-    public function run(Email $email, bool $isUseProxy = false): bool
+    public function run(Email $email, bool $isUseProxy = false,string $country = 'USA'): bool
     {
         $this->email = $email;
+        $this->country = $country;
 
         try {
 
+            
             // 更新邮箱状态为处理中
             $email->update(['status' => EmailStatus::PROCESSING]);
 
@@ -164,7 +168,7 @@ class AppleIdBatchRegistration
                     ],
                     'birthday'       => '1996-06-12',
                     'primaryAddress' => [
-                        'country' => 'USA',
+                        'country' => $country,
                     ],
                 ],
                 'preferences'      => [
@@ -403,6 +407,7 @@ class AppleIdBatchRegistration
                 ->where('status', Phone::STATUS_NORMAL)
                 ->whereNotNull(['phone_address', 'phone'])
                 ->whereNotIn('id', $this->usedPhones)
+                ->where('country_code_alpha3', $this->country)
                 ->lockForUpdate()
                 ->firstOrFail();
 

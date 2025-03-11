@@ -32,7 +32,7 @@ class CreateAppleid extends CreateRecord
 
 
                 foreach ($data['emails'] as $email) {
-                    RegisterAppleIdJob::dispatch($email)->onQueue('default');
+                    RegisterAppleIdJob::dispatch($email,$data['country'])->onQueue('default');
                 }
 
                 // 显示通知

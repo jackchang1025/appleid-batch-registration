@@ -71,6 +71,7 @@ class ListPhones extends ListRecords
                                 'phone_address' => $phoneAddress,
                                 'status' => Phone::STATUS_NORMAL,
                                 'country_code' => '', // Will be set by the model's mutator
+                                'country_code_alpha3' => '', // Will be set by the model's mutator
                                 'country_dial_code' => '', // Will be set by the model's mutator
                             ]);
                             

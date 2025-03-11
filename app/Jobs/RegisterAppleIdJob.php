@@ -32,7 +32,8 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
      * 创建一个新的任务实例
      */
     public function __construct(
-        protected string $email
+        protected string $email,
+        protected string $country = 'USA'
     ) {
         $this->onQueue('default');
     }
@@ -69,7 +70,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
 
     
             // 运行注册
-           $appleIdBatchRegistration->run($email, $proxyInfo && $proxyInfo->status);
+           $appleIdBatchRegistration->run($email, $proxyInfo && $proxyInfo->status,$this->country);
             
             Log::info("AppleID registration successful for email: {$this->email}");
 
