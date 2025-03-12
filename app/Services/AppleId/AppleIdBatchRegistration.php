@@ -101,6 +101,17 @@ class AppleIdBatchRegistration
         'CAN' => 'en_GB',
     ];
 
+    public static array $acceptlanguage = [
+        'USA' => 'en-US,en;q=0.5',
+        'CAN' => 'en-CA,en;q=0.9',
+        'GBR' => 'en-GB,en;q=0.9',
+        'CHN' => 'zh-CN,zh;q=0.9',
+        'AUS' => 'en-AU,en;q=0.9',
+        'JPN' => 'ja-JP,ja;q=0.9',
+        'FRA' => 'fr-FR,fr;q=0.9',
+        'DEU' => 'de-DE,de;q=0.9',
+    ];
+
     // 国家到标准时区标识符的映射
     public static array $countryTimeZoneIdentifiers = [
         'USA' => 'America/New_York', // 美国东部时间，可根据需要更改
@@ -121,11 +132,13 @@ class AppleIdBatchRegistration
         return self::$countryTimeZoneIdentifiers[$country] ?? 'America/New_York';
     }
 
-        /**
+    /**
      * 根据国家代码动态获取当前的GMT时区字符串
      *
      * @param string $country 三字母国家代码
      * @return string 格式化为 'GMT±HH:MM' 的时区字符串
+     * @throws \DateInvalidTimeZoneException
+     * @throws \DateMalformedStringException
      */
     public static function getCountryTimezone(string $country): string
     {
@@ -290,7 +303,9 @@ class AppleIdBatchRegistration
                         'firstName' => $firstName,
                         'lastName'  => $lastName,
                     ],
-                    'birthday'       => '1996-06-12',
+                    //随机生成生日 1950-2000年之间，格式为 YYYY-MM-DD
+                    'birthday'       => date('Y-m-d', rand(strtotime('1950-01-01'), strtotime('2000-12-31'))),
+                    // 'birthday'       => '1996-06-12',
                     'primaryAddress' => [
                         'country' => $country,
                     ],
@@ -344,9 +359,14 @@ class AppleIdBatchRegistration
                 throw new RuntimeException('clientInfo not found');
             }
 
+            $acceptlanguage = self::$acceptlanguage[$country];
+            if (empty($acceptlanguage)){
+                throw new RuntimeException('acceptlanguage not found');
+            }
+
             $this->connector->headers()->add('X-Apple-Request-Context', 'create');
             $this->connector->headers()->add('X-Apple-Id-Session-Id', $XAppleSessionId);
-            $this->connector->headers()->add('Accept-Language', "{$language},en;q=0.9");
+            $this->connector->headers()->add('Accept-Language', $acceptlanguage);
             $this->connector->headers()->add('X-Apple-I-Timezone', $xAppleITimeZone);
             $this->connector->headers()->add('Sec-Ch-Ua', '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"');
             $this->connector->headers()->add('Sec-Ch-Mobile', '?0');
