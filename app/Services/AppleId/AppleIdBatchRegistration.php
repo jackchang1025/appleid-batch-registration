@@ -50,6 +50,7 @@ use Throwable;
 use Saloon\Http\PendingRequest;
 use GuzzleHttp\RequestOptions;
 use App\Enums\Request;
+use App\Services\AppleClientIdService;
 
 class AppleIdBatchRegistration
 {
@@ -93,6 +94,57 @@ class AppleIdBatchRegistration
         'CAN' => 'en_GB',
     ];
 
+    // 国家到标准时区标识符的映射
+    public static array $countryTimeZoneIdentifiers = [
+        'USA' => 'America/New_York', // 美国东部时间，可根据需要更改
+        'CAN' => 'America/Toronto',  // 加拿大东部时间
+        'CAN' => 'America/Edmonton',  // 加拿大东部时间
+        'GBR' => 'Europe/London',    // 英国时间
+        'CHN' => 'Asia/Shanghai',    // 中国时间
+        'AUS' => 'Australia/Sydney', // 澳大利亚东部时间
+        'JPN' => 'Asia/Tokyo',       // 日本时间
+        'FRA' => 'Europe/Paris',     // 法国时间
+        'DEU' => 'Europe/Berlin',    // 德国时间
+        'IND' => 'Asia/Kolkata',     // 印度时间
+        'BRA' => 'America/Sao_Paulo',// 巴西圣保罗时间
+        // 可以添加更多国家...
+    ];
+
+    public static function countryTimeZoneIdentifiers(string $country): string
+    {
+        return self::$countryTimeZoneIdentifiers[$country] ?? 'America/New_York';
+    }
+
+        /**
+     * 根据国家代码动态获取当前的GMT时区字符串
+     *
+     * @param string $country 三字母国家代码
+     * @return string 格式化为 'GMT±HH:MM' 的时区字符串
+     */
+    public static function getCountryTimezone(string $country): string
+    {
+        // 获取国家对应的时区标识符，如果不存在则使用纽约时间作为默认值
+        $timezoneIdentifier = self::$countryTimeZoneIdentifiers[$country] ?? 'America/New_York';
+
+        // 创建时区对象
+        $timezone = new \DateTimeZone($timezoneIdentifier);
+
+        // 获取当前时间在该时区的DateTime对象
+        $date = new \DateTime('now', $timezone);
+
+        // 获取与UTC的偏移秒数
+        $offsetSeconds = $timezone->getOffset($date);
+
+        // 将秒数转换为小时和分钟
+        $offsetHours = floor(abs($offsetSeconds) / 3600);
+        $offsetMinutes = floor((abs($offsetSeconds) % 3600) / 60);
+
+        // 格式化为 'GMT±HH:MM' 格式
+        $sign = $offsetSeconds >= 0 ? '+' : '-';
+        return sprintf('GMT%s%02d:%02d', $sign, $offsetHours, $offsetMinutes);
+    }
+
+
     /**
      * @param ProxyManager $proxyManager
      * @param LoggerInterface $logger
@@ -102,8 +154,10 @@ class AppleIdBatchRegistration
     public function __construct(
         protected ProxyManager $proxyManager,
         protected LoggerInterface $logger,
+        protected AppleClientIdService $appleClientIdService,
         protected AppleIdConnector $connector = new AppleIdConnector(),
         protected CloudCodeConnector $cloudCodeConnector = new CloudCodeConnector(),
+
     ) {
 
     }
@@ -134,7 +188,6 @@ class AppleIdBatchRegistration
         $this->country = $country;
 
         try {
-
 
             // 更新邮箱状态为处理中
             $email->update(['status' => EmailStatus::PROCESSING]);
@@ -229,13 +282,31 @@ class AppleIdBatchRegistration
                 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d'
             );
 
+            $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+
+            $language = self::countryTimeZoneIdentifiers($country);
+            $xAppleITimeZone = self::getCountryTimezone($country);
+            $clientInfo = $this->appleClientIdService->getClientId([
+                'userAgent' => $userAgent,
+                'language' => $language,
+                'timeZone' => $xAppleITimeZone,
+                'plugins' => [],
+            ]);
+
+            if (empty($clientInfo['fullData'])){
+                throw new RuntimeException('clientInfo not found');
+            }
+
             $this->connector->headers()->add('X-Apple-Request-Context', 'create');
             $this->connector->headers()->add('X-Apple-Id-Session-Id', $XAppleSessionId);
-            $this->connector->headers()->add('Accept-Language', "en-{$this->phone->country_code},en;q=0.9");
+            $this->connector->headers()->add('Accept-Language', "{$language},en;q=0.9");
+            $this->connector->headers()->add('X-Apple-I-Timezone', $xAppleITimeZone);
             $this->connector->headers()->add('Sec-Ch-Ua', '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"');
             $this->connector->headers()->add('Sec-Ch-Mobile', '?0');
             $this->connector->headers()->add('Sec-Ch-Mobile', '?0');
             $this->connector->headers()->add('Sec-Ch-Platform', 'Windows');
+            $this->connector->headers()->add('User-Agent', $userAgent);
+            $this->connector->headers()->add('X-Apple-I-Fd-Client-Info', $clientInfo['fullData']);
 
             $this->phoneNumberVerification = PhoneNumberVerification::from([
                 'phoneNumber' => [
@@ -274,7 +345,6 @@ class AppleIdBatchRegistration
 
             $this->attemptVerificationPhoneCode();
 
-            $this->connector->headers()->add('X-Apple-I-Fd-Client-Info','{"U":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36","L":"en-CA","Z":"GMT-06:00","V":"1.1","F":"kla44j1e3NlY5BNlY5BSs5uQ32SCVgcHmkxF91.1Qs8QkmbFVDJhCixGMuJjkW5BRhkeNH0VdIcJb9WJQSwEOyPKz13NlY5BNp55BNlan0Os5Apw.AZ7"}');
             $accountResponse = $this->resource->account($this->validate);
 
             Appleid::create([
