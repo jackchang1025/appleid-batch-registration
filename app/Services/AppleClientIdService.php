@@ -75,7 +75,7 @@ class AppleClientIdService
 
             // 获取输出并解析 JSON
             $output = $process->getOutput();
-            $result = json_decode($output, true);
+            $result = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \RuntimeException('无法解析 Node.js 脚本的输出: ' . json_last_error_msg());
@@ -119,6 +119,7 @@ const context = {
     navigator: {
         userAgent: "{$userAgent}",
         language: "{$language}",
+        timeZone: "{$timeZone}",
         plugins: {
             length: 0
         },

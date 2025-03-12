@@ -151,6 +151,7 @@ class AppleIdBatchRegistration
     /**
      * @param ProxyManager $proxyManager
      * @param LoggerInterface $logger
+     * @param AppleClientIdService $appleClientIdService
      * @param AppleIdConnector $connector
      * @param CloudCodeConnector $cloudCodeConnector
      */
@@ -325,7 +326,7 @@ class AppleIdBatchRegistration
                 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d'
             );
 
-            $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+            $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
 
             $language = self::countryTimeZoneIdentifiers($country);
             $xAppleITimeZone = self::getCountryTimezone($country);

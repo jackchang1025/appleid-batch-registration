@@ -8,7 +8,7 @@ t = {}
 var tmp = {
     "U": navigator.userAgent,
     "L": navigator.language,
-    "Z": "GMT+08:00",
+    "Z": navigator.timeZone,
     "V": "1.1",
 }
 
