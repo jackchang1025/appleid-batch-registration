@@ -43,6 +43,9 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Vali
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Validate\VerificationInfo;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Verification\SendVerificationEmail;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Account\Verification\SendVerificationEmail as SendVerificationEmailResponse;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\Account;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\SendVerificationPhone;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\VerificationPhone;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Resources\AccountResource;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 use App\Enums\EmailStatus;
@@ -376,8 +379,12 @@ class AppleIdBatchRegistration
                 false
             );
 
-            $this->attemptsCaptcha();
+            //
+            $this->resource->appleid($this->email->email);
 
+            $this->resource->password($this->email->email, $password);
+
+            $this->attemptsCaptcha();
 
             $response = $this->sendVerificationEmail();
 
@@ -389,6 +396,7 @@ class AppleIdBatchRegistration
 
             $this->attemptVerificationPhoneCode();
 
+            sleep(random_int(3, 5));
             $accountResponse = $this->resource->account($this->validate);
 
             Appleid::create([
@@ -561,7 +569,13 @@ class AppleIdBatchRegistration
      {
         return function (PendingRequest $pendingRequest) {
 
-            if (!empty($this->hcBits) && !empty($this->hcChallenge)){
+            $isHcBits = $pendingRequest->getRequest() instanceof \Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\Validate
+                || $pendingRequest->getRequest() instanceof SendVerificationPhone
+                || $pendingRequest->getRequest() instanceof VerificationPhone
+                || $pendingRequest->getRequest() instanceof Account
+            ;
+
+            if (!empty($this->hcBits) && !empty($this->hcChallenge) && $isHcBits){
                 $hc = self::calculate_hc(1, $this->hcBits, date('ymdhis'), $this->hcChallenge);
                 $pendingRequest->headers()->add('X-Apple-Hc', $hc);
             }
@@ -687,6 +701,7 @@ class AppleIdBatchRegistration
                 $this->validate->captcha->answer = $cloudCodeResponse->getCode();
 
 
+                sleep(random_int(3, 5));
                 return $this->resource->validate($this->validate);
 
             } catch (CaptchaException|DecryptCloudCodeException $e) {
@@ -701,11 +716,11 @@ class AppleIdBatchRegistration
     /**
      * @return SendVerificationEmailResponse
      * @throws FatalRequestException
-     * @throws RequestException
+     * @throws RequestException|RandomException
      */
     protected function sendVerificationEmail(): SendVerificationEmailResponse
     {
-
+        sleep(random_int(3, 5));
         $data = SendVerificationEmail::from([
             'account'     => [
                 'name'   => $this->email->email,
@@ -753,7 +768,7 @@ class AppleIdBatchRegistration
      * @throws ClientException
      * @throws JsonException
      * @throws FatalRequestException
-     * @throws RequestException|MaxRetryAttemptsException
+     * @throws RequestException|MaxRetryAttemptsException|RandomException
      */
     public function attemptVerificationEmailCode(int $attempts = 5): Response
     {
@@ -778,6 +793,7 @@ class AppleIdBatchRegistration
             } catch (VerificationCodeException $e) {
 
                 //重新发送邮件
+                sleep(random_int(3, 5));
                 $response = $this->sendVerificationEmail();
 
                 $this->validate->account->verificationInfo->id = $response->verificationId;

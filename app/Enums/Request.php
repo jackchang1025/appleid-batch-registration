@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\Appleid;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\Password;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\Widget\Account as AccountWidget;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\Account;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Captcha;
@@ -17,6 +19,10 @@ enum Request: string
 {
     case ACCOUNT = Account::class;
     case ACCOUNT_WIDGET = AccountWidget::class;
+
+    case APPLEID = Appleid::class;
+
+    case PASSWORD = Password::class;
     case CAPTCHA = Captcha::class;
     case VALIDATE = Validate::class;
     case SEND_VERIFICATION_EMAIL = SendVerificationEmail::class;
@@ -31,6 +37,8 @@ enum Request: string
         return match($this) {
             self::ACCOUNT_WIDGET => '初始化 session_id',
             self::ACCOUNT => '注册账号信息',
+            self::APPLEID => '验证账号信息',
+            self::PASSWORD => '验证密码信息',
             self::CAPTCHA => '获取验证码',
             self::VALIDATE => '验证账号和验证码',
             self::SEND_VERIFICATION_EMAIL => '发送验证邮件',
@@ -41,7 +49,7 @@ enum Request: string
             self::CLOUDCODECONNECTOR => '解码验证码',
         };
     }
-    
+
     /**
      * 通过类名查找匹配的枚举 case
      *
@@ -52,7 +60,7 @@ enum Request: string
     {
         // 获取所有 case
         $cases = self::cases();
-        
+
         // 检查完全匹配
         foreach ($cases as $case) {
 
@@ -61,7 +69,7 @@ enum Request: string
                 return $case;
             }
         }
-        
+
         return null;
     }
 
