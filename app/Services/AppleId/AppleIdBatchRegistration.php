@@ -85,6 +85,10 @@ class AppleIdBatchRegistration
 
     protected ?string $country = null;
 
+    protected ?int $hcBits = null;
+
+    protected ?string $hcChallenge = null;
+
     // 添加类常量
     public const string PHONE_BLACKLIST_KEY = 'phone_code_blacklist';
     public const int BLACKLIST_EXPIRE_SECONDS = 3600; // 1小时过期
@@ -97,7 +101,6 @@ class AppleIdBatchRegistration
     // 国家到标准时区标识符的映射
     public static array $countryTimeZoneIdentifiers = [
         'USA' => 'America/New_York', // 美国东部时间，可根据需要更改
-        'CAN' => 'America/Toronto',  // 加拿大东部时间
         'CAN' => 'America/Edmonton',  // 加拿大东部时间
         'GBR' => 'Europe/London',    // 英国时间
         'CHN' => 'Asia/Shanghai',    // 中国时间
@@ -169,6 +172,43 @@ class AppleIdBatchRegistration
     }
 
     /**
+     * 计算满足指定位数前导零的哈希挑战
+     *
+     * @param int $version 版本号
+     * @param int $bits 需要满足的前导零位数
+     * @param int $date 日期字符串
+     * @param string $challenge 挑战字符串
+     * @return string|null 满足条件的哈希挑战字符串
+     */
+    public static function calculate_hc(int $version, int $bits, int $date, string $challenge): ?string
+    {
+        $counter = 0;
+
+        while (true) {
+            // 构建挑战字符串
+            $hc = implode(":", [$version, $bits, $date, $challenge, ":" . $counter]);
+
+            // 计算 SHA-1 哈希值 (使用 raw_output=true 获取二进制形式)
+            $hashed_hc = sha1($hc, true);
+
+            // 将二进制转换为位字符串
+            $binary_hc = '';
+            for ($i = 0, $iMax = strlen($hashed_hc); $i < $iMax; $i++) {
+                // 将每个字节转换为8位二进制表示，并确保前导零被保留
+                $binary_hc .= str_pad(decbin(ord($hashed_hc[$i])), 8, '0', STR_PAD_LEFT);
+            }
+
+            // 检查前 $bits 位是否全为零
+            if (substr($binary_hc, 0, $bits) === str_repeat('0', $bits)) {
+                return $hc;
+            }
+
+            $counter++;
+        }
+    }
+
+
+    /**
      * @param Email $email
      * @param bool $isUseProxy
      * @param string $country
@@ -205,12 +245,15 @@ class AppleIdBatchRegistration
                 $this->initProxy();
                 $this->connector->withSplQueue($this->queue);
             }
-
             $this->connector->withLogger($this->logger);
             $this->connector->withCookies($this->cookieJar);
             $this->connector->debug();
-            $this->connector->debugRequest($this->debugRequest());
-            $this->connector->debugResponse($this->debugResponse());
+
+            $this->connector->middleware()->onRequest($this->setHcBitsAndChallenge());
+            $this->connector->middleware()->onRequest($this->debugRequest());
+
+            $this->connector->middleware()->onResponse($this->getHcBitsAndChallenge());
+            $this->connector->middleware()->onResponse($this->debugResponse());
 
             $this->cloudCodeConnector->debug();
             $this->cloudCodeConnector->withLogger($this->logger);
@@ -497,8 +540,35 @@ class AppleIdBatchRegistration
                 'body'    => $jsonBody,
             ]);
         };
-
     }
+
+    protected function getHcBitsAndChallenge(): callable
+    {
+        return function (Response $response) {
+
+            $xAppleHcBits = $response->headers()->get('X-Apple-HC-Bits');
+            $xAppleHcChallenge = $response->headers()->get('X-Apple-HC-Challenge');
+
+            if (!empty($xAppleHcBits) && !empty($xAppleHcChallenge)){
+                $this->hcBits = $xAppleHcBits;
+                $this->hcChallenge = $xAppleHcChallenge;
+            }
+        };
+     }
+
+     protected function setHcBitsAndChallenge(): callable
+     {
+        return function (PendingRequest $pendingRequest) {
+
+            if (!empty($this->hcBits) && !empty($this->hcChallenge)){
+                $hc = self::calculate_hc(1, $this->hcBits, date('ymdhis'), $this->hcChallenge);
+                $pendingRequest->headers()->add('X-Apple-Hc', $hc);
+            }
+
+            return $pendingRequest;
+        };
+     }
+
 
     /**
      * Generate a secure random password with specific requirements

@@ -12,9 +12,9 @@ class AppleClientInfo extends Command
      *
      * @var string
      */
-    protected $signature = 'app:apple-client-info 
-                            {--user-agent= : 自定义用户代理} 
-                            {--language= : 浏览器语言} 
+    protected $signature = 'app:apple-client-info
+                            {--user-agent= : 自定义用户代理}
+                            {--language= : 浏览器语言}
                             {--time-zone= : 时区}';
 
     /**
@@ -66,7 +66,7 @@ class AppleClientInfo extends Command
             // 输出结果
             $this->info('Client ID: ' . $result['clientId']);
             $this->info('Full Data: ' . $result['fullData']);
-            
+
         } catch (\Exception $e) {
             $this->error('获取 Apple 客户端 ID 失败: ' . $e->getMessage());
         }
