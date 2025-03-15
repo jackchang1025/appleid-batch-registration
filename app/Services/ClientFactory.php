@@ -869,7 +869,7 @@ class ClientFactory
             'proxy' => $proxy,
             'verify' => false, // 禁用SSL验证，在某些环境可能需要
         ]))
-        ->get('https://api.ip.cc/');
+        ->get('http://api.ip.cc/');
     }
 
     public function toArray(): array
