@@ -61,8 +61,6 @@ class AppleIdRegistration extends Command
     public function handle(): void
     {
 
-
-
         $email = Email::where('email', $this->argument('email'))
         ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
         ->firstOrFail();
@@ -70,14 +68,22 @@ class AppleIdRegistration extends Command
         //判断邮箱是否真正注册
         $this->lock = Cache::lock("domain_check_lock_{$email->email}", 60 * 10);
 
-        if (!$this->lock->get()) {
-            //邮箱正在注册中
-            $this->error('email is  registered');
+//        if (!$this->lock->get()) {
+//            //邮箱正在注册中
+//            $this->error('email is  registered');
+//
+//            return;
+//        }
 
-            return;
-        }
 
         $proxyInfo = ProxyConfiguration::first();
+                $appleIdBatchRegistration = app(AppleIdBatchRegistrationService::class);
+
+                $appleIdBatchRegistration->run($email,$proxyInfo && $proxyInfo->status, $this->option('country'));
+
+                return;
+
+        
 
         for ($i = 0; $i < 5; $i++){
 

@@ -14,6 +14,7 @@
         "novadaemon/filament-pretty-json": "^2.4",
         "propaganistas/laravel-phone": "^5.3",
         "symfony/intl": "^7.2",
+        "symfony/panther": "^2.2",
         "weijiajia/decrypt-verification-code": "@dev",
         "weijiajia/http-proxy-manager": "@dev",
         "weijiajia/saloonphp-apple-client": "@dev",

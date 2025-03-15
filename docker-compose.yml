@@ -109,12 +109,76 @@ services:
             - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
         networks:
             - sail
+    # Add mitmproxy service
+    mitmproxy:
+        image: 'mitmproxy/mitmproxy:latest'
+        container_name: mitmproxy
+        command: >
+            mitmproxy --mode upstream:https://geo.iproyal.com:12321 
+            --upstream-auth JdARqTRQkZ1Lohsv:nXBXmWiYXH1Gi3XX_country-ca_streaming-1
+            --set web_host=0.0.0.0
+            --set web_port=8081
+            --set listen_host=0.0.0.0
+            --set listen_port=8080
+        ports:
+            - '8080:8080'  # Main proxy port
+            - '8081:8081'  # Web interface
+        networks:
+            - sail
     selenium:
-        image: selenium/standalone-chromium
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
+        image: selenium/hub:latest
+        container_name: selenium
+        environment:
+            SE_GRID_MAX_SESSION: 100 # 最大会话数
+            SE_NODE_MAX_INSTANCES: 100 # 最大会话数
+            SE_NODE_MAX_SESSIONS: 100 # 最大会话数
+            SE_NODE_OVERRIDE_MAX_SESSIONS: true  # 设置为true来覆盖最大限制
+            SE_NODE_OVERRIDE_MAX_INSTANCES: 20 # 最大实例数
+            SE_NODE_OVERRIDE_MAX_SESSION: 20 # 最大会话数
+            SE_VNC_PASSWORD: '111' # 调式密码
+            SE_SESSION_RETRY_INTERVAL: 1 # 重试间隔
+            SE_SESSION_TIMEOUT: 300 # 设置会话超时时间为300秒
+            SE_SESSION_REQUEST_TIMEOUT: 600 # 设置会话超时时间为300秒
+        ports:
+            - '4444:4444'   # Selenium WebDriver 端口
+            - '7900:7900'   # VNC 端口（可选，用于访问 Chrome 无头模式）
+        shm_size: '8gb'     # 增加共享内存，防止 Chrome 无头模式下崩溃
+        networks:
+            - sail
+    chrome:
+        image: selenium/node-chrome:latest
+        container_name: selenium_chrome
         volumes:
-            - '/dev/shm:/dev/shm'
+            - /dev/shm:/dev/shm
+        depends_on:
+            - selenium
+        environment:
+            SE_EVENT_BUS_HOST: selenium
+            SE_EVENT_BUS_PUBLISH_PORT: 4442
+            SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+            SE_NODE_OVERRIDE_MAX_SESSIONS: true  # 设置为true来覆盖最大限制
+            SE_NODE_MAX_SESSION: 20
+            SE_NODE_MAX_SESSIONS: 20 #最大会话数
+            SE_NODE_MAX_INSTANCES: 20
+            SE_VNC_PASSWORD: '111' # 调式密码
+        networks:
+            - sail
+    firefox:
+        image: selenium/node-firefox:latest
+        container_name: selenium_firefox
+        volumes:
+            - /dev/shm:/dev/shm
+        depends_on:
+            - selenium
+        environment:
+            SE_EVENT_BUS_HOST: selenium
+            SE_EVENT_BUS_PUBLISH_PORT: 4442
+            SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+            SE_NODE_OVERRIDE_MAX_SESSIONS: true  # 设置为true来覆盖最大限制
+            SE_NODE_MAX_SESSION: 10
+            SE_NODE_MAX_INSTANCES: 10
+            SE_NODE_MAX_SESSIONS: 10
+            SE_VNC_PASSWORD: '111' # 调式密码
         networks:
             - sail
 networks:

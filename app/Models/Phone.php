@@ -47,7 +47,7 @@ class Phone extends Model
     const string STATUS_NORMAL = 'normal';
     const string STATUS_INVALID = 'invalid';
     const string STATUS_BOUND = 'bound';
-    const string STATUS_BINDING = 'binding';
+    const string STATUS_BINDING = 'Binding';
 
     public const  array STATUS = [
         self::STATUS_NORMAL => '正常',

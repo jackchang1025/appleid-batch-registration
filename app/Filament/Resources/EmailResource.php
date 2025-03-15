@@ -19,6 +19,7 @@ use Filament\Infolists\Components\Section;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Actions\BulkAction;
+use App\Jobs\RegisterAppleIdForBrowserJob;
 
 class EmailResource extends Resource
 {
@@ -36,8 +37,7 @@ class EmailResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Textarea::make('email_uri')
-                    ->required()
-                    ->maxLength(255),
+                    ->required(),
                 Forms\Components\Select::make('status')
                     ->options(EmailStatus::labels())
                     ->default(EmailStatus::AVAILABLE->value)
@@ -157,7 +157,7 @@ class EmailResource extends Resource
                                     if ($record->status->value === EmailStatus::AVAILABLE->value || $record->status->value === EmailStatus::FAILED->value){
                                         $count++;
 
-                                        RegisterAppleIdJob::dispatch($record,$data['country']);
+                                        RegisterAppleIdForBrowserJob::dispatch($record,$data['country']);
                                         continue;
                                     }
 

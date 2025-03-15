@@ -5,6 +5,12 @@ namespace App\Console\Commands;
 use App\Services\AppleClientIdService;
 use Illuminate\Console\Command;
 use App\Services\AppleId\AppleIdBatchRegistration;
+use App\Models\Phone;
+use Illuminate\Support\Str;
+use App\Services\AppleId\AppleIdRegistration;
+use App\Services\AppleId\Pages\PageManager;
+use App\Models\Email;
+
 class AppleClientInfo extends Command
 {
     /**
@@ -41,8 +47,22 @@ class AppleClientInfo extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(PageManager $pageManager)
     {
+        $appleIdRegistration = new AppleIdRegistration(
+            pageManager:$pageManager,
+            country:'CAN',
+            email:Email::where('email','=','MichelleGreen4isv@gmail.com')->first(),
+        );
+
+        $appleIdRegistration->register();
+
+        return;
+        //构建 uuid
+        $uuid = Str::uuid();
+
+        dd($uuid);
+
         $this->info('正在生成 Apple 客户端 ID...');
 
         $language = AppleIdBatchRegistration::countryTimeZoneIdentifiers('CAN');

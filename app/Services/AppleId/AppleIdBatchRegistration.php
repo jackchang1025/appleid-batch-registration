@@ -54,6 +54,11 @@ use Saloon\Http\PendingRequest;
 use GuzzleHttp\RequestOptions;
 use App\Enums\Request;
 use App\Services\AppleClientIdService;
+use Carbon\Carbon;
+use Weijiajia\SaloonphpAppleClient\Exception\AccountAlreadyExistsException;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Captcha\Captcha as CaptchaResponse;
+use Illuminate\Support\Str;
+use Illuminate\Http\Client\Pool;
 
 class AppleIdBatchRegistration
 {
@@ -91,6 +96,8 @@ class AppleIdBatchRegistration
     protected ?int $hcBits = null;
 
     protected ?string $hcChallenge = null;
+
+    protected ?CaptchaResponse $captchaResponse = null;
 
     // 添加类常量
     public const string PHONE_BLACKLIST_KEY = 'phone_code_blacklist';
@@ -137,30 +144,18 @@ class AppleIdBatchRegistration
      *
      * @param string $country 三字母国家代码
      * @return string 格式化为 'GMT±HH:MM' 的时区字符串
-     * @throws \DateInvalidTimeZoneException
-     * @throws \DateMalformedStringException
      */
     public static function getCountryTimezone(string $country): string
     {
         // 获取国家对应的时区标识符，如果不存在则使用纽约时间作为默认值
         $timezoneIdentifier = self::$countryTimeZoneIdentifiers[$country] ?? 'America/New_York';
 
-        // 创建时区对象
-        $timezone = new \DateTimeZone($timezoneIdentifier);
+        // 使用Carbon创建指定时区的当前时间
+        $now = Carbon::now($timezoneIdentifier);
 
-        // 获取当前时间在该时区的DateTime对象
-        $date = new \DateTime('now', $timezone);
-
-        // 获取与UTC的偏移秒数
-        $offsetSeconds = $timezone->getOffset($date);
-
-        // 将秒数转换为小时和分钟
-        $offsetHours = floor(abs($offsetSeconds) / 3600);
-        $offsetMinutes = floor((abs($offsetSeconds) % 3600) / 60);
-
-        // 格式化为 'GMT±HH:MM' 格式
-        $sign = $offsetSeconds >= 0 ? '+' : '-';
-        return sprintf('GMT%s%02d:%02d', $sign, $offsetHours, $offsetMinutes);
+        // 获取时区偏移并格式化为'GMT±HH:MM'格式
+        $offset = $now->format('P'); // 格式为 '+01:00' 或 '-05:00'
+        return 'GMT' . $offset;
     }
 
 
@@ -177,7 +172,6 @@ class AppleIdBatchRegistration
         protected AppleClientIdService $appleClientIdService,
         protected AppleIdConnector $connector = new AppleIdConnector(),
         protected CloudCodeConnector $cloudCodeConnector = new CloudCodeConnector(),
-
     ) {
 
     }
@@ -224,6 +218,57 @@ class AppleIdBatchRegistration
         }
     }
 
+    /** 
+     * 获取所有 带有 src 的 javascript 脚本
+     *
+     * @param Crawler $crawler
+     * @return array
+     */
+    public function getScriptUrls(Response $response): array
+    {
+        $Crawler = $response->dom();
+        $scriptUrls = [];
+        foreach ($Crawler->filter('script[src]') as $script) {
+            /**@var \DOMElement $script */
+            $scriptUrls[] = $script->getAttribute('src');
+        }
+        return $scriptUrls;
+    }
+
+    public function getScriptContent(array $scriptUrls,string $userAgent):array
+    {
+        //使用 laravel 的 Http 类 并发获取所有脚本内容
+
+        if (empty($scriptUrls)) {
+            return [];
+        }
+
+        $headers = [
+            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Encoding' => 'gzip, deflate, br, zstd',
+            'Accept-Language' => 'en-CA,en-GB;q=0.9,en;q=0.8',
+            'Connection' => 'keep-alive',
+            'Host' => 'appleid.apple.com',
+            'Referer' => 'https://www.icloud.com/',
+            'Sec-Fetch-Dest' => 'iframe',
+            'Sec-Fetch-Mode' => 'navigate',
+            'Sec-Fetch-Site' => 'cross-site',
+            'Sec-Fetch-User' => '?1',
+            'Upgrade-Insecure-Requests' => '1',
+            'User-Agent' => $userAgent,
+            'sec-ch-ua' => '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
+            
+        ];
+
+        $responses = Http::pool(function (Pool $pool) use ($scriptUrls, $headers) {
+            foreach ($scriptUrls as $scriptUrl) {
+                $pool->withHeaders($headers)->get($scriptUrl);
+            }
+        });
+
+        return $responses;
+        
+    }
 
     /**
      * @param Email $email
@@ -262,14 +307,20 @@ class AppleIdBatchRegistration
                 $this->initProxy();
                 $this->connector->withSplQueue($this->queue);
             }
+
+            $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36';
             $this->connector->withLogger($this->logger);
             $this->connector->withCookies($this->cookieJar);
             $this->connector->debug();
+            $this->connector->headers()->add('Sec-Ch-Ua', '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"');
+            $this->connector->headers()->add('Sec-Ch-Mobile', '?0');
+            $this->connector->headers()->add('Sec-Ch-Platform', 'Windows');
+            $this->connector->headers()->add('User-Agent', $userAgent);
 
-            $this->connector->middleware()->onRequest($this->setHcBitsAndChallenge());
+//            $this->connector->middleware()->onRequest($this->setHcBitsAndChallenge());
             $this->connector->middleware()->onRequest($this->debugRequest());
 
-            $this->connector->middleware()->onResponse($this->getHcBitsAndChallenge());
+//            $this->connector->middleware()->onResponse($this->getHcBitsAndChallenge());
             $this->connector->middleware()->onResponse($this->debugResponse());
 
             $this->cloudCodeConnector->debug();
@@ -304,7 +355,7 @@ class AppleIdBatchRegistration
                         'lastName'  => $lastName,
                     ],
                     //随机生成生日 1950-2000年之间，格式为 YYYY-MM-DD
-                    'birthday'       => date('Y-m-d', rand(strtotime('1950-01-01'), strtotime('2000-12-31'))),
+                    'birthday'       => date('Y-m-d', random_int(strtotime('1950-01-01'), strtotime('2000-12-31'))),
                     // 'birthday'       => '1996-06-12',
                     'primaryAddress' => [
                         'country' => $country,
@@ -322,18 +373,21 @@ class AppleIdBatchRegistration
             ]);
 
             $this->phone = $this->getPhone();
-
+        
 
             $this->resource = $this->connector->getAccountResource();
 
-            $response        = $this->resource->widgetAccount(
-                appContext: 'icloud',
-                widgetKey: 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d',
-                lv: '0.3.16',
-                referer: 'https://www.icloud.com/'
-            );
+            // $response        = $this->resource->widgetAccount(
+            //     appContext: 'icloud',
+            //     widgetKey: 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d',
+            //     lv: '0.3.16',
+            //     referer: 'https://www.icloud.com/'
+            // );
 
-            $XAppleSessionId = $this->cookieJar->getCookieByName('aidsp')?->getValue();
+
+            $XAppleSessionId = '4C7113DE2F3CA78B257785FDAA2654D56831A4B2A85858E8BBB5DCA9D4C809BD5290968BEF438B692A3B1F6E38FEBA76C2D510B597386723C9ADD44F03811DB49A042664431AF681779F597A96B31C82B46A715403862C2D664BF487E15A673BE3EDA9164C327F1D2BD6392A759B2B19BF8C01364E1CF6B1';
+            $this->connector->resolveHeaderSynchronizeDriver()->add('scnt','AAAA-jRDNzExM0RFMkYzQ0E3OEIyNTc3ODVGREFBMjY1NEQ1NjgzMUE0QjJBODU4NThFOEJCQjVEQ0E5RDRDODA5QkQ1MjkwOTY4QkVGNDM4QjY5MkEzQjFGNkUzOEZFQkE3NkMyRDUxMEI1OTczODY3MjNDOUFERDQ0RjAzODExREI0OUEwNDI2NjQ0MzFBRjY4MTc3OUY1OTdBOTZCMzFDODJCNDZBNzE1NDAzODYyQzJENjY0QkY0ODdFMTVBNjczQkUzRURBOTE2NEMzMjdGMUQyQkQ2MzkyQTc1OUIyQjE5QkY4QzAxMzY0RTFDRjZCMXwyAAABlZMkP8w6lqGjM9l1FROBjRT7N40F9b1ilZbAKZPq4gLntWK48XcZCEk9hRfsABGiaanY0jxw8hCU2APTd5ulKEDqwwHsx1hxvJrMXP2n-aRUuYQjMA');
+            // $XAppleSessionId = $this->cookieJar->getCookieByName('aidsp')?->getValue();
 
             if (!$XAppleSessionId) {
                 throw new RuntimeException('X-Apple-Session-Id not found');
@@ -344,20 +398,20 @@ class AppleIdBatchRegistration
                 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d'
             );
 
-            $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+            
 
-            $language = self::countryTimeZoneIdentifiers($country);
-            $xAppleITimeZone = self::getCountryTimezone($country);
-            $clientInfo = $this->appleClientIdService->getClientId([
-                'userAgent' => $userAgent,
-                'language' => $language,
-                'timeZone' => $xAppleITimeZone,
-                'plugins' => [],
-            ]);
-
-            if (empty($clientInfo['fullData'])){
-                throw new RuntimeException('clientInfo not found');
-            }
+//            $language = self::countryTimeZoneIdentifiers($country);
+            // $xAppleITimeZone = self::getCountryTimezone($country);
+//            $clientInfo = $this->appleClientIdService->getClientId([
+//                'userAgent' => $userAgent,
+//                'language' => $language,
+//                'timeZone' => $xAppleITimeZone,
+//                'plugins' => [],
+//            ]);
+//
+//            if (empty($clientInfo['fullData'])){
+//                throw new RuntimeException('clientInfo not found');
+//            }
 
             $acceptlanguage = self::$acceptlanguage[$country];
             if (empty($acceptlanguage)){
@@ -366,14 +420,10 @@ class AppleIdBatchRegistration
 
             $this->connector->headers()->add('X-Apple-Request-Context', 'create');
             $this->connector->headers()->add('X-Apple-Id-Session-Id', $XAppleSessionId);
-            $this->connector->headers()->add('Accept-Language', $acceptlanguage);
-            $this->connector->headers()->add('X-Apple-I-Timezone', $xAppleITimeZone);
-            $this->connector->headers()->add('Sec-Ch-Ua', '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"');
-            $this->connector->headers()->add('Sec-Ch-Mobile', '?0');
-            $this->connector->headers()->add('Sec-Ch-Mobile', '?0');
-            $this->connector->headers()->add('Sec-Ch-Platform', 'Windows');
-            $this->connector->headers()->add('User-Agent', $userAgent);
-            $this->connector->headers()->add('X-Apple-I-Fd-Client-Info', $clientInfo['fullData']);
+//            $this->connector->headers()->add('Accept-Language', $acceptlanguage);
+//            $this->connector->headers()->add('X-Apple-I-Timezone', $xAppleITimeZone);
+            
+//            $this->connector->headers()->add('X-Apple-I-Fd-Client-Info', $clientInfo['fullData']);
 
             $this->phoneNumberVerification = PhoneNumberVerification::from([
                 'phoneNumber' => [
@@ -398,6 +448,8 @@ class AppleIdBatchRegistration
                 $this->captcha,
                 false
             );
+
+            $this->captcha();
 
             //
             $this->resource->appleid($this->email->email);
@@ -439,7 +491,15 @@ class AppleIdBatchRegistration
 
             // 注册成功，返回 true
             return true;
+        }catch(AccountAlreadyExistsException $e){
+
+            $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
+            $this->email && $this->email->update(['status' => EmailStatus::REGISTERED]);
+            $this->log('注册失败', ['message' => $e->getMessage()]);
+            throw $e;
+
         }catch (ClientException | MaxRetryAttemptsException $e){
+
 
             $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
 
@@ -463,7 +523,7 @@ class AppleIdBatchRegistration
 
             throw $e;
 
-        } catch (Exception|Throwable $e) {
+        } catch (Throwable $e) {
             $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
             $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
             $this->log('注册失败', ['message' => $e->getMessage()]);
@@ -670,7 +730,7 @@ class AppleIdBatchRegistration
                 ->where('status', Phone::STATUS_NORMAL)
                 ->whereNotNull(['phone_address', 'phone'])
                 ->whereNotIn('id', $this->usedPhones)
-//                ->whereNotIn('id', $blacklistIds)
+                ->whereNotIn('id', $blacklistIds)
                 ->where('country_code_alpha3', $this->country)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -683,6 +743,22 @@ class AppleIdBatchRegistration
         });
     }
 
+
+    protected function captcha ():CaptchaResponse{
+
+        $this->captchaResponse = $this->resource->captcha()->dto();
+
+        // 获取验证码图片
+        $captchaImage = $this->captchaResponse->payload->content;
+
+        // 保存验证码图片
+        $imagePath = storage_path("app/public/captcha.jpeg");
+
+        file_put_contents($imagePath, base64_decode($captchaImage));
+
+        return $this->captchaResponse;
+    }
+
     /**
      * @param int $attempts
      * @return Response
@@ -691,7 +767,7 @@ class AppleIdBatchRegistration
      * @throws FatalRequestException
      * @throws RequestException
      */
-    public function attemptsCaptcha(int $attempts = 5): Response
+    protected function attemptsCaptcha(int $attempts = 5): Response
     {
 
         for ($i = 0; $i < $attempts; $i++) {
@@ -700,32 +776,22 @@ class AppleIdBatchRegistration
 
             try {
 
-                $captcha = $this->resource->captcha()->dto();
-
-                // 获取验证码图片
-                $captchaImage = $captcha->payload->content;
-
-                // 保存验证码图片
-                $imagePath = storage_path("app/public/captcha.jpeg");
-
-                file_put_contents($imagePath, base64_decode($captchaImage));
-
-                $cloudCodeResponse = $this->cloudCodeConnector->decryptCloudCode(
+                $response = $this->cloudCodeConnector->decryptCloudCode(
                     token: 'Hb1SOEObuMJyjEViLsaPI5M3SHCR1K-kToy5JKagxU0',
                     type: '10110',
-                    image: $captcha->payload->content,
+                    image: $this->captchaResponse->payload->content,
                 );
 
-                $this->validate->captcha->id     = $captcha->id;
-                $this->validate->captcha->token  = $captcha->token;
-                $this->validate->captcha->answer = $cloudCodeResponse->getCode();
-
+                $this->validate->captcha->id     = $this->captchaResponse->id;
+                $this->validate->captcha->token  = $this->captchaResponse->token;
+                $this->validate->captcha->answer = $response->getCode();
 
                 sleep(random_int(3, 5));
                 return $this->resource->validate($this->validate);
 
             } catch (CaptchaException|DecryptCloudCodeException $e) {
 
+                $this->captcha();
             }
 
         }
@@ -808,15 +874,20 @@ class AppleIdBatchRegistration
                 ]);
 
                 //验证邮箱验证码
-                return $this->resource->verificationEmail($verificationPut);
+                $response =  $this->resource->verificationEmail($verificationPut);
 
-            } catch (VerificationCodeException $e) {
+                Cache::put($this->email->email, $emailCode, 60 * 30);
+
+                return $response;
+
+            } catch (VerificationCodeException | MaxRetryAttemptsException $e) {
 
                 //重新发送邮件
                 sleep(random_int(3, 5));
                 $response = $this->sendVerificationEmail();
 
                 $this->validate->account->verificationInfo->id = $response->verificationId;
+
             }
         }
 
@@ -836,7 +907,7 @@ class AppleIdBatchRegistration
         $isSuccess = false;
         for ($i = 0; $i < $attempts; $i++) {
 
-            sleep($i * 5);
+            sleep($i * 6);
 
             $response = Http::get($uri);
 
@@ -862,8 +933,6 @@ class AppleIdBatchRegistration
                 $isSuccess = true;
                 continue;
             }
-
-            Cache::put($email, $code, 60 * 666);
 
             return $code;
         }
@@ -964,7 +1033,7 @@ class AppleIdBatchRegistration
 
             $this->log('获取手机验证码', ['request' => $phone->phone_address, 'response' => $response->json()]);
 
-            $code = $this->parse($response->body());
+            $code = self::parse($response->body());
 
             if ($code) {
                 return $code;
@@ -973,7 +1042,7 @@ class AppleIdBatchRegistration
         throw new MaxRetryAttemptsException("Attempt {$attempts} times failed to get phone code");
     }
 
-    public function parse(string $str): ?string
+    public static function parse(string $str): ?string
     {
         if (preg_match('/\b\d{6}\b/', $str, $matches)) {
             return $matches[0];
