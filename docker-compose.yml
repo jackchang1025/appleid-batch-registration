@@ -113,22 +113,22 @@ services:
     mitmproxy:
         image: 'mitmproxy/mitmproxy:latest'
         container_name: mitmproxy
+        tty: true
+        stdin_open: true
         command: >
-            mitmproxy --mode upstream:https://geo.iproyal.com:12321 
-            --upstream-auth JdARqTRQkZ1Lohsv:nXBXmWiYXH1Gi3XX_country-ca_streaming-1
-            --set web_host=0.0.0.0
-            --set web_port=8081
+            mitmdump --mode upstream:${MITM_PROXY} 
+            --upstream-auth ${MITM_PROXY_USERNAME}:${MITM_PROXY_PASSWORD}
             --set listen_host=0.0.0.0
             --set listen_port=8080
         ports:
             - '8080:8080'  # Main proxy port
-            - '8081:8081'  # Web interface
         networks:
             - sail
     selenium:
         image: selenium/hub:latest
         container_name: selenium
         environment:
+            SE_NODE_ACCEPT_INSECURE_CERTS: true #接受不安全证书
             SE_GRID_MAX_SESSION: 100 # 最大会话数
             SE_NODE_MAX_INSTANCES: 100 # 最大会话数
             SE_NODE_MAX_SESSIONS: 100 # 最大会话数

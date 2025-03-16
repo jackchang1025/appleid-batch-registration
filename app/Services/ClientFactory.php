@@ -120,6 +120,8 @@ class ClientFactory
      */
     protected array $pendingScripts = [];
 
+    protected ?string $certificatePath = null;
+
     /**
      * 构造函数
      *
@@ -155,7 +157,8 @@ class ClientFactory
     ) {
         $this->capabilities ??= DesiredCapabilities::chrome();
         $this->userAgent ??= self::DEFAULT_USER_AGENT;
- 
+
+        $this->certificatePath = env('MITM_CERTIFICATE_PATH');
     }
 
     /**
@@ -481,6 +484,18 @@ class ClientFactory
     }
 
     /**
+     * 设置证书路径
+     *
+     * @param string $certificatePath 证书文件路径
+     * @return static
+     */
+    public function withCertificatePath(string $certificatePath): static
+    {
+        $this->certificatePath = $certificatePath;
+        return $this;
+    }
+
+    /**
      * 使用IP信息创建客户端
      * 
      * 此方法会自动获取IP信息并用它来配置浏览器，覆盖现有设置
@@ -531,12 +546,24 @@ class ClientFactory
         // 添加Chrome启动参数
         $chromeOptions->addArguments($this->chromeArguments);
 
+
+        // 如果指定了证书路径，添加到 Chrome 选项中
+        $this->configureSslCertificates($chromeOptions);
+        
+        // 设置接受不安全证书
+        $this->capabilities->setCapability('acceptInsecureCerts', true);
+        
         // 设置代理（如果提供并且格式有效）
         if ($this->proxy && $this->isValidProxyFormat($this->proxy)) {
-            $this->capabilities->setCapability(WebDriverCapabilityType::PROXY, [
-                'proxyType' => 'manual',
-                'httpProxy' => $this->proxy,
-                'sslProxy' => $this->proxy,
+            // $this->capabilities->setCapability(WebDriverCapabilityType::PROXY, [
+            //     'proxyType' => 'manual',
+            //     'httpProxy' => $this->proxy,
+            //     'sslProxy' => $this->proxy,
+            // ]);
+
+            // 配置代理
+            $chromeOptions->addArguments([
+                "--proxy-server={$this->proxy}",
             ]);
         }
 
@@ -557,6 +584,39 @@ class ClientFactory
         $this->executeAllPendingScripts($client);
         
         return $client;
+    }
+
+        /**
+     * 配置 Chrome 以处理 SSL 证书
+     */
+    protected function configureSslCertificates(ChromeOptions $chromeOptions): void
+    {
+        // 1. 设置证书策略
+        if ($this->certificatePath && file_exists($this->certificatePath)) {
+            // 创建临时目录存储证书策略
+            $tmpDir = sys_get_temp_dir() . '/chrome-cert-' . uniqid();
+            if (!is_dir($tmpDir)) {
+                mkdir($tmpDir, 0755, true);
+            }
+            
+            // 复制证书到目标位置
+            $certFile = $tmpDir . '/mitmproxy-cert.pem';
+            copy($this->certificatePath, $certFile);
+            
+            // 添加证书相关参数
+            $chromeOptions->addArguments([
+                "--ignore-certificate-errors", 
+                "--allow-insecure-localhost",
+            ]);
+            
+            // 添加证书路径
+            $chromeOptions->addExtensions([$certFile]);
+        } else {
+            // 如果没有证书文件，使用最基本的忽略错误参数
+            $chromeOptions->addArguments([
+                "--ignore-certificate-errors",
+            ]);
+        }
     }
 
     /**
@@ -870,6 +930,37 @@ class ClientFactory
             'verify' => false, // 禁用SSL验证，在某些环境可能需要
         ]))
         ->get('http://api.ip.cc/');
+    }
+
+    /**
+     * 获取证书的 SPKI 指纹
+     * 
+     * @return string|null 证书指纹
+     */
+    protected function getCertificateFingerprint(): ?string
+    {
+        if (!$this->certificatePath || !file_exists($this->certificatePath)) {
+            return null;
+        }
+        
+        // 尝试从证书中提取 SPKI 指纹
+        try {
+            $certData = file_get_contents($this->certificatePath);
+            $cert = openssl_x509_read($certData);
+            if ($cert) {
+                $pubkey = openssl_get_publickey($cert);
+                if ($pubkey) {
+                    $keyData = openssl_pkey_get_details($pubkey);
+                    if (isset($keyData['key'])) {
+                        // 计算 SPKI SHA-256 指纹
+                        return base64_encode(hash('sha256', $keyData['key'], true));
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+        }
+        
+        return null;
     }
 
     public function toArray(): array
