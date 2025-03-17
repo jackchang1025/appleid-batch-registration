@@ -2,20 +2,14 @@
 
 namespace App\Services\AppleId\Pages;
 
-use App\Services\ClientFactory;
 use Symfony\Component\Panther\Client;
 
 class PageManager
 {
-    private Client $client;
     private ?Page $currentPage = null;
     
-    public function __construct(ClientFactory $clientFactory)
+    public function __construct(private Client $client)
     {
-        $this->client = $clientFactory
-        ->withProxy(env('SELENIUM_PROXY'))
-        ->createClientWithIpInfo(env('SELENIUM_HOST'));
-
         $this->client->manage()->timeouts()->implicitlyWait(30)->pageLoadTimeout(30);
 
     }

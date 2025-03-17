@@ -11,6 +11,8 @@ services:
         ports:
             - '${APP_PORT:-80}:80'
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+        command: >
+            chmod -R 777 /var/www/html/storage
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
