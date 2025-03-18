@@ -9608,10 +9608,16 @@
         {
             "name": "weijiajia/saloonphp-cookie-plugin",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/saloonphp-cookie-plugin",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-cookie-plugin.git",
                 "reference": "cefccd6692b9d564fb49ca39c8d4b74841b455ea"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-cookie-plugin/zipball/cefccd6692b9d564fb49ca39c8d4b74841b455ea",
+                "reference": "cefccd6692b9d564fb49ca39c8d4b74841b455ea",
+                "shasum": ""
             },
             "require": {
                 "php": ">=8.0",
@@ -9621,20 +9627,14 @@
                 "friendsofphp/php-cs-fixer": "^3.0",
                 "phpunit/phpunit": "^9.0|^10.0"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpCookiePlugin\\": "src/"
                 }
             },
-            "scripts": {
-                "test": [
-                    "vendor/bin/phpunit"
-                ],
-                "fix-style": [
-                    "vendor/bin/php-cs-fixer fix"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9646,26 +9646,33 @@
             ],
             "description": "A cookie management plugin for Saloon PHP, allowing for easy cookie handling in your API integrations.",
             "keywords": [
+                "Guzzle",
                 "api",
                 "cookie",
                 "cookies",
-                "guzzle",
                 "http",
                 "plugin",
                 "saloon"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-cookie-plugin/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-cookie-plugin/tree/main"
+            },
+            "time": "2025-03-08T16:08:15+00:00"
         },
         {
             "name": "weijiajia/saloonphp-header-synchronize-plugin",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/saloonphp-header-synchronize-plugin",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-header-synchronize-plugin.git",
                 "reference": "62ef842ec7afa1cadc3ddd3d97842f0a189ee8df"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-header-synchronize-plugin/zipball/62ef842ec7afa1cadc3ddd3d97842f0a189ee8df",
+                "reference": "62ef842ec7afa1cadc3ddd3d97842f0a189ee8df",
+                "shasum": ""
             },
             "require": {
                 "php": "^8.1",
@@ -9677,22 +9684,14 @@
                 "phpunit/phpunit": "^10.0",
                 "symfony/var-dumper": "^6.0"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpHeaderSynchronizePlugin\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Weijiajia\\SaloonphpHeaderSynchronizePlugin\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "vendor/bin/pest"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9712,18 +9711,25 @@
                 "saloonphp",
                 "synchronize"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-header-synchronize-plugin/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-header-synchronize-plugin/tree/main"
+            },
+            "time": "2025-03-08T16:01:02+00:00"
         },
         {
             "name": "weijiajia/saloonphp-http-proxy-plugin",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/saloonphp-http-proxy-plugin",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-http-proxy-plugin.git",
                 "reference": "4bdaedf3e13881c561a298078be21bdf8c7e82f7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-http-proxy-plugin/zipball/4bdaedf3e13881c561a298078be21bdf8c7e82f7",
+                "reference": "4bdaedf3e13881c561a298078be21bdf8c7e82f7",
+                "shasum": ""
             },
             "require": {
                 "php": "^8.0",
@@ -9734,28 +9740,14 @@
                 "pestphp/pest": "^3.7",
                 "phpstan/phpstan": "^1.10"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpHttpProxyPlugin\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Weijiajia\\SaloonphpHttpProxyPlugin\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "vendor/bin/pest"
-                ],
-                "analyse": [
-                    "vendor/bin/phpstan analyse"
-                ],
-                "fix": [
-                    "vendor/bin/php-cs-fixer fix"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9775,10 +9767,11 @@
                 "saloon",
                 "saloonphp"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-http-proxy-plugin/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-http-proxy-plugin/tree/main"
+            },
+            "time": "2025-03-08T16:15:37+00:00"
         },
         {
             "name": "weijiajia/saloonphp-logs-plugin",
