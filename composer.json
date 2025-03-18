@@ -13,11 +13,11 @@
         "laravel/tinker": "^2.10.1",
         "novadaemon/filament-pretty-json": "^2.4",
         "propaganistas/laravel-phone": "^5.3",
+        "symfony/dom-crawler": "^7.2",
         "symfony/intl": "^7.2",
-        "symfony/panther": "^2.2",
         "weijiajia/decrypt-verification-code": "@dev",
         "weijiajia/http-proxy-manager": "@dev",
-        "weijiajia/saloonphp-apple-client": "@dev",
+        "weijiajia/saloonphp-apple-client": "dev-main",
         "weijiajia/saloonphp-logs-plugin": "@dev",
         "ysfkaya/filament-phone-input": "^3.1"
     },
@@ -80,6 +80,20 @@
             "php-http/discovery": true
         }
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "/var/www/packagist/*",
+            "options": {
+                "symlink": false
+            }
+        },
+        {
+            "type": "composer",
+            "url": "https://packagist.org"
+        }
+        
+    ],
     "minimum-stability": "dev",
     "prefer-stable": true
 }

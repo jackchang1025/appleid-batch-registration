@@ -11,8 +11,8 @@ services:
         ports:
             - '${APP_PORT:-80}:80'
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-        command: >
-            chmod -R 777 /var/www/html/storage
+        # command: >
+        #     chmod -R 777 /var/www/html/storage
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
@@ -21,6 +21,7 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
+            - '/home/code/php/packagist:/var/www/packagist'
         networks:
             - sail
         depends_on:
@@ -28,7 +29,6 @@ services:
             - redis
             - meilisearch
             - mailpit
-            - selenium
     supervisor:
         build:
             context: './docker/supervisor'
@@ -109,78 +109,6 @@ services:
         ports:
             - '${FORWARD_MAILPIT_PORT:-1025}:1025'
             - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
-        networks:
-            - sail
-    # Add mitmproxy service
-    mitmproxy:
-        image: 'mitmproxy/mitmproxy:latest'
-        container_name: mitmproxy
-        tty: true
-        stdin_open: true
-        command: >
-            mitmdump --mode upstream:${MITM_PROXY} 
-            --upstream-auth ${MITM_PROXY_USERNAME}:${MITM_PROXY_PASSWORD}
-            --set listen_host=0.0.0.0
-            --set listen_port=8080
-        ports:
-            - '8080:8080'  # Main proxy port
-        networks:
-            - sail
-    selenium:
-        image: selenium/hub:latest
-        container_name: selenium
-        environment:
-            SE_NODE_ACCEPT_INSECURE_CERTS: true #接受不安全证书
-            SE_GRID_MAX_SESSION: 100 # 最大会话数
-            SE_NODE_MAX_INSTANCES: 100 # 最大会话数
-            SE_NODE_MAX_SESSIONS: 100 # 最大会话数
-            SE_NODE_OVERRIDE_MAX_SESSIONS: true  # 设置为true来覆盖最大限制
-            SE_NODE_OVERRIDE_MAX_INSTANCES: 20 # 最大实例数
-            SE_NODE_OVERRIDE_MAX_SESSION: 20 # 最大会话数
-            SE_VNC_PASSWORD: '111' # 调式密码
-            SE_SESSION_RETRY_INTERVAL: 1 # 重试间隔
-            SE_SESSION_TIMEOUT: 300 # 设置会话超时时间为300秒
-            SE_SESSION_REQUEST_TIMEOUT: 600 # 设置会话超时时间为300秒
-        ports:
-            - '4444:4444'   # Selenium WebDriver 端口
-            - '7900:7900'   # VNC 端口（可选，用于访问 Chrome 无头模式）
-        shm_size: '8gb'     # 增加共享内存，防止 Chrome 无头模式下崩溃
-        networks:
-            - sail
-    chrome:
-        image: selenium/node-chrome:latest
-        container_name: selenium_chrome
-        volumes:
-            - /dev/shm:/dev/shm
-        depends_on:
-            - selenium
-        environment:
-            SE_EVENT_BUS_HOST: selenium
-            SE_EVENT_BUS_PUBLISH_PORT: 4442
-            SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
-            SE_NODE_OVERRIDE_MAX_SESSIONS: true  # 设置为true来覆盖最大限制
-            SE_NODE_MAX_SESSION: 20
-            SE_NODE_MAX_SESSIONS: 20 #最大会话数
-            SE_NODE_MAX_INSTANCES: 20
-            SE_VNC_PASSWORD: '111' # 调式密码
-        networks:
-            - sail
-    firefox:
-        image: selenium/node-firefox:latest
-        container_name: selenium_firefox
-        volumes:
-            - /dev/shm:/dev/shm
-        depends_on:
-            - selenium
-        environment:
-            SE_EVENT_BUS_HOST: selenium
-            SE_EVENT_BUS_PUBLISH_PORT: 4442
-            SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
-            SE_NODE_OVERRIDE_MAX_SESSIONS: true  # 设置为true来覆盖最大限制
-            SE_NODE_MAX_SESSION: 10
-            SE_NODE_MAX_INSTANCES: 10
-            SE_NODE_MAX_SESSIONS: 10
-            SE_VNC_PASSWORD: '111' # 调式密码
         networks:
             - sail
 networks:
