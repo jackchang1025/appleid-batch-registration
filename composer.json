@@ -81,13 +81,7 @@
         }
     },
     "repositories": [
-        {
-            "type": "path",
-            "url": "/var/www/packagist/*",
-            "options": {
-                "symlink": false
-            }
-        },
+
         {
             "type": "composer",
             "url": "https://packagist.org"
