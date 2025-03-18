@@ -2,9 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\EmailStatus;
 use App\Models\Email;
-use App\Models\ProxyConfiguration;
 use App\Models\User;
 use App\Services\AppleId\AppleIdBatchRegistration;
 use App\Services\Exception\RegistrationException;
@@ -15,13 +13,13 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Filament\Notifications\Notification;
 use Saloon\Exceptions\Request\Statuses\ServiceUnavailableException;
 use Filament\Notifications\Actions\Action;
-use App\Filament\Resources\EmailResource;
 use App\Filament\Resources\EmailResource\Pages\ViewEmail;
+use App\Services\AppleId\AppleIdTvRegistration;
+use Weijiajia\SaloonphpAppleClient\Exception\AccountAlreadyExistsException;
 
 class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
 {
@@ -35,7 +33,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     /**
      * 任务超时时间（秒）
      */
-    public int|float $timeout = 60 * 10;
+    public int|float $timeout = 60 * 5;
 
     /**
      * 创建一个新的任务实例
@@ -60,7 +58,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueFor(): int
     {
-        return 60 * 10; // 5分钟
+        return 60 * 5; // 5分钟
     }
 
     /**
@@ -80,15 +78,12 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
      * @throws ServiceUnavailableException
      * @throws \Throwable
      */
-    public function handle(AppleIdBatchRegistration $appleIdBatchRegistration): void
+    public function handle(AppleIdTvRegistration $appleIdTvRegistration): void
     {
         try {
 
-            // 获取代理配置
-            $proxyInfo = ProxyConfiguration::first();
-
             // 运行注册
-            $appleIdBatchRegistration->run($this->email, $proxyInfo && $proxyInfo->status, $this->country);
+            $appleIdTvRegistration->run($this->email);
 
             Log::info("AppleID registration successful for email: {$this->email->email}");
 
@@ -110,7 +105,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
             //抛出异常
             throw $e;
 
-        } catch (Exception $e) {
+        } catch (Exception| AccountAlreadyExistsException $e) {
 
             // 处理错误情况
             Log::error("AppleID registration failed for email: {$this->email}: {$e}");

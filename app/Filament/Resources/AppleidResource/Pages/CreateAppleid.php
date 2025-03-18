@@ -11,7 +11,6 @@ use App\Models\Email;
 use App\Enums\EmailStatus;
 use Filament\Forms;
 use Filament\Forms\Form;
-use App\Jobs\RegisterAppleIdForBrowserJob;
 class CreateAppleid extends CreateRecord
 {
     protected static string $resource = AppleidResource::class;
@@ -98,7 +97,7 @@ class CreateAppleid extends CreateRecord
                         throw new \Exception("邮箱 {$email} 不存在");
                     }
 
-                    RegisterAppleIdForBrowserJob::dispatch($email,$data['country']);
+                    RegisterAppleIdJob::dispatch($email,$data['country']);
                 }
 
                 // 显示通知

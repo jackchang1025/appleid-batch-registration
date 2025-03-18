@@ -1,0 +1,866 @@
+第一步访问首页
+GET https://tv.apple.com/ HTTP/1.1
+Host: tv.apple.com
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Windows"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+HTTP/1.1 200 OK
+Server: daiquiri/5
+Content-Type: text/html
+Content-Security-Policy: default-src 'self' https://*.apple.com; img-src 'self' https://*.apple.com https://*.mzstatic.com data: blob:; style-src 'self' https://*.apple.com 'unsafe-inline'; script-src 'self' https://*.apple.com blob: 'sha256-4ywTGAe4rEpoHt8XkjbkdOWklMJ/1Py/x6b3/aGbtSQ=' 'unsafe-eval'; connect-src 'self' https://*.apple.com https://*.applemusic.com https://*.mzstatic.com https://mediaservices.cdn-apple.com; media-src 'self' https://*.apple.com https://*.applemusic.com https://*.mzstatic.com blob:; child-src 'self' https://*.apple.com videos: com.apple.tv: blob:; frame-ancestors 'none';
+x-apple-jingle-correlation-key: DBLDCQCDPLJDCKFTFM7DVZVWDE
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-original-content-length: 1127856
+x-responding-instance: amp-web-tv-server:amp-web-tv-server-main-67b6c6b55b-kh96f:2000:2504.18.0
+x-xss-protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+x-daiquiri-instance: daiquiri:10001:daiquiri-cluster-54b6fc648c-qwltb:7987:25RELEASE27:daiquiri-amp-kubernetes-shared-cluster-ak8s-prod-pv4-amp-web-tv-prod
+x-daiquiri-instance: daiquiri:10001:daiquiri-all-shared-ext-6c6d96685-vmfwn:7987:25RELEASE27:daiquiri-amp-kubernetes-shared-ext-ak8s-prod-pv4-amp-daiquiri-ingress-prod
+Content-Length: 1127856
+Cache-Control: public, max-age=430
+Date: Tue, 18 Mar 2025 04:50:47 GMT
+X-Cache: TCP_HIT from a23-220-165-233.deploy.akamaitechnologies.com (AkamaiGHost/22.0.0.1-318443691900e5d3d78f5dd48f596007) (-)
+Connection: keep-alive
+Set-Cookie: geo=US; path=/; domain=.apple.com
+Vary: X-Apple-Store-Front, Cookie
+
+第二步点击 sign in 登陆按钮
+GET https://tv.apple.com/includes/commerce/fetch-proxy.html?product=tv&devToken=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IldlYlBsYXlLaWQifQ.eyJpc3MiOiJBTVBXZWJQbGF5IiwiaWF0IjoxNzQxNzI0OTk2LCJleHAiOjE3NTcyNzY5OTYsInJvb3RfaHR0cHNfb3JpZ2luIjpbImFwcGxlLmNvbSJdfQ.i_WhpwafmgxICuONMXJ53rrBoNsK7jZGHsedk4ioocywCC7LZGYMT1DZnM-1wmwqUa9yWFdepV4ErgZcBYG5Hg&productVersion=2504.18.0&authType=web&authDisplayType=inline&locale=en-us&useRelativeIframeSrc=true&iso2code=us&isFullscreen=true&hostedAppSubdomain=apps HTTP/1.1
+Host: tv.apple.com
+Connection: keep-alive
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Windows"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: iframe
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+Cookie: geo=US; dslang=US-EN; site=USA; itspod=51; wosid-lite=rkm0MFtD2JAELvwmzRhs2w
+If-None-Match: "54cd4486adfa809c4b68a25adca809a6"
+If-Modified-Since: Mon, 10 Mar 2025 18:39:00 GMT
+
+HTTP/1.1 304 Not Modified
+Content-Type: text/html
+Last-Modified: Mon, 10 Mar 2025 18:39:00 GMT
+ETag: "54cd4486adfa809c4b68a25adca809a6"
+Cache-Control: no-transform, max-age=3
+Date: Tue, 18 Mar 2025 04:37:40 GMT
+X-Cache: TCP_IMS_HIT from a23-220-165-233.deploy.akamaitechnologies.com (AkamaiGHost/22.0.0.1-318443691900e5d3d78f5dd48f596007) (A)
+Connection: keep-alive
+Vary: X-Apple-Store-Front, Cookie
+
+
+GET https://tv.apple.com/includes/commerce/authenticate?product=tv&devToken=eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IldlYlBsYXlLaWQifQ.eyJpc3MiOiJBTVBXZWJQbGF5IiwiaWF0IjoxNzQxNzI0OTk2LCJleHAiOjE3NTcyNzY5OTYsInJvb3RfaHR0cHNfb3JpZ2luIjpbImFwcGxlLmNvbSJdfQ.i_WhpwafmgxICuONMXJ53rrBoNsK7jZGHsedk4ioocywCC7LZGYMT1DZnM-1wmwqUa9yWFdepV4ErgZcBYG5Hg&productVersion=2504.18.0&authType=web&authDisplayType=inline&locale=en-us&useRelativeIframeSrc=true&iso2code=us&isModal=true&modalMode=overlay&hostedAppSubdomain=apps&shouldPopModal=true HTTP/1.1
+Host: tv.apple.com
+Connection: keep-alive
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Windows"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: iframe
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+Cookie: geo=US; dslang=US-EN; site=USA; itspod=51; wosid-lite=rkm0MFtD2JAELvwmzRhs2w
+If-None-Match: "7bb2ddeaa1a7d932cdc183031c690a89"
+If-Modified-Since: Thu, 13 Mar 2025 23:15:05 GMT
+
+HTTP/1.1 304 Not Modified
+Content-Type: text/html
+Last-Modified: Thu, 13 Mar 2025 23:15:05 GMT
+ETag: "7bb2ddeaa1a7d932cdc183031c690a89"
+Cache-Control: no-transform, max-age=31
+Expires: Tue, 18 Mar 2025 04:38:11 GMT
+Date: Tue, 18 Mar 2025 04:37:40 GMT
+X-Cache: TCP_REFRESH_HIT from a23-220-165-233.deploy.akamaitechnologies.com (AkamaiGHost/22.0.0.1-318443691900e5d3d78f5dd48f596007) (S)
+Connection: keep-alive
+X-Cache-Remote: TCP_IMS_HIT from a23-220-165-228.deploy.akamaitechnologies.com (AkamaiGHost/22.0.0.1-318443691900e5d3d78f5dd48f596007) (-)
+Vary: X-Apple-Store-Front, Cookie
+
+
+
+GET https://idmsa.apple.com/appleauth/auth/authorize/signin?frame_id=auth-i5pbn7kv-s56e-co6u-q0fr-nw7ruzh1&language=en_us&skVersion=7&iframeId=auth-i5pbn7kv-s56e-co6u-q0fr-nw7ruzh1&client_id=06f8d74b71c73757a2f82158d5e948ae7bae11ec45fda9a58690f55e35945c51&redirect_uri=https://tv.apple.com&response_type=code&response_mode=web_message&account_ind=1&state=auth-i5pbn7kv-s56e-co6u-q0fr-nw7ruzh1&authVersion=latest HTTP/1.1
+Host: idmsa.apple.com
+Connection: keep-alive
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Windows"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Dest: iframe
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+Cookie: geo=US; dslang=US-EN; site=USA; itspod=51; wosid-lite=rkm0MFtD2JAELvwmzRhs2w; aasp=295BEDDE620E5A0AD38758327BB48ECAD81018CC872F327BE7A317F2925EC39C10B1CCFA9F0F13CE5E38CEB041756F965183BF7D57FF4E8DE28A754624BB47B5BF56A48F3F1F6E7FB12D5E8ED171486B916FB3A7A57FDCC47B92CB84D01ABE8AEC0880BDA0B619DB99A9B322D58401C6F3918E29F788F47B; aa=C2B7FCC8B419BB094090BE1DB7EE2497
+
+
+HTTP/1.1 200
+Server: Apple
+Date: Tue, 18 Mar 2025 04:37:45 GMT
+Content-Type: text/html;charset=UTF-8
+Connection: keep-alive
+X-Apple-I-Request-ID: bcde6a33-03b2-11f0-a8ac-b1f78dc6c76c
+X-FRAME-OPTIONS: ALLOW-FROM https://tv.apple.com
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Content-Security-Policy: default-src 'self' ; child-src blob: ; connect-src 'self' https://www.apple.com https://appleid.cdn-apple.com https://webcourier.sandbox.push.apple.com https://xp-qa.apple.com ; font-src 'self' https://www.apple.com https://appleid.cdn-apple.com https://idmsa.apple.com https://gsa.apple.com https://idmsa.apple.com.cn https://signin.apple.com ; frame-src 'self' https://appleid.apple.com https://gsa.apple.com https://account.apple.com ; img-src 'self' https://www.apple.com https://appleid.cdn-apple.com https://*.mzstatic.com data: https://*.apple.com ; media-src data: ; object-src 'none' ; script-src 'self' https://www.apple.com https://appleid.cdn-apple.com https://idmsa.apple.com https://gsa.apple.com https://idmsa.apple.com.cn https://signin.apple.com ; style-src 'unsafe-inline' 'self' https://www.apple.com https://appleid.cdn-apple.com https://idmsa.apple.com https://gsa.apple.com https://idmsa.apple.com.cn https://signin.apple.com ;  frame-ancestors 'self' https://tv.apple.com;
+Referrer-Policy: origin
+X-BuildVersion: R7
+scnt: AAAA-jI5NUJFRERFNjIwRTVBMEFEMzg3NTgzMjdCQjQ4RUNBRDgxMDE4Q0M4NzJGMzI3QkU3QTMxN0YyOTI1RUMzOUMxMEIxQ0NGQTlGMEYxM0NFNUUzOENFQjA0MTc1NkY5NjUxODNCRjdENTdGRjRFOERFMjhBNzU0NjI0QkI0N0I1QkY1NkE0OEYzRjFGNkU3RkIxMkQ1RThFRDE3MTQ4NkI5MTZGQjNBN0E1N0ZEQ0M0N0I5MkNCODREMDFBQkU4QUVDMDg4MEJEQTBCNjE5REI5OUE5QjMyMkQ1ODQwMUM2RjM5MThFMjlGNzg4RjQ3QnwxAAABlaeY08OYetfB6qR5tGNQy1lf04fm_HOwRk-wScbF0rGIm-XjAnxCcA-m5hDbABDewcSus1l1Zl0If5U1GcCElDLu0ez_KDsSPgVoL7ywB2l4mspdgw
+Set-Cookie: dslang=US-EN; Domain=apple.com; Path=/; Secure; HttpOnly
+Set-Cookie: site=USA; Domain=apple.com; Path=/; Secure; HttpOnly
+Pragma: no-cache
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+Cache-Control: no-cache
+Cache-Control: no-store
+X-Apple-Auth-Attributes: cMq1xy6oUM6SWtHIuQq5/8+Rqc9ywIB0nPyyP4Kqd0XgFvg63cCHkjL1lpjWt/aFnIDI+imEMcTeBSFc5XD/Xbw3Qvm5C7EZP+sBRwbw68ldYqYcEjX8fBSzPusc6lN46iFTzdwrxiMfChfKcN4T4T4xtlEFYueeaV0TeEqvXOw0b+VkvIOFo50xLJr2Eplu2Os5dz7aKxWnFnWNzw0oD3ud5IWh8AOzj6hDMjEOwEgbiVAIQUYDAyKaMEqx/FwAEN7Bx/fnGQ==
+X-Apple-HC-Bits: 12
+X-Apple-HC-Challenge: 7eb1abf6fe14eb5ae3f15da8256e46cb
+Set-Cookie: aasp=0F3858921CE3C6DAF386B22E9B7473F515E32BCAC3F28EF85C65DDA3413ADAB34D9CA1EA70DF5495AD02A0B27AD3A8360095A9C64F19A8F824E21B1656C884D33027835B8CE5A54ADC8D73DA9CA4799AA7C9FC672F211CD8FF06F398F7FFA81E8A4E303EBA7AE5FECD9D793F9F67D0C54CD3D2894689A51A; Domain=idmsa.apple.com; Path=/; Secure; HttpOnly
+vary: accept-encoding
+Content-Language: en-US-x-lvariant-USA
+Content-Length: 43461
+
+
+第三步输入邮箱登陆或者创建
+GET https://auth.tv.apple.com/auth/v1/liteReplayProtection/initializeSession HTTP/1.1
+Host: auth.tv.apple.com
+Connection: keep-alive
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-platform: "Windows"
+x-apple-store-front: 143441-1,8
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/json
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: geo=US; dslang=US-EN; site=USA; itspod=51; wosid-lite=rkm0MFtD2JAELvwmzRhs2w
+
+HTTP/1.1 200 OK
+Server: Apple
+Date: Tue, 18 Mar 2025 04:38:51 GMT
+Content-Type: application/json
+Content-Length: 51
+Connection: keep-alive
+x-apple-jingle-correlation-key: XTN6AWKSHEO4Q2UHGU2E5IHRRA
+x-apple-request-uuid: bcdbe059-5239-1dc8-6a87-35344ea0f188
+b3: bcdbe05952391dc86a8735344ea0f188-d1894eb0f6afa07b
+x-b3-traceid: bcdbe05952391dc86a8735344ea0f188
+x-b3-spanid: d1894eb0f6afa07b
+apple-seq: 0.0
+apple-tk: false
+apple-originating-system: MZAuth
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Access-Control-Allow-Origin: https://tv.apple.com
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: x-apple-store-front,X-Set-Apple-Store-Front,Retry-After,x-csrf-token,X-Apple-Page-UUID
+x-responding-instance: MZAuth:10040:::
+Strict-Transport-Security: max-age=31536000; includeSubdomains
+Set-Cookie: wosid-replay=BgI7pqp6eQTlExfFz6eqTg; Path=/; Domain=.tv.apple.com; Expires=Tue, 18-Mar-2025 04:48:51 GMT; Max-Age=600; Secure; HttpOnly
+Expires: Thu, 01 Jan 1970 00:00:00 GMT
+X-Apple-Page-UUID: 0122f3ff-17e5-47ac-8c44-875d78902ce3
+X-Runtime: 0.005699
+apple-timing-app: 5 ms
+x-daiquiri-instance: daiquiri:17578002:mr85p00it-hyhk03184901:7987:25RELEASE27:daiquiri-amp-commerce-clients-ext-002-mr
+X-XSS-Protection: 1; mode=block
+
+{"pageUUID":"0122f3ff-17e5-47ac-8c44-875d78902ce3"}
+
+
+POST https://auth.tv.apple.com/auth/v1/web/accountName/validate HTTP/1.1
+Host: auth.tv.apple.com
+Connection: keep-alive
+Content-Length: 44
+x-apple-page-uuid: 0122f3ff-17e5-47ac-8c44-875d78902ce3
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/json
+x-apple-store-front: 143441-1,8
+sec-ch-ua-platform: "Windows"
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: geo=US; dslang=US-EN; site=USA; itspod=51; wosid-lite=rkm0MFtD2JAELvwmzRhs2w; wosid-replay=BgI7pqp6eQTlExfFz6eqTg
+
+{"accountName":"HelenMitchells3r@gmail.com"}
+
+HTTP/1.1 200 OK
+Server: Apple
+Date: Tue, 18 Mar 2025 04:38:51 GMT
+Content-Type: application/json
+Content-Length: 92
+Connection: keep-alive
+x-apple-jingle-correlation-key: TYJKA6CWONYCRRUJKQPOJKSJYM
+x-apple-request-uuid: 9e12a078-5673-7028-c689-541ee4aa49c3
+b3: 9e12a07856737028c689541ee4aa49c3-9047a956013bdd46
+x-b3-traceid: 9e12a07856737028c689541ee4aa49c3
+x-b3-spanid: 9047a956013bdd46
+apple-seq: 0.0
+apple-tk: false
+apple-originating-system: MZAuth
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Access-Control-Allow-Origin: https://tv.apple.com
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: x-apple-store-front,X-Set-Apple-Store-Front,Retry-After,x-csrf-token,X-Apple-Page-UUID
+x-responding-instance: MZAuth:10033:::
+Strict-Transport-Security: max-age=31536000; includeSubdomains
+X-Apple-Page-UUID: 4b982661-6f40-49d5-9072-a148c8fc9fa0
+X-Runtime: 0.031466
+apple-timing-app: 31 ms
+x-daiquiri-instance: daiquiri:15824001:mr85p00it-hyhk04194601:7987:25RELEASE27:daiquiri-amp-commerce-clients-ext-001-mr
+X-XSS-Protection: 1; mode=block
+
+{"accountNameAvailable":true,"email":true,"pageUUID":"4b982661-6f40-49d5-9072-a148c8fc9fa0"}
+
+
+GET https://buy.tv.apple.com/account/pod HTTP/1.1
+Host: buy.tv.apple.com
+Connection: keep-alive
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-platform: "Windows"
+x-apple-store-front: 143441-1,8
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/json
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: geo=US; dslang=US-EN; site=USA; itspod=51; wosid-lite=rkm0MFtD2JAELvwmzRhs2w; wosid-replay=BgI7pqp6eQTlExfFz6eqTg
+
+HTTP/1.1 204 No Content
+Server: Apple
+Date: Tue, 18 Mar 2025 04:38:54 GMT
+Connection: keep-alive
+x-apple-jingle-correlation-key: HLR3LUKEJED5Z4VGSVNXEYNIVM
+x-apple-request-uuid: 3ae3b5d1-4449-07dc-f2a6-955b7261a8ab
+b3: 3ae3b5d1444907dcf2a6955b7261a8ab-4b703a300c461173
+x-b3-traceid: 3ae3b5d1444907dcf2a6955b7261a8ab
+x-b3-spanid: 4b703a300c461173
+apple-seq: 0.0
+apple-tk: false
+apple-originating-system: MZAccountManager
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Access-Control-Allow-Origin: https://tv.apple.com
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: x-apple-store-front,X-Set-Apple-Store-Front,Retry-After,x-apple-application-site
+x-responding-instance: MZAccountManager:511001:::
+Strict-Transport-Security: max-age=31536000; includeSubdomains
+Set-Cookie: itspod=42;Version=1;Domain=.apple.com;Path=/;Max-Age=63072000;Expires=Thu, 18 Mar 2027 04:38:54 GMT
+Set-Cookie: media-user-token=;Version=1;Domain=.apple.com;Path=/;Max-Age=0;Secure
+Set-Cookie: commerce-authorization-token=;Version=1;Domain=.apple.com;Path=/;Max-Age=0;Secure;HttpOnly
+Set-Cookie: myacinfo=;Version=1;Domain=.apple.com;Path=/;Max-Age=0;Secure;HttpOnly
+X-Runtime: 0.005075
+apple-timing-app: 5 ms
+x-daiquiri-instance: daiquiri:49312001:st41p00it-qukt08070301:7987:25RELEASE27:daiquiri-amp-commerce-pci-int-001-st
+x-daiquiri-instance: daiquiri:14626001:mr55p00it-qukt01010301:7987:25RELEASE27:daiquiri-amp-commerce-pci-ext-001-mr
+X-XSS-Protection: 1; mode=block
+
+
+GET https://buy.tv.apple.com/account/restricted/create/options?restrictedAccountType=restrictedEmailOptimizedWeb HTTP/1.1
+Host: buy.tv.apple.com
+Connection: keep-alive
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-platform: "Windows"
+x-apple-store-front: 143441-1,8
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/json
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: geo=US; dslang=US-EN; site=USA; wosid-lite=rkm0MFtD2JAELvwmzRhs2w; wosid-replay=BgI7pqp6eQTlExfFz6eqTg; itspod=42
+
+HTTP/1.1 200 OK
+Server: Apple
+Date: Tue, 18 Mar 2025 04:38:54 GMT
+Content-Type: application/json
+Content-Length: 238
+Connection: keep-alive
+x-apple-jingle-correlation-key: 5PXHWM6LTXC6NWGLPLFEVAKPLA
+x-apple-request-uuid: ebee7b33-cb9d-c5e6-d8cb-7aca4a814f58
+b3: ebee7b33cb9dc5e6d8cb7aca4a814f58-23c75a0be9c7913f
+x-b3-traceid: ebee7b33cb9dc5e6d8cb7aca4a814f58
+x-b3-spanid: 23c75a0be9c7913f
+apple-seq: 0.0
+apple-tk: false
+apple-originating-system: MZAccountManager
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Access-Control-Allow-Origin: https://tv.apple.com
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: x-apple-store-front,X-Set-Apple-Store-Front,Retry-After,x-apple-application-site
+x-responding-instance: MZAccountManager:425093:::
+Strict-Transport-Security: max-age=31536000; includeSubdomains
+Set-Cookie: wosid-lite=KVsAXmg7b8vP3eczyss1zw;Version=1;Domain=.apple.com;Path=/;Secure;HttpOnly
+X-Runtime: 0.103849
+apple-timing-app: 103 ms
+x-daiquiri-instance: daiquiri:49312001:st41p00it-qukt08070301:7987:25RELEASE27:daiquiri-amp-commerce-pci-int-001-st
+x-daiquiri-instance: daiquiri:14626002:mr55p00it-qukt01020301:7987:25HOTFIX3:daiquiri-amp-commerce-pci-ext-001-mr
+X-XSS-Protection: 1; mode=block
+
+{"createAccountBeforeEmailVetting":false,"restrictedAccountEligible":true,"hsa2Eligible":false,"smsCodeEligible":false,"featureVersion":10,"verificationDeliveryOptions":null,"countryDialCode":"1","pageUUID":"RK6Lr8k1LtR0i7wmFk4sPGZY0Go="}
+
+当页面输入密码之后执行
+POST https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/validateAccountFieldsSrv HTTP/1.1
+Host: buy.tv.apple.com
+Connection: keep-alive
+Content-Length: 328
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-platform: "Windows"
+x-apple-store-front: 143441-1,8
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/x-www-form-urlencoded;charset=UTF-8
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: geo=US; dslang=US-EN; site=USA; wosid-replay=y3PAFZT7HEGKbsMO7P4tr0; itspod=16; wosid-lite=vq1AGJSDbuKh2caHwo218M
+
+storefront=USA&context=create&acAccountName=HelenMitchells3r%40gmail.com&acAccountPassword=*7%40e%40rljDlC%2C)p*-u%24vi&marketing=1&restrictedAccountType=restrictedEmailOptimizedWeb&addressOfficialCountryCode=USA&paymentMethodType=None&pageUUID=XbMPl3MWJecxobivVBAUQFHZOVE%3D&accountType=email&email=HelenMitchells3r%40gmail.com
+
+HTTP/1.1 200 Apple WebObjects 5.8.65-b08
+Server: Apple
+Date: Tue, 18 Mar 2025 04:57:22 GMT
+Content-Type: application/json
+Content-Length: 77
+Connection: keep-alive
+x-apple-jingle-correlation-key: CQ4CVO2QGUHU2HE2AYXUSGNN7M
+x-apple-request-uuid: 14382abb-5035-0f4d-1c9a-062f4919adfb
+pod: 16
+x-apple-translated-wo-url: /WebObjects/MZFinance.woa/wa/validateAccountFieldsSrv
+apple-tk: false
+x-b3-spanid: b9dd47100cbe936b
+edge-control: no-store
+edge-control: cache-maxage=0
+x-apple-lokamai-no-cache: true
+b3: 14382abb50350f4d1c9a062f4919adfb-b9dd47100cbe936b
+cache-control: private
+cache-control: no-cache
+cache-control: no-store
+cache-control: no-transform
+cache-control: must-revalidate
+cache-control: max-age=0
+x-b3-traceid: 14382abb50350f4d1c9a062f4919adfb
+itspod: 16
+access-control-allow-credentials: true
+x-responding-instance: MZFinance:3160123:::
+apple-seq: 0.0
+access-control-allow-origin: https://tv.apple.com
+apple-originating-system: MZFinance
+strict-transport-security: max-age=31536000; includeSubdomains
+x-frame-options: SAMEORIGIN
+x-apple-orig-url: https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/validateAccountFieldsSrv
+x-apple-application-site: MR22
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; secure
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com; secure
+set-cookie: wosid-lite=vq1AGJSDbuKh2caHwo218M; version="1"; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: itspod=16; version="1"; expires=Fri, 18-Apr-2025 04:57:22 GMT; path=/; domain=.apple.com
+set-cookie: mzf_in=3160123; version="1"; path=/WebObjects; domain=.apple.com; secure; HttpOnly
+set-cookie: mzf_dr=0; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com
+apple-timing-app: 202 ms
+expires: Tue, 18 Mar 2025 04:57:22 GMT
+x-apple-application-instance: 3160123
+x-webobjects-loadaverage: 428
+x-daiquiri-instance: daiquiri:14236001:mr55p00it-qukt05050701:7987:25RELEASE27:daiquiri-amp-commerce-legacy-int-001-mr
+x-daiquiri-instance: daiquiri:14626006:mr55p00it-qukt06010101:7987:25RELEASE27:daiquiri-amp-commerce-pci-ext-001-mr
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+
+{"pageUUID":"XbMPl3MWJecxobivVBAUQFHZOVE=","status":0,"validationResults":[]}
+
+
+第四步验证信息
+POST https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/validateAccountFieldsSrv HTTP/1.1
+Host: buy.tv.apple.com
+Connection: keep-alive
+Content-Length: 418
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-platform: "Windows"
+x-apple-store-front: 143441-1,8
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/x-www-form-urlencoded;charset=UTF-8
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: mzf_in=3160123; geo=US; dslang=US-EN; site=USA; wosid-replay=y3PAFZT7HEGKbsMO7P4tr0; itspod=16; wosid-lite=vq1AGJSDbuKh2caHwo218M
+
+storefront=USA&context=create&firstName=chang&lastName=matthew&birthMonth=10&birthDay=25&birthYear=1996&acAccountName=HelenMitchells3r%40gmail.com&acAccountPassword=*7%40e%40rljDlC%2C)p*-u%24vi&marketing=1&restrictedAccountType=restrictedEmailOptimizedWeb&addressOfficialCountryCode=USA&paymentMethodType=None&pageUUID=XbMPl3MWJecxobivVBAUQFHZOVE%3D&agreedToTerms=1&accountType=email&email=HelenMitchells3r%40gmail.com
+
+
+HTTP/1.1 200 Apple WebObjects 5.8.65-b08
+Server: Apple
+Date: Tue, 18 Mar 2025 04:59:27 GMT
+Content-Type: application/json
+Content-Length: 77
+Connection: keep-alive
+x-apple-jingle-correlation-key: PNXGUZCE7THS6QLDJ7D6OOLOYE
+x-apple-request-uuid: 7b6e6a64-44fc-cf2f-4163-4fc7e7396ec1
+pod: 16
+x-apple-translated-wo-url: /WebObjects/MZFinance.woa/wa/validateAccountFieldsSrv
+apple-tk: false
+x-b3-spanid: 353fdb7e52fe5513
+edge-control: no-store
+edge-control: cache-maxage=0
+x-apple-lokamai-no-cache: true
+b3: 7b6e6a6444fccf2f41634fc7e7396ec1-353fdb7e52fe5513
+cache-control: private
+cache-control: no-cache
+cache-control: no-store
+cache-control: no-transform
+cache-control: must-revalidate
+cache-control: max-age=0
+x-b3-traceid: 7b6e6a6444fccf2f41634fc7e7396ec1
+itspod: 16
+access-control-allow-credentials: true
+x-responding-instance: MZFinance:3160123:::
+apple-seq: 0.0
+access-control-allow-origin: https://tv.apple.com
+apple-originating-system: MZFinance
+strict-transport-security: max-age=31536000; includeSubdomains
+x-frame-options: SAMEORIGIN
+x-apple-orig-url: https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/validateAccountFieldsSrv
+x-apple-application-site: MR22
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; secure
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com; secure
+set-cookie: wosid-lite=vq1AGJSDbuKh2caHwo218M; version="1"; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: itspod=16; version="1"; expires=Fri, 18-Apr-2025 04:59:27 GMT; path=/; domain=.apple.com
+set-cookie: mzf_in=3160123; version="1"; path=/WebObjects; domain=.apple.com; secure; HttpOnly
+set-cookie: mzf_dr=0; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com
+apple-timing-app: 91 ms
+expires: Tue, 18 Mar 2025 04:59:27 GMT
+x-apple-application-instance: 3160123
+x-webobjects-loadaverage: 406
+x-daiquiri-instance: daiquiri:14236001:mr55p00it-qukt05050701:7987:25RELEASE27:daiquiri-amp-commerce-legacy-int-001-mr
+x-daiquiri-instance: daiquiri:14626003:mr55p00it-qukt02032101:7987:25RELEASE27:daiquiri-amp-commerce-pci-ext-001-mr
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+
+{"pageUUID":"XbMPl3MWJecxobivVBAUQFHZOVE=","status":0,"validationResults":[]}
+
+
+POST https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/generateEmailConfirmationCodeSrv HTTP/1.1
+Host: buy.tv.apple.com
+Connection: keep-alive
+Content-Length: 38
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-platform: "Windows"
+x-apple-store-front: 143441-1,8
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/json
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: mzf_in=3160123; geo=US; dslang=US-EN; site=USA; wosid-replay=y3PAFZT7HEGKbsMO7P4tr0; itspod=16; wosid-lite=vq1AGJSDbuKh2caHwo218M
+
+{"email":"HelenMitchells3r@gmail.com"}
+
+
+HTTP/1.1 200 Apple WebObjects 5.8.65-b08
+Server: Apple
+Date: Tue, 18 Mar 2025 04:59:29 GMT
+Content-Type: application/json
+Content-Length: 107
+Connection: keep-alive
+x-apple-jingle-correlation-key: QK7SWNZG7RCCD5VFHXM7NUM6WM
+x-apple-request-uuid: 82bf2b37-26fc-4421-f6a5-3dd9f6d19eb3
+pod: 16
+x-apple-translated-wo-url: /WebObjects/MZFinance.woa/wa/generateEmailConfirmationCodeSrv
+apple-tk: false
+x-b3-spanid: e116a22a26fa196e
+edge-control: no-store
+edge-control: cache-maxage=0
+x-apple-lokamai-no-cache: true
+b3: 82bf2b3726fc4421f6a53dd9f6d19eb3-e116a22a26fa196e
+cache-control: private
+cache-control: no-cache
+cache-control: no-store
+cache-control: no-transform
+cache-control: must-revalidate
+cache-control: max-age=0
+x-b3-traceid: 82bf2b3726fc4421f6a53dd9f6d19eb3
+itspod: 16
+access-control-allow-credentials: true
+x-responding-instance: MZFinance:3160123:::
+apple-seq: 0.0
+access-control-allow-origin: https://tv.apple.com
+apple-originating-system: MZFinance
+strict-transport-security: max-age=31536000; includeSubdomains
+x-frame-options: SAMEORIGIN
+x-apple-orig-url: https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/generateEmailConfirmationCodeSrv
+x-apple-application-site: MR22
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; secure
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com; secure
+set-cookie: wosid-lite=vq1AGJSDbuKh2caHwo218M; version="1"; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: itspod=16; version="1"; expires=Fri, 18-Apr-2025 04:59:29 GMT; path=/; domain=.apple.com
+set-cookie: mzf_in=3160123; version="1"; path=/WebObjects; domain=.apple.com; secure; HttpOnly
+set-cookie: mzf_dr=0; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com
+apple-timing-app: 292 ms
+expires: Tue, 18 Mar 2025 04:59:29 GMT
+x-apple-application-instance: 3160123
+x-webobjects-loadaverage: 406
+x-daiquiri-instance: daiquiri:14236001:mr55p00it-qukt05050701:7987:25RELEASE27:daiquiri-amp-commerce-legacy-int-001-mr
+x-daiquiri-instance: daiquiri:14626003:mr55p00it-qukt02032101:7987:25RELEASE27:daiquiri-amp-commerce-pci-ext-001-mr
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+
+{"clientToken":"000009-00-dcd32889fc307fe1e1bfbbcb80d88a2b5de42edfd2b9b9a33e5ce9b93565af4eLTOW","status":0}
+
+第六步验证邮箱
+POST https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/validateEmailConfirmationCodeSrv HTTP/1.1
+Host: buy.tv.apple.com
+Connection: keep-alive
+Content-Length: 153
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-platform: "Windows"
+x-apple-store-front: 143441-1,8
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/json
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: mzf_in=3300241; geo=US; dslang=US-EN; site=USA; wosid-replay=IRQTtthOhvCOx4GmnckDy0; itspod=30; wosid-lite=ZEV9Hg3nLnNKbqiQOuabFg
+
+{"email":"LisaDavisv6j96@gmail.com","secretCode":"702244","clientToken":"001107-00-f3c0c2e95c30c71a752d7d7bdef0edce5cf662a266713dc1daf52f29ea6e6893LTOW"}
+
+HTTP/1.1 200 Apple WebObjects 5.8.65-b08
+Server: Apple
+Date: Tue, 18 Mar 2025 05:17:40 GMT
+Content-Type: application/json
+Content-Length: 149
+Connection: keep-alive
+x-apple-jingle-correlation-key: STOUM4WPNA3BL5K7JLOV7CIJBA
+x-apple-request-uuid: 94dd4672-cf68-3615-f55f-4add5f890908
+pod: 30
+x-apple-translated-wo-url: /WebObjects/MZFinance.woa/wa/validateEmailConfirmationCodeSrv
+apple-tk: false
+x-b3-spanid: 9dad845c0846626c
+edge-control: no-store
+edge-control: cache-maxage=0
+x-apple-lokamai-no-cache: true
+b3: 94dd4672cf683615f55f4add5f890908-9dad845c0846626c
+cache-control: private
+cache-control: no-cache
+cache-control: no-store
+cache-control: no-transform
+cache-control: must-revalidate
+cache-control: max-age=0
+x-b3-traceid: 94dd4672cf683615f55f4add5f890908
+itspod: 30
+access-control-allow-credentials: true
+x-responding-instance: MZFinance:3300241:::
+apple-seq: 0.0
+access-control-allow-origin: https://tv.apple.com
+apple-originating-system: MZFinance
+strict-transport-security: max-age=31536000; includeSubdomains
+x-frame-options: SAMEORIGIN
+x-apple-orig-url: https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/validateEmailConfirmationCodeSrv
+x-apple-application-site: MR22
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; secure
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com; secure
+set-cookie: wosid-lite=ZEV9Hg3nLnNKbqiQOuabFg; version="1"; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: itspod=30; version="1"; expires=Fri, 18-Apr-2025 05:17:40 GMT; path=/; domain=.apple.com
+set-cookie: mzf_in=3300241; version="1"; path=/WebObjects; domain=.apple.com; secure; HttpOnly
+set-cookie: mzf_dr=0; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com
+apple-timing-app: 1609 ms
+expires: Tue, 18 Mar 2025 05:17:40 GMT
+x-apple-application-instance: 3300241
+x-webobjects-loadaverage: 613
+x-daiquiri-instance: daiquiri:14236001:mr55p00it-qukt05050701:7987:25RELEASE27:daiquiri-amp-commerce-legacy-int-001-mr
+x-daiquiri-instance: daiquiri:14626001:mr55p00it-qukt01010301:7987:25RELEASE27:daiquiri-amp-commerce-pci-ext-001-mr
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+
+{"clientToken":"001107-00-f3c0c2e95c30c71a752d7d7bdef0edce5cf662a266713dc1daf52f29ea6e6893LTOW","pageUUID":"WPBrYKktvDDvsu5J9+pEbNBNu6s=","status":0}
+
+
+
+POST https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/createAccountSrv?isTVPlus=true HTTP/1.1
+Host: buy.tv.apple.com
+Connection: keep-alive
+Content-Length: 540
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IldlYlBsYXlLaWQifQ.eyJpc3MiOiJBTVBXZWJQbGF5IiwiaWF0IjoxNzQxNzI0OTk2LCJleHAiOjE3NTcyNzY5OTYsInJvb3RfaHR0cHNfb3JpZ2luIjpbImFwcGxlLmNvbSJdfQ.i_WhpwafmgxICuONMXJ53rrBoNsK7jZGHsedk4ioocywCC7LZGYMT1DZnM-1wmwqUa9yWFdepV4ErgZcBYG5Hg
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/x-www-form-urlencoded;charset=UTF-8
+x-apple-store-front: 143441-1,8
+sec-ch-ua-platform: "Windows"
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: mzf_in=3300241; geo=US; dslang=US-EN; site=USA; wosid-replay=IRQTtthOhvCOx4GmnckDy0; itspod=30; wosid-lite=ZEV9Hg3nLnNKbqiQOuabFg
+
+storefront=USA&context=create&firstName=chang&lastName=matthew&birthMonth=10&birthDay=25&birthYear=1996&acAccountName=LisaDavisv6j96%40gmail.com&acAccountPassword=*7%40e%40rljDlC%2C)p*-u%24vi&marketing=1&restrictedAccountType=restrictedEmailOptimizedWeb&addressOfficialCountryCode=USA&paymentMethodType=None&pageUUID=WPBrYKktvDDvsu5J9%2BpEbNBNu6s%3D&agreedToTerms=1&accountType=email&email=LisaDavisv6j96%40gmail.com&secretCode=702244&clientToken=001107-00-f3c0c2e95c30c71a752d7d7bdef0edce5cf662a266713dc1daf52f29ea6e6893LTOW&webCreate=true
+
+
+HTTP/1.1 200 Apple WebObjects 5.8.65-b08
+Server: Apple
+Date: Tue, 18 Mar 2025 05:17:44 GMT
+Content-Type: application/json
+Content-Length: 1754
+Connection: keep-alive
+x-apple-jingle-correlation-key: AFT7BIAI6322456EOLUVNM4UGU
+x-apple-request-uuid: 0167f0a0-08f6-f5ae-77c4-72e956b39435
+x-apple-translated-wo-url: /WebObjects/MZFinance.woa/wa/createAccountSrv?isTVPlus=true
+apple-tk: false
+x-b3-spanid: 9d0fcd539c456ee8
+edge-control: no-store
+edge-control: cache-maxage=0
+x-apple-lokamai-no-cache: true
+b3: 0167f0a008f6f5ae77c472e956b39435-9d0fcd539c456ee8
+cache-control: private
+cache-control: no-cache
+cache-control: no-store
+cache-control: no-transform
+cache-control: must-revalidate
+cache-control: max-age=0
+x-set-apple-store-front: 143441-1,8
+x-b3-traceid: 0167f0a008f6f5ae77c472e956b39435
+access-control-allow-credentials: true
+x-responding-instance: MZFinance:3300241:::
+apple-seq: 0.0
+access-control-allow-origin: https://tv.apple.com
+apple-originating-system: MZFinance
+strict-transport-security: max-age=31536000; includeSubdomains
+x-frame-options: SAMEORIGIN
+x-apple-orig-url: https://buy.tv.apple.com/WebObjects/MZFinance.woa/wa/createAccountSrv?isTVPlus=true
+x-apple-application-site: MR22
+set-cookie: commerce-authorization-token=AAAAAAAAAAICfE3OreqExZUn37xjQP44oL8V9nyuhsjKJGkfPR0RIKBGvm1t8CZzw0pE3qlsn3VHjhN8MIuPYuuso4WbPlfO76j4cWVl+HH7DTZgS1DL4XoH2waZ6kOtW3aWe8ajqmhvOlPBgDd/nemSSyAg0iAzWdn9OjCAO+Yzq310CxdYoizpib3yMKaW77lr1rEvxtb5i8J4u0D5ri++5fJEOXdu2FO67dYkwMhp3mfWDj5cUQ==; version="1"; max-age=1200; expires=Tue, 18-Mar-2025 05:37:44 GMT; path=/; domain=.tv.apple.com; secure; HttpOnly
+set-cookie: itspod=30; version="1"; max-age=63072000; expires=Thu, 18-Mar-2027 05:17:44 GMT; path=/; domain=.apple.com
+set-cookie: commerce-authorization-token=; version="1"; max-age=0; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: commerce-authorization-token-lite=; version="1"; max-age=0; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: commerce-on-web-token=; version="1"; max-age=0; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: commerce-ds-session-id=; version="1"; max-age=0; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: myacinfo=; version="1"; max-age=0; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: media-user-token=Am/33gucdVp8W3PJOMtyXDJH7Rbma+nYRdeH2eKQLujzkc5HvMAucr7BkN/e/cjU2IPdxqUpVSvf5RKtBS0H0U+xq6BMVccAl5xspWaazCyj/Eb2mMBGk1icZoBaATbWjo4Ip1qPUx5a6vss+uODUOws6+Nti0x0od902Qddq7FWCFh8HMmF70afQTuaxkY/Ab4Kl7osGvREyFYwq6JJ1qjkUCZbK+fwsj8LXMg/PvN3IMVfAw==; version="1"; max-age=15552000; expires=Sun, 14-Sep-2025 05:17:44 GMT; path=/; domain=.apple.com; secure
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; secure
+set-cookie: wosid-lite=; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com; secure
+set-cookie: wosid-lite=ZEV9Hg3nLnNKbqiQOuabFg; version="1"; path=/; domain=.apple.com; secure; HttpOnly
+set-cookie: mzf_in=3300241; version="1"; path=/WebObjects; domain=.apple.com; secure; HttpOnly
+set-cookie: mzf_dr=0; version="1"; expires=Thu, 01-Jan-1970 00:00:00 GMT; path=/WebObjects; domain=.apple.com
+apple-timing-app: 2872 ms
+expires: Tue, 18 Mar 2025 05:17:44 GMT
+x-apple-store-front: 143441-1,8
+x-apple-application-instance: 3300241
+pragma: no-cache
+x-webobjects-loadaverage: 611
+x-daiquiri-instance: daiquiri:14236001:mr55p00it-qukt05050701:7987:25RELEASE27:daiquiri-amp-commerce-legacy-int-001-mr
+x-daiquiri-instance: daiquiri:14626006:mr55p00it-qukt06010101:7987:25RELEASE27:daiquiri-amp-commerce-pci-ext-001-mr
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+
+{"status":0,"requiresStoreFrontResponseHeader":"true","result":{"accountId":"300000308745586","xt-b-ts-22230624665":{"isSecure":false,"value":"1742275064005","domain":".apple.com","path":"/","isHTTPOnly":false},"mz_at_ssl-22230624665":{"isSecure":true,"value":"AwUAAAFQAAFgWAAAAABn2QH4ot8kFmgGQNrEnKK7Jcsocm4gnEY%3D","domain":".apple.com","path":"/","isHTTPOnly":true},"details":"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n  <key>set-current-user</key>\n  <dict>\n    <key>passwordToken</key><string>C8F91131CA9AC5CA45F4FE7E10F89F7F</string>\n    <key>clearToken</key><string>30303030303031373432323735303632</string>\n    <key>accountInfo</key>\n    <dict>\n      <key>appleId</key><string>lisadavisv6j96@gmail.com</string>\n      <key>address</key>\n      <dict>\n        <key>firstName</key><string>chang</string>\n        <key>lastName</key><string>matthew</string>\n      </dict>\n    </dict>\n    <key>dsPersonId</key><string>22230624665</string>\n    <key>altDsid</key><string>000147-08-b0bc59d4-6d50-4aab-bdb7-af5679a82ce7</string>\n    <key>jingleDocType</key><string>signupSuccess</string>\n    <key>jingleAction</key><string>mzSignupAccount</string>\n    <key>creditDisplay</key><string></string>\n    <key>creditBalance</key><string>1311811</string>\n    <key>freeSongBalance</key><string>1311811</string>\n    <key>store-version</key><string>2.0</string>\n  </dict>\n</dict>\n</plist>\n","mz_at0-22230624665":{"isSecure":false,"value":"AwQAAAFQAAFgWAAAAABn2QH4YrvH9G8CnWiiW8S8cSY0Qhlywow%3D","domain":".apple.com","path":"/","isHTTPOnly":true},"dsPersonId":"22230624665"}}
+
+
+GET https://amp-api.music.apple.com/v1/me/account?meta=subscription HTTP/1.1
+Host: amp-api.music.apple.com
+Connection: keep-alive
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+sec-ch-ua-mobile: ?0
+authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IldlYlBsYXlLaWQifQ.eyJpc3MiOiJBTVBXZWJQbGF5IiwiaWF0IjoxNzQxNzI0OTk2LCJleHAiOjE3NTcyNzY5OTYsInJvb3RfaHR0cHNfb3JpZ2luIjpbImFwcGxlLmNvbSJdfQ.i_WhpwafmgxICuONMXJ53rrBoNsK7jZGHsedk4ioocywCC7LZGYMT1DZnM-1wmwqUa9yWFdepV4ErgZcBYG5Hg
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+music-user-token: Am/33gucdVp8W3PJOMtyXDJH7Rbma+nYRdeH2eKQLujzkc5HvMAucr7BkN/e/cjU2IPdxqUpVSvf5RKtBS0H0U+xq6BMVccAl5xspWaazCyj/Eb2mMBGk1icZoBaATbWjo4Ip1qPUx5a6vss+uODUOws6+Nti0x0od902Qddq7FWCFh8HMmF70afQTuaxkY/Ab4Kl7osGvREyFYwq6JJ1qjkUCZbK+fwsj8LXMg/PvN3IMVfAw==
+sec-ch-ua-platform: "Windows"
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=utf-8
+Content-Length: 156
+Connection: keep-alive
+Keep-Alive: timeout=30
+x-apple-jingle-correlation-key: 3Y35I5VMOYMYPTIZVXV5L3F4XI
+x-apple-request-uuid: de37d476-ac76-1987-cd19-adebd5ecbcba
+b3: de37d476ac761987cd19adebd5ecbcba-f3dc952360c5f725
+x-b3-traceid: de37d476ac761987cd19adebd5ecbcba
+x-b3-spanid: f3dc952360c5f725
+apple-seq: 0.0
+apple-tk: false
+apple-originating-system: MZStorePlatform
+X-Apple-Application-Site: ST11
+X-Apple-Application-Instance: 2535416
+x-responding-instance: MZStorePlatform:2535416:::
+Access-Control-Allow-Origin: https://tv.apple.com
+Access-Control-Allow-Credentials: true
+apple-timing-app: 38 ms
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+x-apple-lokamai-no-cache: true
+x-daiquiri-instance: daiquiri:41896008:st53p00it-qujn12040101:7987:25RELEASE27:daiquiri-amp-store-l7shared-int-001-st
+Access-Control-Expose-Headers: x-apple-jingle-correlation-key
+x-daiquiri-instance: daiquiri:42282005:st53p00it-qujn14050102:7987:25RELEASE27:daiquiri-amp-store-l7shared-ext-001-st
+Expires: Tue, 18 Mar 2025 05:17:45 GMT
+Cache-Control: max-age=0, no-cache, private
+Pragma: no-cache
+X-Cache: MISS from NGCDN
+X-Cache-Remote: TCP_MISS from a23-49-61-111.deploy.akamaitechnologies.com (AkamaiGHost/22.0.0-bb2a2774a48042877147cbed2bad8ca6) (-)
+Vary: Origin, Accept-Encoding, Origin
+x-ws-request-id: 67d901f9_PS-000-01Usl72_22026-9156
+X-Via: 1.1 PS-HIA-01OSX22 [MISS], 1.1 PS-000-01Usl72 [MISS]
+Date: Tue, 18 Mar 2025 05:17:45 GMT
+X-Cache-Status: MISS
+Server: nginx
+
+{"data":[{"id":"me","type":"accounts","href":"/v1/me/account","attributes":{"restrictions":{}}}],"meta":{"subscription":{"active":false,"storefront":"us"}}}
+
+
+GET https://buy.tv.apple.com/account/web/infoRefresh HTTP/1.1
+Host: buy.tv.apple.com
+Connection: keep-alive
+sec-ch-ua: "Chromium";v="128", "Not;A=Brand";v="24", "Microsoft Edge";v="128"
+accept-language: en-us
+sec-ch-ua-mobile: ?0
+authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IldlYlBsYXlLaWQifQ.eyJpc3MiOiJBTVBXZWJQbGF5IiwiaWF0IjoxNzQxNzI0OTk2LCJleHAiOjE3NTcyNzY5OTYsInJvb3RfaHR0cHNfb3JpZ2luIjpbImFwcGxlLmNvbSJdfQ.i_WhpwafmgxICuONMXJ53rrBoNsK7jZGHsedk4ioocywCC7LZGYMT1DZnM-1wmwqUa9yWFdepV4ErgZcBYG5Hg
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 Edg/128.0.0.0
+content-type: application/json
+x-apple-store-front: 143441-1,8
+sec-ch-ua-platform: "Windows"
+Accept: */*
+Origin: https://tv.apple.com
+Sec-Fetch-Site: same-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://tv.apple.com/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: geo=US; dslang=US-EN; site=USA; wosid-replay=IRQTtthOhvCOx4GmnckDy0; itspod=30; wosid-lite=ZEV9Hg3nLnNKbqiQOuabFg; commerce-authorization-token=AAAAAAAAAAICfE3OreqExZUn37xjQP44oL8V9nyuhsjKJGkfPR0RIKBGvm1t8CZzw0pE3qlsn3VHjhN8MIuPYuuso4WbPlfO76j4cWVl+HH7DTZgS1DL4XoH2waZ6kOtW3aWe8ajqmhvOlPBgDd/nemSSyAg0iAzWdn9OjCAO+Yzq310CxdYoizpib3yMKaW77lr1rEvxtb5i8J4u0D5ri++5fJEOXdu2FO67dYkwMhp3mfWDj5cUQ==; media-user-token=Am/33gucdVp8W3PJOMtyXDJH7Rbma+nYRdeH2eKQLujzkc5HvMAucr7BkN/e/cjU2IPdxqUpVSvf5RKtBS0H0U+xq6BMVccAl5xspWaazCyj/Eb2mMBGk1icZoBaATbWjo4Ip1qPUx5a6vss+uODUOws6+Nti0x0od902Qddq7FWCFh8HMmF70afQTuaxkY/Ab4Kl7osGvREyFYwq6JJ1qjkUCZbK+fwsj8LXMg/PvN3IMVfAw==
+
+HTTP/1.1 200 OK
+Server: Apple
+Date: Tue, 18 Mar 2025 05:17:45 GMT
+Content-Type: application/json
+Content-Length: 113
+Connection: keep-alive
+x-apple-jingle-correlation-key: OIPW6IEXBTBM6LMSP4BX23V2U4
+x-apple-request-uuid: 721f6f20-970c-c2cf-2d92-7f037d6ebaa7
+b3: 721f6f20970cc2cf2d927f037d6ebaa7-e37c91dfb53298e4
+x-b3-traceid: 721f6f20970cc2cf2d927f037d6ebaa7
+x-b3-spanid: e37c91dfb53298e4
+apple-seq: 0.0
+apple-tk: false
+apple-originating-system: MZAccountManager
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Access-Control-Allow-Origin: https://tv.apple.com
+Vary: Origin
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: x-apple-store-front,X-Set-Apple-Store-Front,Retry-After,x-apple-application-site
+x-responding-instance: MZAccountManager:305010:::
+Strict-Transport-Security: max-age=31536000; includeSubdomains
+Set-Cookie: itspod=30;Version=1;Domain=.apple.com;Path=/;Max-Age=63072000;Expires=Thu, 18 Mar 2027 05:17:45 GMT
+X-Runtime: 0.044267
+apple-timing-app: 44 ms
+x-daiquiri-instance: daiquiri:19312003:mr55p00it-qukt05151701:7987:25RELEASE27:daiquiri-amp-commerce-pci-int-001-mr
+x-daiquiri-instance: daiquiri:14626006:mr55p00it-qukt06010101:7987:25RELEASE27:daiquiri-amp-commerce-pci-ext-001-mr
+X-XSS-Protection: 1; mode=block
+
+{"pldfltcid":"39f513ae9d2843ae889c1c36086ce0bc030","pltvcid":"6438cb751cfc4a849c38c0e1fa708327030","itspod":"30"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

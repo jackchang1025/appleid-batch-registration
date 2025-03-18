@@ -11,15 +11,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Infolists\Infolist;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Notifications\Notification;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Actions\BulkAction;
-use App\Jobs\RegisterAppleIdForBrowserJob;
 
 class EmailResource extends Resource
 {
@@ -157,7 +150,7 @@ class EmailResource extends Resource
                                     if ($record->status->value === EmailStatus::AVAILABLE->value || $record->status->value === EmailStatus::FAILED->value){
                                         $count++;
 
-                                        RegisterAppleIdForBrowserJob::dispatch($record,$data['country']);
+                                        RegisterAppleIdJob::dispatch($record,$data['country']);
                                         continue;
                                     }
 
