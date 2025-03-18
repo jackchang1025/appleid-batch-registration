@@ -21,6 +21,9 @@ use Weijiajia\HttpProxyManager\Contracts\ProxyInterface;
 use Weijiajia\HttpProxyManager\ProxyConnector;
 use Weijiajia\SaloonphpAppleClient\Exception\AccountAlreadyExistsException;
 use App\Enums\EmailStatus;
+use Saloon\Http\Connector;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleConnector;
+
 class AppleIdTvRegistration 
 {
     private const LOG_FORMAT = <<<FORMAT
@@ -62,7 +65,7 @@ FORMAT;
         $this->lastName = fake()->lastName();
         $this->birthMonth = fake()->month();
         $this->birthDay = fake()->dayOfMonth($this->birthMonth);
-        $this->birthYear = (int)date('Y', random_int(strtotime('1950-01-01'), strtotime('2000-12-31')));
+        $this->birthYear = (int) date('Y', random_int(strtotime('1950-01-01'), strtotime('2000-12-31')));
         
         // 初始化队列
         $this->queue = new ProxySplQueue();
@@ -85,6 +88,12 @@ FORMAT;
     private function getCookieJar(): FileCookieJar
     {
         if($this->cookieJar === null){
+            // 确保Cookie目录存在
+            $cookieDir = dirname($this->cookieJarPath);
+            if (!is_dir($cookieDir)) {
+                mkdir($cookieDir, 0777, true);
+            }
+            
             file_exists($this->cookieJarPath) && unlink($this->cookieJarPath);
             $this->cookieJar = new FileCookieJar($this->cookieJarPath);
         }
@@ -112,7 +121,7 @@ FORMAT;
     /**
      * 添加日志中间件到连接器
      */
-    private function addLoggerMiddleware(object $connector): void
+    private function addLoggerMiddleware(Connector $connector): void
     {
         $connector->sender()->addMiddleware(
             Middleware::log(
@@ -126,10 +135,12 @@ FORMAT;
     /**
      * 初始化连接器的通用设置
      */
-    private function initConnector(object $connector): void
+    private function initConnector(AppleConnector $connector): void
     {
         $connector->withSplQueue($this->queue);
         $connector->withCookies($this->cookieJar);
+        $connector->tries = 5;
+        $connector->retryInterval = 1000;
         $connector->debug();
     }
 
@@ -147,6 +158,7 @@ FORMAT;
 
             // 设置Cookie路径
             $this->cookieJarPath = storage_path("/app/public/cookies/{$email->email}.json");
+
 
             $this->getCookieJar();
             $this->setupProxy();
