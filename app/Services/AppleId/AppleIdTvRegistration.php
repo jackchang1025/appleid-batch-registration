@@ -22,7 +22,10 @@ use Weijiajia\HttpProxyManager\ProxyConnector;
 use Weijiajia\SaloonphpAppleClient\Exception\AccountAlreadyExistsException;
 use App\Enums\EmailStatus;
 use Saloon\Http\Connector;
+use Weijiajia\SaloonphpAppleClient\Exception\MaxRetryAttemptsException;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Data\ValidateEmailConfirmationCodeSrvResponse;
+use Weijiajia\SaloonphpAppleClient\Exception\VerificationCodeException;
 
 class AppleIdTvRegistration 
 {
@@ -53,6 +56,8 @@ FORMAT;
     private  int $birthMonth;
     private  int $birthDay;
     private  int $birthYear;
+
+    private  ?string $code = null;
 
     public function __construct(
         private readonly LoggerInterface $logger,
@@ -222,17 +227,7 @@ FORMAT;
 
             $email->createLog('生成邮箱验证码',$generateEmailConfirmationCodeSrvResponse->toArray());
 
-            $code = Helper::getEmailVerificationCode($email->email, $email->email_uri);
-
-            $email->createLog('获取邮箱验证码',['code' => $code]);
-        
-            $validateEmailConfirmationCodeSrvResponse = $this->buyTvAppleConnector->getResources()->validateEmailConfirmationCodeSrv(
-                email: $email->email,
-                clientToken: $generateEmailConfirmationCodeSrvResponse->clientToken,
-                secretCode: $code
-            );
-
-            $email->createLog('验证邮箱验证码',$validateEmailConfirmationCodeSrvResponse->toArray());
+            $validateEmailConfirmationCodeSrvResponse = $this->attemptsVerifyEmail($email,$generateEmailConfirmationCodeSrvResponse->clientToken);
 
             $data = CreateAccountSrvData::from([
                 'email' => $email->email,
@@ -244,7 +239,7 @@ FORMAT;
                 'acAccountName' => $email->email,
                 'acAccountPassword' => $this->password,
                 'pageUUID' => $validateEmailConfirmationCodeSrvResponse->pageUUID,
-                'secretCode' => $code,
+                'secretCode' => $this->code,
                 'clientToken' => $validateEmailConfirmationCodeSrvResponse->clientToken,
             ]);
 
@@ -280,6 +275,35 @@ FORMAT;
             $email->createLog("注册失败",['message' => $e->getMessage()]);
             throw $e;
        }
+    }
+
+    protected function attemptsVerifyEmail(Email $email,string $clientToken,int $attempts = 5): ValidateEmailConfirmationCodeSrvResponse
+    {
+       
+        for($i = 0; $i < $attempts; $i++){
+
+            try{
+
+                $this->code = Helper::getEmailVerificationCode($email->email, $email->email_uri);
+
+                $email->createLog('获取邮箱验证码',['code' => $this->code]);
+            
+                $validateEmailConfirmationCodeSrvResponse = $this->buyTvAppleConnector->getResources()->validateEmailConfirmationCodeSrv(
+                    email: $email->email,
+                    clientToken: $clientToken,
+                    secretCode: $this->code
+                );
+
+                $email->createLog('验证邮箱验证码',$validateEmailConfirmationCodeSrvResponse->toArray());
+                
+            }catch(VerificationCodeException $e){
+
+                $email->createLog('验证邮箱验证码失败',['message' => $e->getMessage()]);
+
+            }
+        }
+
+        throw new MaxRetryAttemptsException(" {$attempts} 次验证邮箱验证码失败");
     }
 
     /**
