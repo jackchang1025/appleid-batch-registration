@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "42e4d2ca307299bc007c6aec2c14d71b",
+    "content-hash": "e03813f96dc6e4b5093a36d40fb9012c",
     "packages": [
         {
             "name": "amphp/amp",
@@ -9548,10 +9548,16 @@
         {
             "name": "weijiajia/saloonphp-apple-client",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/saloonphp-apple-client",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-apple-client.git",
                 "reference": "80fc7435b995a76a18d6c8bb2b4f88aaeade6401"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-apple-client/zipball/80fc7435b995a76a18d6c8bb2b4f88aaeade6401",
+                "reference": "80fc7435b995a76a18d6c8bb2b4f88aaeade6401",
+                "shasum": ""
             },
             "require": {
                 "php": ">=8.0",
@@ -9566,12 +9572,14 @@
                 "mockery/mockery": "^1.5",
                 "phpunit/phpunit": "^9.0"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpAppleClient\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9591,10 +9599,11 @@
                 "php",
                 "saloon"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-apple-client/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-apple-client/tree/main"
+            },
+            "time": "2025-03-18T08:25:12+00:00"
         },
         {
             "name": "weijiajia/saloonphp-cookie-plugin",
