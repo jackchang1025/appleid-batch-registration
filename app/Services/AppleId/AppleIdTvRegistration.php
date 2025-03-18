@@ -295,6 +295,8 @@ FORMAT;
                 );
 
                 $email->createLog('验证邮箱验证码',$validateEmailConfirmationCodeSrvResponse->toArray());
+
+                return $validateEmailConfirmationCodeSrvResponse;
                 
             }catch(VerificationCodeException $e){
 
