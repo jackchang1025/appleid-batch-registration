@@ -13,7 +13,7 @@ class TvApple extends Command
      *
      * @var string
      */
-    protected $signature = 'app:tv-apple';
+    protected $signature = 'app:tv-apple {email}';
 
     /**
      * The console command description.
@@ -34,12 +34,16 @@ class TvApple extends Command
      */
     public function handle(AppleIdTvRegistration $appleIdTvRegistration)
     {
-        $email = Email::where('email', 'LindaCartery273@gmail.com')->firstOrFail();
+        $email = Email::where('email', $this->argument('email'))->firstOrFail();
 
         for($i = 0; $i < 5; $i++){
             try{
 
-                dd($appleIdTvRegistration->run($email)); 
+                $appleId = $appleIdTvRegistration->run($email); 
+
+                $this->info('注册成功: '.json_encode($appleId,JSON_UNESCAPED_UNICODE));
+
+                break;
 
             }catch(\Saloon\Exceptions\Request\Statuses\ServiceUnavailableException $e){
 

@@ -72,6 +72,21 @@ class EmailResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    BulkAction::make('export_emails')
+                        ->label('批量导出')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('info')
+                        ->action(function ($records) {
+                            $content = '';
+                            
+                            foreach ($records as $record) {
+                                $content .= "{$record->email_uri}----{$record->email}\n";
+                            }
+                            
+                            return response()->streamDownload(function () use ($content) {
+                                echo $content;
+                            }, 'emails_export_' . now()->format('YmdHis') . '.txt');
+                        }),
                     BulkAction::make('update_status')
                         ->label('批量修改状态')
                         ->icon('heroicon-o-pencil-square')

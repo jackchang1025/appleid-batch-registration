@@ -435,20 +435,19 @@ class ProxyConfigurationResource extends Resource
                     Forms\Components\TextInput::make('configuration.iproyal.session_duration')
                         ->helperText('会话持续时间(分钟),仅在开启粘性会话时有效')
                         ->numeric()
-                        ->default(10)
-                        ->visible(fn(Forms\Get $get) => $get('configuration.iproyal.sticky_session')),
+                        ->default(10),
 
                     Forms\Components\Toggle::make('configuration.iproyal.streaming')
                         ->label('启用高端池')
                         ->helperText('启用高端IP池')
                         ->default(false),
 
-                    Forms\Components\Toggle::make('configuration.iproyal.skip_isp_static')
+                    Forms\Components\Toggle::make('configuration.iproyal.skipispstatic')
                         ->label('跳过静态ISP')
                         ->helperText('启用跳过静态ISP功能')
                         ->default(false),
 
-                    Forms\Components\TextInput::make('configuration.iproyal.skip_ips_list')
+                    Forms\Components\TextInput::make('configuration.iproyal.skipipslist')
                         ->helperText('跳过IP列表ID')
                         ->default(''),
         ];

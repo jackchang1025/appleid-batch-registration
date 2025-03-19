@@ -100,6 +100,21 @@ class PhoneResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
+                BulkAction::make('export_phones')
+                        ->label('批量导出')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('info')
+                        ->action(function ($records) {
+                            $content = '';
+                            
+                            foreach ($records as $record) {
+                                $content .= "{$record->phone}----{$record->phone_address}\n";
+                            }
+                            
+                            return response()->streamDownload(function () use ($content) {
+                                echo $content;
+                            }, 'phones_export_' . now()->format('YmdHis') . '.txt');
+                        }),
                 BulkAction::make('update_status')
                     ->label('批量修改状态')
                     ->icon('heroicon-o-pencil-square')
