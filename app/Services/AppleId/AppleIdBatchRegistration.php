@@ -6,6 +6,7 @@ use App\Models\Appleid;
 use App\Models\Email;
 use App\Models\Phone;
 use App\Services\Exception\RegistrationException;
+use App\Services\Helper\Helper;
 use Exception;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\FileCookieJar;
@@ -218,7 +219,7 @@ class AppleIdBatchRegistration
         }
     }
 
-    /** 
+    /**
      * 获取所有 带有 src 的 javascript 脚本
      *
      * @param Crawler $crawler
@@ -257,7 +258,7 @@ class AppleIdBatchRegistration
             'Upgrade-Insecure-Requests' => '1',
             'User-Agent' => $userAgent,
             'sec-ch-ua' => '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
-            
+
         ];
 
         $responses = Http::pool(function (Pool $pool) use ($scriptUrls, $headers) {
@@ -267,7 +268,7 @@ class AppleIdBatchRegistration
         });
 
         return $responses;
-        
+
     }
 
     /**
@@ -342,7 +343,7 @@ class AppleIdBatchRegistration
             ]);
 
             //生成长度为8-20的密码的大小写混合加数字的密码
-            $password  = self::generatePassword();
+            $password  = Helper::generatePassword();
             $firstName = fake()->firstName();
             $lastName  = fake()->lastName();
 
@@ -373,7 +374,7 @@ class AppleIdBatchRegistration
             ]);
 
             $this->phone = $this->getPhone();
-        
+
 
             $this->resource = $this->connector->getAccountResource();
 
@@ -398,7 +399,7 @@ class AppleIdBatchRegistration
                 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d'
             );
 
-            
+
 
 //            $language = self::countryTimeZoneIdentifiers($country);
             // $xAppleITimeZone = self::getCountryTimezone($country);
@@ -422,7 +423,7 @@ class AppleIdBatchRegistration
             $this->connector->headers()->add('X-Apple-Id-Session-Id', $XAppleSessionId);
 //            $this->connector->headers()->add('Accept-Language', $acceptlanguage);
 //            $this->connector->headers()->add('X-Apple-I-Timezone', $xAppleITimeZone);
-            
+
 //            $this->connector->headers()->add('X-Apple-I-Fd-Client-Info', $clientInfo['fullData']);
 
             $this->phoneNumberVerification = PhoneNumberVerification::from([
@@ -663,61 +664,6 @@ class AppleIdBatchRegistration
             return $pendingRequest;
         };
      }
-
-
-    /**
-     * Generate a secure random password with specific requirements
-     *
-     * @param int $minLength Minimum password length (must be at least 4)
-     * @param int $maxLength Maximum password length
-     * @return string The generated password
-     * @throws \InvalidArgumentException If invalid length parameters are provided
-     * @throws \Random\RandomException If random_int fails
-     */
-    public static function generatePassword(int $minLength = 8, int $maxLength = 20): string
-    {
-        // Validate input parameters
-        if ($minLength < 8) {
-            throw new \InvalidArgumentException('Minimum length must be at least 8 to accommodate required character types');
-        }
-
-        if ($minLength > $maxLength) {
-            throw new \InvalidArgumentException('Minimum length cannot be greater than maximum length');
-        }
-
-        // Define character sets
-        $charSets = [
-            'uppercase' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-            'lowercase' => 'abcdefghijklmnopqrstuvwxyz',
-            'numbers'   => '0123456789',
-            'special'   => '!@#$%^&*()_+-=[]{}|;:,.<>?'
-        ];
-
-        // Determine password length
-        $length = random_int($minLength, $maxLength);
-
-        // Start with empty password
-        $password = '';
-
-        // Add one character from each required set
-        foreach ($charSets as $type => $chars) {
-            $randomIndex = random_int(0, strlen($chars) - 1);
-            $password .= $chars[$randomIndex];
-        }
-
-        // Create a combined character set for remaining characters
-        $allChars = implode('', $charSets);
-        $allCharsLength = strlen($allChars) - 1;
-
-        // Fill the remaining length with random characters
-        $remainingLength = $length - count($charSets);
-        for ($i = 0; $i < $remainingLength; $i++) {
-            $password .= $allChars[random_int(0, $allCharsLength)];
-        }
-
-        // Shuffle the password to avoid predictable patterns
-        return str_shuffle($password);
-    }
 
     public function getPhone(): Phone
     {

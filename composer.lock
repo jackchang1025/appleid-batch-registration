@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e03813f96dc6e4b5093a36d40fb9012c",
+    "content-hash": "ccc93ac1b915178cbb10c7553fd248cc",
     "packages": [
         {
             "name": "amphp/amp",
@@ -9480,12 +9480,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/http-proxy-manager.git",
-                "reference": "5a0defe35c53380ede8ea274c07f0b833c893e31"
+                "reference": "75fd37c813182e96ae7d3c0a2bd15f29328f898b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/5a0defe35c53380ede8ea274c07f0b833c893e31",
-                "reference": "5a0defe35c53380ede8ea274c07f0b833c893e31",
+                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/75fd37c813182e96ae7d3c0a2bd15f29328f898b",
+                "reference": "75fd37c813182e96ae7d3c0a2bd15f29328f898b",
                 "shasum": ""
             },
             "require": {
@@ -9543,7 +9543,7 @@
                 "issues": "https://github.com/jackchang1025/http-proxy-manager/issues",
                 "source": "https://github.com/jackchang1025/http-proxy-manager/tree/main"
             },
-            "time": "2025-03-11T04:52:34+00:00"
+            "time": "2025-03-19T09:43:17+00:00"
         },
         {
             "name": "weijiajia/saloonphp-apple-client",

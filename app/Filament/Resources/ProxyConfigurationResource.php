@@ -432,6 +432,11 @@ class ProxyConfigurationResource extends Resource
                         ->helperText('开启后将尽可能使用相同的IP')
                         ->default(false),
 
+                    Forms\Components\Toggle::make('configuration.iproyal.forcerandom')
+                        ->label('强制随机')
+                        ->helperText('强制随机获取IP')
+                        ->default(true),
+
                     Forms\Components\TextInput::make('configuration.iproyal.session_duration')
                         ->helperText('会话持续时间(分钟),仅在开启粘性会话时有效')
                         ->numeric()
@@ -505,6 +510,7 @@ class ProxyConfigurationResource extends Resource
                 ->default('flow')
                 ->helperText('选择代理模式'),
 
+            //账密模式
             Forms\Components\TextInput::make('configuration.smartproxy.username')
                 ->label('套餐账号')
                 ->helperText('套餐账号'),
@@ -551,11 +557,63 @@ class ProxyConfigurationResource extends Resource
             Forms\Components\TextInput::make('configuration.smartproxy.life')
                 ->helperText('尽可能保持一个ip的使用时间(分钟),仅在开启粘性会话时有效')
                 ->numeric()
-                ->default(10)
-                ->visible(fn(Forms\Get $get) => $get('configuration.smartproxy.sticky_session')),
+                ->default(10),
 
             Forms\Components\TextInput::make('configuration.smartproxy.ip')
             ->helperText('指定数据中心地址'),
+
+            //提取模式
+            //app_key: 开放的app_key,可以通过用户个人中心获取
+            // pt(可选): 套餐id,提取界面选择套餐可指定对应套餐进行提取
+            // num(可选): 单次提取IP数量,最大500
+            // cc(可选): 例如俄罗斯：RU，点击查看  全球地区
+            // state(可选): 例如：AstrakhanOblast，点击查看  州代码列表
+            // city(可选): 例如：Astrakhan，点击查看  城市代码列表
+            // life(可选): 单次提取IP时间 最大7200分钟
+            // protocol(默认): 代理协议,1.http/socks5
+            // format(可选): 返回数据格式,1.txt 2.json
+            // lb(可选): 返回数据格式,1.换行回车 2.换行 3.回车 4.Tab
+            // Forms\Components\TextInput::make('configuration.smartproxy.app_key')
+            //     ->helperText('开放的app_key,可以通过用户个人中心获取'),
+
+            // Forms\Components\TextInput::make('configuration.smartproxy.pt')
+            //     ->helperText('套餐id,提取界面选择套餐可指定对应套餐进行提取'),
+
+            // Forms\Components\TextInput::make('configuration.smartproxy.num')
+            //     ->numeric()
+            //     ->default(1)
+            //     ->helperText('单次提取IP数量,最大500'),
+
+            // Forms\Components\TextInput::make('configuration.smartproxy.cc')
+            //     ->helperText('全球地区'),
+
+            // Forms\Components\TextInput::make('configuration.smartproxy.state')
+            //     ->helperText('州代码列表'),
+
+            // Forms\Components\TextInput::make('configuration.smartproxy.city')
+            //     ->helperText('城市代码列表'),
+
+            // Forms\Components\TextInput::make('configuration.smartproxy.life')
+            //     ->numeric()
+            //     ->default(10)
+            //     ->helperText('单次提取IP时间 最大7200分钟'),
+
+            // Forms\Components\Select::make('configuration.smartproxy.protocol')
+            //     ->label('代理协议')
+            //     ->options([
+            //         'http'   => 'HTTP/HTTPS',
+            //         'socks5' => 'SOCKS5',
+            //     ])
+            //     ->default('http'),
+
+            // Forms\Components\Select::make('configuration.smartproxy.format')
+            //     ->label('返回数据格式')
+            //     ->options([
+            //         'txt' => 'txt',
+            //         'json' => 'json',
+            //     ])
+            //     ->default('json'),
+                
 
         ];
     }

@@ -22,13 +22,6 @@ class TvApple extends Command
      */
     protected $description = 'Command description';
 
-
-    public function decodedContent(string $encodedContent):?array
-    {
-        return json_decode(urldecode($encodedContent), true);
-    }
-
-
     /**
      * Execute the console command.
      */
@@ -36,20 +29,9 @@ class TvApple extends Command
     {
         $email = Email::where('email', $this->argument('email'))->firstOrFail();
 
-        for($i = 0; $i < 5; $i++){
-            try{
+        $appleId = $appleIdTvRegistration->run($email);
 
-                $appleId = $appleIdTvRegistration->run($email); 
-
-                $this->info('注册成功: '.json_encode($appleId,JSON_UNESCAPED_UNICODE));
-
-                break;
-
-            }catch(\Saloon\Exceptions\Request\Statuses\ServiceUnavailableException $e){
-
-            }
-
-            sleep(5);
-        }
+        $this->info('注册成功: '.json_encode($appleId,JSON_UNESCAPED_UNICODE));
+       
     }
 }

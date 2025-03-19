@@ -16,7 +16,7 @@
         "symfony/dom-crawler": "^7.2",
         "symfony/intl": "^7.2",
         "weijiajia/decrypt-verification-code": "@dev",
-        "weijiajia/http-proxy-manager": "@dev",
+        "weijiajia/http-proxy-manager": "dev-main",
         "weijiajia/saloonphp-apple-client": "dev-main",
         "weijiajia/saloonphp-logs-plugin": "@dev",
         "ysfkaya/filament-phone-input": "^3.1"
