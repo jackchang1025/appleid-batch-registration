@@ -35,21 +35,21 @@ class CreateAppleid extends CreateRecord
                     ->required()
                     ->searchable()
                     ->options([
-                        'USA' => '美国',
+                        // 'USA' => '美国',
                         'CAN' => '加拿大',
-                        'GBR' => '英国',
-                        'AUS' => '澳大利亚',
-                        'NZL' => '新西兰',
-                        'DEU' => '德国',
-                        'FRA' => '法国',
-                        'ITA' => '意大利',
-                        'ESP' => '西班牙',
-                        'JPN' => '日本',
-                        'KOR' => '韩国',
-                        'TWN' => '台湾',
-                        'HKG' => '香港',
-                        'MAC' => '澳门',
-                        'CHN' => '中国大陆',
+                        // 'GBR' => '英国',
+                        // 'AUS' => '澳大利亚',
+                        // 'NZL' => '新西兰',
+                        // 'DEU' => '德国',
+                        // 'FRA' => '法国',
+                        // 'ITA' => '意大利',
+                        // 'ESP' => '西班牙',
+                        // 'JPN' => '日本',
+                        // 'KOR' => '韩国',
+                        // 'TWN' => '台湾',
+                        // 'HKG' => '香港',
+                        // 'MAC' => '澳门',
+                        // 'CHN' => '中国大陆',
 
                     ])
                     ->default('USA')
@@ -98,7 +98,7 @@ class CreateAppleid extends CreateRecord
                         throw new \Exception("邮箱 {$email} 不存在");
                     }
 
-                    RegisterAppleIdForBrowserJob::dispatch($email,$data['country']);
+                    RegisterAppleIdJob::dispatch($email,$data['country']);
                 }
 
                 // 显示通知
