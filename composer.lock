@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e6edf759ca7ef52b8070a768c4053ee0",
+    "content-hash": "312f9c198ca9d96b8d077400dbad16f0",
     "packages": [
         {
             "name": "amphp/amp",
@@ -6286,11 +6286,17 @@
         },
         {
             "name": "saloonphp/cache-plugin",
-            "version": "3.x-dev",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/cache-plugin",
+            "version": "v3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/saloonphp/cache-plugin.git",
                 "reference": "9ed8efd0e08902ee105249c4d8d55edc0e8dc864"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/saloonphp/cache-plugin/zipball/9ed8efd0e08902ee105249c4d8d55edc0e8dc864",
+                "reference": "9ed8efd0e08902ee105249c4d8d55edc0e8dc864",
+                "shasum": ""
             },
             "require": {
                 "php": "^8.1",
@@ -6311,14 +6317,7 @@
                     "Saloon\\CachePlugin\\Tests\\": "tests/"
                 }
             },
-            "scripts": {
-                "test": [
-                    "./vendor/bin/pest"
-                ],
-                "fix-code": [
-                    "./vendor/bin/php-cs-fixer fix --allow-risky=yes"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -6329,10 +6328,11 @@
                 }
             ],
             "description": "Official plugin for caching Saloon responses",
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/saloonphp/cache-plugin/issues",
+                "source": "https://github.com/saloonphp/cache-plugin/tree/v3.0.0"
+            },
+            "time": "2023-10-02T16:29:40+00:00"
         },
         {
             "name": "saloonphp/saloon",
@@ -9616,10 +9616,16 @@
         {
             "name": "weijiajia/saloonphp-apple-client",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/saloonphp-apple-client",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-apple-client.git",
                 "reference": "a1f76656396136ed305305d39a984569e20112d7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-apple-client/zipball/a1f76656396136ed305305d39a984569e20112d7",
+                "reference": "a1f76656396136ed305305d39a984569e20112d7",
+                "shasum": ""
             },
             "require": {
                 "league/flysystem": "^3",
@@ -9636,12 +9642,14 @@
                 "mockery/mockery": "^1.5",
                 "phpunit/phpunit": "^9.0"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpAppleClient\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9661,18 +9669,25 @@
                 "php",
                 "saloon"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-apple-client/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-apple-client/tree/main"
+            },
+            "time": "2025-03-29T13:38:39+00:00"
         },
         {
             "name": "weijiajia/saloonphp-cookie-plugin",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/saloonphp-cookie-plugin",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-cookie-plugin.git",
                 "reference": "014facc44b3692ddd6fa3779be6b3d6c0eadd464"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-cookie-plugin/zipball/014facc44b3692ddd6fa3779be6b3d6c0eadd464",
+                "reference": "014facc44b3692ddd6fa3779be6b3d6c0eadd464",
+                "shasum": ""
             },
             "require": {
                 "php": ">=8.0",
@@ -9682,20 +9697,14 @@
                 "friendsofphp/php-cs-fixer": "^3.0",
                 "phpunit/phpunit": "^9.0|^10.0"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpCookiePlugin\\": "src/"
                 }
             },
-            "scripts": {
-                "test": [
-                    "vendor/bin/phpunit"
-                ],
-                "fix-style": [
-                    "vendor/bin/php-cs-fixer fix"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9707,26 +9716,33 @@
             ],
             "description": "A cookie management plugin for Saloon PHP, allowing for easy cookie handling in your API integrations.",
             "keywords": [
+                "Guzzle",
                 "api",
                 "cookie",
                 "cookies",
-                "guzzle",
                 "http",
                 "plugin",
                 "saloon"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-cookie-plugin/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-cookie-plugin/tree/main"
+            },
+            "time": "2025-03-23T15:36:15+00:00"
         },
         {
             "name": "weijiajia/saloonphp-header-synchronize-plugin",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/saloonphp-header-synchronize-plugin",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-header-synchronize-plugin.git",
                 "reference": "62ef842ec7afa1cadc3ddd3d97842f0a189ee8df"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-header-synchronize-plugin/zipball/62ef842ec7afa1cadc3ddd3d97842f0a189ee8df",
+                "reference": "62ef842ec7afa1cadc3ddd3d97842f0a189ee8df",
+                "shasum": ""
             },
             "require": {
                 "php": "^8.1",
@@ -9738,22 +9754,14 @@
                 "phpunit/phpunit": "^10.0",
                 "symfony/var-dumper": "^6.0"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpHeaderSynchronizePlugin\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Weijiajia\\SaloonphpHeaderSynchronizePlugin\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "vendor/bin/pest"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9773,10 +9781,11 @@
                 "saloonphp",
                 "synchronize"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-header-synchronize-plugin/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-header-synchronize-plugin/tree/main"
+            },
+            "time": "2025-03-08T16:01:02+00:00"
         },
         {
             "name": "weijiajia/saloonphp-http-proxy-plugin",
@@ -9784,12 +9793,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/saloonphp-http-proxy-plugin.git",
-                "reference": "ae4d198cd07b3eb278454f2196452e965659094c"
+                "reference": "853356a23261e55b03bba9853950bcc2b97b7040"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/saloonphp-http-proxy-plugin/zipball/ae4d198cd07b3eb278454f2196452e965659094c",
-                "reference": "ae4d198cd07b3eb278454f2196452e965659094c",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-http-proxy-plugin/zipball/853356a23261e55b03bba9853950bcc2b97b7040",
+                "reference": "853356a23261e55b03bba9853950bcc2b97b7040",
                 "shasum": ""
             },
             "require": {
@@ -9832,7 +9841,7 @@
                 "issues": "https://github.com/jackchang1025/saloonphp-http-proxy-plugin/issues",
                 "source": "https://github.com/jackchang1025/saloonphp-http-proxy-plugin/tree/main"
             },
-            "time": "2025-03-19T12:01:53+00:00"
+            "time": "2025-03-23T05:12:18+00:00"
         },
         {
             "name": "weijiajia/saloonphp-logs-plugin",
@@ -13396,14 +13405,12 @@
         "roave/security-advisories": 20,
         "weijiajia/decrypt-verification-code": 20,
         "weijiajia/http-proxy-manager": 20,
-        "weijiajia/saloonphp-apple-client": 20,
-        "weijiajia/saloonphp-http-proxy-plugin": 20
+        "weijiajia/saloonphp-apple-client": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.2",
-        "ext-dom": "*"
+        "php": "^8.2"
     },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"
