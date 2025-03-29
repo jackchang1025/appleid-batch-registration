@@ -99,15 +99,14 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
                 ])
                 ->sendToDatabase(User::first());
 
+            $this->delete();
+
         } catch (RegistrationException|ServiceUnavailableException $e) {
 
             //抛出异常
             throw $e;
 
         } catch (Exception $e) {
-
-            // 处理错误情况
-            Log::error("AppleID registration failed for email: {$this->email}: {$e}");
 
             // 显示通知
             Notification::make()
@@ -122,14 +121,11 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
                         ]), shouldOpenInNewTab: true),
                 ])
                 ->sendToDatabase(User::first());
-
         }
     }
 
     public function failed(Exception $exception): void
     {
-        Log::error("AppleID registration failed for email: {$this->email}: {$exception}");
-
         Notification::make()
             ->title("{$this->email->email} 注册失败")
             ->body($exception->getMessage())
