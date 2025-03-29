@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "58e32f199f0ba0aeafa08143b5e06042",
+    "content-hash": "d87842f89d6936ecf28f3f232b052bb1",
     "packages": [
         {
             "name": "amphp/amp",
@@ -9477,16 +9477,16 @@
         },
         {
             "name": "weijiajia/decrypt-verification-code",
-            "version": "0.0.2",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/decrypt-verification-code.git",
-                "reference": "d685b8c26cb3a77a03903f32dc243a2e4ae6cc0d"
+                "reference": "6e49d0663b137221a0fb7fad80b8c4eb436f349a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/decrypt-verification-code/zipball/d685b8c26cb3a77a03903f32dc243a2e4ae6cc0d",
-                "reference": "d685b8c26cb3a77a03903f32dc243a2e4ae6cc0d",
+                "url": "https://api.github.com/repos/jackchang1025/decrypt-verification-code/zipball/6e49d0663b137221a0fb7fad80b8c4eb436f349a",
+                "reference": "6e49d0663b137221a0fb7fad80b8c4eb436f349a",
                 "shasum": ""
             },
             "require": {
@@ -9494,6 +9494,7 @@
                 "saloonphp/saloon": "^3.0",
                 "weijiajia/saloonphp-logs-plugin": "dev-main"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -9520,9 +9521,9 @@
             ],
             "support": {
                 "issues": "https://github.com/jackchang1025/decrypt-verification-code/issues",
-                "source": "https://github.com/jackchang1025/decrypt-verification-code/tree/0.0.2"
+                "source": "https://github.com/jackchang1025/decrypt-verification-code/tree/main"
             },
-            "time": "2025-03-08T15:40:10+00:00"
+            "time": "2025-03-29T16:52:32+00:00"
         },
         {
             "name": "weijiajia/http-proxy-manager",
@@ -13394,6 +13395,7 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "roave/security-advisories": 20,
+        "weijiajia/decrypt-verification-code": 20,
         "weijiajia/http-proxy-manager": 20,
         "weijiajia/saloonphp-apple-client": 20
     },
