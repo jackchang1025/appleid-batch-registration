@@ -7,24 +7,17 @@ use App\Models\Phone;
 use App\Services\AppleId\Pages\PageManager;
 use App\Services\AppleId\Pages\VerifyPhonePage;
 use App\Services\Helper\Helper;
+use App\Services\Trait\HasPhone;
 use Weijiajia\SaloonphpAppleClient\Exception\MaxRetryAttemptsException;
 use Weijiajia\SaloonphpAppleClient\Exception\VerificationCodeException;
 use libphonenumber\PhoneNumberFormat;
 use App\Services\AppleId\Pages\ICloudTermsConditionsPage;
 use App\Models\Appleid;
 use App\Enums\EmailStatus;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
 use Weijiajia\SaloonphpAppleClient\Exception\AccountException;
 class AppleIdRegistration
-{    
-
-    protected Phone $phone;
-
-    protected array $usedPhones = [];
-
-    public const  PHONE_BLACKLIST_KEY = 'phone_code_blacklist';
-    public const  BLACKLIST_EXPIRE_SECONDS = 3600; // 1小时过期
+{
+    use HasPhone;
 
     public function __construct(
         protected PageManager $pageManager,
@@ -36,7 +29,7 @@ class AppleIdRegistration
         protected ?string $birthDay = null,
         protected ?string $birthYear = null,
         protected ?string $password = null,
-        
+
     ) {
 
         $this->firstName ??= fake()->firstName();
@@ -46,8 +39,8 @@ class AppleIdRegistration
         $this->birthYear ??= date('Y', random_int(strtotime('1950-01-01'), strtotime('2000-12-31')));
         $this->password ??= Helper::generatePassword();
     }
-    
- 
+
+
     public function register(): void
     {
         try{
@@ -56,13 +49,13 @@ class AppleIdRegistration
 
             // 1. 导航到iCloud首页
             $homePage = $this->pageManager->navigateToHomePage();
-                
+
             // 2. 点击登录，进入认证页面
             $authPage = $homePage->navigateToSignInPage();
-            
+
             // 3. 点击创建账号，进入注册页面
             $registerPage = $authPage->navigateToRegisterPage();
-            
+
             // 4. 填写注册表单并提交
             $verifyEmailPage = $registerPage
                 ->fillPersonalInfo($this->firstName, $this->lastName, $this->country)
@@ -70,17 +63,17 @@ class AppleIdRegistration
                 ->fillAccountInfo($this->email->email, $this->password, $this->password, $this->phone->getPhoneNumberService()->format(PhoneNumberFormat::NATIONAL))
                 ->acceptTerms()
                 ->submit();
-            
+
             // 5. 验证邮箱
-            $emailCode = Helper::getEmailVerificationCode(
+            $emailCode = Helper::attemptEmailVerificationCode(
                 $this->email->email,
                 $this->email->email_uri
             );
-            
+
             $verifyPhonePage = $verifyEmailPage
                 ->inputVerificationCode($emailCode)
                 ->clickContinue();
-            
+
             // 6. 验证手机号
             $iCloudTermsConditionsPage = $this->verifyPhone($verifyPhonePage);
 
@@ -101,10 +94,10 @@ class AppleIdRegistration
 
             $this->email->update(['status' => EmailStatus::REGISTERED]);
             $this->phone->update(['status' => Phone::STATUS_BOUND]);
-            
+
             var_dump($appleid->toArray());
         }catch(AccountException|\Throwable $e){
-            
+
             $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
             $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
 
@@ -131,7 +124,7 @@ class AppleIdRegistration
         // 注册成功
     }
 
-    
+
     /**
      * 处理手机验证过程，包括可能的多次尝试和手机号变更
      */
@@ -144,20 +137,20 @@ class AppleIdRegistration
                 /**
                  * @var Phone $phone
                  */
-                $phoneCode = Helper::getPhoneVerificationCode($this->phone->phone_address);
-                
+                $phoneCode = Helper::attemptPhoneVerificationCode($this->phone->phone_address);
+
                 return $verifyPhonePage
                     ->inputVerificationCode($phoneCode)
                     ->clickContinue();
-                
+
             } catch (VerificationCodeException $e) {
-                
+
                 $this->addActiveBlacklistIds($this->phone->id);
                 $this->usedPhones[] = $this->phone->id;
                 $this->phone->update(['status' => Phone::STATUS_NORMAL]);
 
                 $this->phone = $this->getPhone();
-                
+
                 // 否则尝试切换到新手机号页面，然后重新验证
                 $newPhonePage = $verifyPhonePage->navigateToNewPhonePage();
                 $verifyPhonePage = $newPhonePage
@@ -167,52 +160,5 @@ class AppleIdRegistration
         }
 
         throw new MaxRetryAttemptsException("尝试 {$maxAttempts} 次后，手机验证码仍然错误");
-    }
-
-    public function getPhone(): Phone
-    {
-        return DB::transaction(function () {
-
-            // 获取有效黑名单ID
-            $blacklistIds = $this->getActiveBlacklistIds();
-
-            $phone = Phone::query()
-                ->where('status', Phone::STATUS_NORMAL)
-                ->whereNotNull(['phone_address', 'phone'])
-                ->whereNotIn('id', $this->usedPhones)
-                ->whereNotIn('id', $blacklistIds)
-                ->where('country_code_alpha3', $this->country)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $phone->update(['status' => Phone::STATUS_BINDING]);
-
-            $this->usedPhones[] = $phone->id;
-
-            return $phone;
-        });
-    }
-
-        /**
-     * 获取当前有效的黑名单手机号ID
-     *
-     * @return array
-     */
-    protected function getActiveBlacklistIds(): array
-    {
-
-        // 获取所有黑名单记录
-        $blacklist = Redis::hgetall(self::PHONE_BLACKLIST_KEY);
-
-        // 过滤出未过期的黑名单手机号ID
-        return array_keys(array_filter($blacklist, function ($timestamp) {
-            return (now()->timestamp - $timestamp) < self::BLACKLIST_EXPIRE_SECONDS;
-        }));
-    }
-
-    protected function addActiveBlacklistIds(int $id): void
-    {
-        Redis::hset(self::PHONE_BLACKLIST_KEY, $id, now()->timestamp);
-        Redis::expire(self::PHONE_BLACKLIST_KEY, self::BLACKLIST_EXPIRE_SECONDS);
     }
 }
