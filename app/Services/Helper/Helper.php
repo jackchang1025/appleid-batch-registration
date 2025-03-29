@@ -72,6 +72,13 @@ class Helper
     }
 
 
+    /**
+     * @param string $uri
+     * @param int $maxAttempts
+     * @return string
+     * @throws MaxRetryAttemptsException
+     * @throws \Illuminate\Http\Client\ConnectionException
+     */
     public static function attemptPhoneVerificationCode(string $uri, int $maxAttempts = 5): string
     {
         for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
@@ -88,6 +95,13 @@ class Helper
         throw new MaxRetryAttemptsException("尝试 {$maxAttempts} 次后，获取手机验证码失败");
     }
 
+    /**
+     * @param string $email
+     * @param string $uri
+     * @param int $maxAttempts
+     * @return string
+     * @throws MaxRetryAttemptsException
+     */
     public static function attemptEmailVerificationCode(string $email, string $uri, int $maxAttempts = 5): string
     {
         $isSuccess = false;

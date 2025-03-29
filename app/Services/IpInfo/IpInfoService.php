@@ -4,11 +4,18 @@ namespace App\Services\IpInfo;
 
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class IpInfoService
 {
-    public function getIpInfo(?string $proxy = null, string $uri = 'http://api.ip.cc/',int $times = 5): PromiseInterface|\Illuminate\Http\Client\Response
+    /**
+     * @param string|null $proxy
+     * @param string $uri
+     * @param int $times
+     * @return PromiseInterface|Response
+     */
+    public function getIpInfo(?string $proxy = null, string $uri = 'http://api.ip.cc/',int $times = 5): PromiseInterface|Response
     {
         for ($i = 0; $i < $times; $i++) {
             try {
