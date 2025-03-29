@@ -11,6 +11,9 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use App\Enums\EmailStatus;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Database\Eloquent\Collection;
+
 class AppleidResource extends Resource
 {
     protected static ?string $model = Appleid::class;
@@ -45,8 +48,26 @@ class AppleidResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    BulkAction::make('export_appleids')
+                        ->label('批量导出')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('info')
+                        ->action(function (Collection $records,Table $table) {
+
+                            $content = '';
+
+                            foreach ($records as $record) {
+                                /** @var Appleid $record */
+                                $content .= "{$record->email}----{$record->password}----{$record->phone}----{$record->phone_uri}\n";
+                            }
+
+                            return response()->streamDownload(function () use ($content) {
+                                echo $content;
+                            }, 'appleids_export_' . now()->format('YmdHis') . '.txt');
+                        }),
                 ]),
-            ]);
+            ])
+            ->defaultSort('id', 'desc');
     }
 
     public static function getRelations(): array

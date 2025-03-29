@@ -43,7 +43,6 @@ class PhoneResource extends Resource
 
                 Forms\Components\TextInput::make('phone_address')
                     ->required()
-                    ->url()
                     ->prefix('https://')
                     ->helperText('请输入有效的URL地址'),
 
@@ -138,7 +137,7 @@ class PhoneResource extends Resource
                             ->success()
                             ->send();
                     }),
-            ]);
+            ])->defaultSort('id', 'desc');
     }
 
     public static function getRelations(): array

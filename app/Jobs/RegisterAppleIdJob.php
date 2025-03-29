@@ -83,14 +83,8 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     public function handle(AppleIdBatchRegistration $appleIdBatchRegistration): void
     {
         try {
-
-            // 获取代理配置
-            $proxyInfo = ProxyConfiguration::first();
-
             // 运行注册
-            $appleIdBatchRegistration->run($this->email, $proxyInfo && $proxyInfo->status, $this->country);
-
-            Log::info("AppleID registration successful for email: {$this->email->email}");
+            $appleIdBatchRegistration->run($this->email, $this->country);
 
             // 显示通知
             Notification::make()

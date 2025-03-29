@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Weijiajia\SaloonphpAppleClient\Contracts\AppleIdInterface;
 /**
- * 
+ *
  *
  * @property int $id
  * @property string $email
@@ -38,7 +38,29 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Appleid whereUpdatedAt($value)
  * @mixin \Eloquent
  */
-class Appleid extends Model
+class Appleid extends Model implements AppleIdInterface
 {
     protected $fillable = ['email', 'email_uri', 'phone','phone_uri','password','first_name','last_name','country','phone_country_code','phone_country_dial_code'];
+
+    public function getAppleId(): string
+    {
+        return $this->email;
+    }
+
+    public function getEmailUri(): ?string
+    {
+        return $this->email_uri;
+    }
+
+    public function getPhoneUri(): ?string
+    {
+        return $this->phone_uri;
+    }
+
+    public function getPassword(): ?string
+    {
+        return $this->password;
+    }
+
+
 }

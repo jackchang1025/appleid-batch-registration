@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "42e4d2ca307299bc007c6aec2c14d71b",
+    "content-hash": "e6edf759ca7ef52b8070a768c4053ee0",
     "packages": [
         {
             "name": "amphp/amp",
@@ -6285,6 +6285,56 @@
             "time": "2025-02-25T09:09:36+00:00"
         },
         {
+            "name": "saloonphp/cache-plugin",
+            "version": "3.x-dev",
+            "dist": {
+                "type": "path",
+                "url": "/var/www/packagist/cache-plugin",
+                "reference": "9ed8efd0e08902ee105249c4d8d55edc0e8dc864"
+            },
+            "require": {
+                "php": "^8.1",
+                "saloonphp/saloon": "^3.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.13",
+                "league/flysystem": "^3.12.2",
+                "orchestra/testbench": "^8.0",
+                "pestphp/pest": "^2.3",
+                "psr/simple-cache": "^3.0",
+                "spatie/ray": "^1.34.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Saloon\\CachePlugin\\": "src/",
+                    "Saloon\\CachePlugin\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "./vendor/bin/pest"
+                ],
+                "fix-code": [
+                    "./vendor/bin/php-cs-fixer fix --allow-risky=yes"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sammyjo20",
+                    "email": "29132017+Sammyjo20@users.noreply.github.com"
+                }
+            ],
+            "description": "Official plugin for caching Saloon responses",
+            "transport-options": {
+                "symlink": false,
+                "relative": false
+            }
+        },
+        {
             "name": "saloonphp/saloon",
             "version": "v3.11.2",
             "source": {
@@ -9427,17 +9477,11 @@
         },
         {
             "name": "weijiajia/decrypt-verification-code",
-            "version": "0.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/jackchang1025/decrypt-verification-code.git",
-                "reference": "d685b8c26cb3a77a03903f32dc243a2e4ae6cc0d"
-            },
+            "version": "dev-main",
             "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/decrypt-verification-code/zipball/d685b8c26cb3a77a03903f32dc243a2e4ae6cc0d",
-                "reference": "d685b8c26cb3a77a03903f32dc243a2e4ae6cc0d",
-                "shasum": ""
+                "type": "path",
+                "url": "/var/www/packagist/decrypt-verification-code",
+                "reference": "0a416bd648ef340eb8b578ef481d5e8abcdeb21b"
             },
             "require": {
                 "php": "^8.0",
@@ -9450,7 +9494,25 @@
                     "Weijiajia\\DecryptVerificationCode\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "Weijiajia\\DecryptVerificationCode\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ],
+                "check-style": [
+                    "phpcs"
+                ],
+                "fix-style": [
+                    "phpcbf"
+                ],
+                "analyse": [
+                    "phpstan analyse"
+                ]
+            },
             "license": [
                 "MIT"
             ],
@@ -9468,25 +9530,18 @@
                 "jfbym",
                 "verification"
             ],
-            "support": {
-                "issues": "https://github.com/jackchang1025/decrypt-verification-code/issues",
-                "source": "https://github.com/jackchang1025/decrypt-verification-code/tree/0.0.2"
-            },
-            "time": "2025-03-08T15:40:10+00:00"
+            "transport-options": {
+                "symlink": false,
+                "relative": false
+            }
         },
         {
             "name": "weijiajia/http-proxy-manager",
             "version": "dev-main",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/jackchang1025/http-proxy-manager.git",
-                "reference": "5a0defe35c53380ede8ea274c07f0b833c893e31"
-            },
             "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/5a0defe35c53380ede8ea274c07f0b833c893e31",
-                "reference": "5a0defe35c53380ede8ea274c07f0b833c893e31",
-                "shasum": ""
+                "type": "path",
+                "url": "/var/www/packagist/http-proxy-manager",
+                "reference": "72473db3cb6cd064a5a8b717bec56e419581477c"
             },
             "require": {
                 "illuminate/collections": "^9.0|^10.0|^11.0|^12.0",
@@ -9501,7 +9556,6 @@
                 "pestphp/pest": "^3.0",
                 "symfony/var-dumper": "^6.0|^7.0"
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "laravel": {
@@ -9515,7 +9569,22 @@
                     "Weijiajia\\HttpProxyManager\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "Weijiajia\\HttpProxyManager\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "vendor/bin/pest"
+                ],
+                "test-coverage": [
+                    "vendor/bin/pest --coverage"
+                ],
+                "format": [
+                    "vendor/bin/pint"
+                ]
+            },
             "license": [
                 "MIT"
             ],
@@ -9539,11 +9608,10 @@
                 "proxyscrape",
                 "stormproxies"
             ],
-            "support": {
-                "issues": "https://github.com/jackchang1025/http-proxy-manager/issues",
-                "source": "https://github.com/jackchang1025/http-proxy-manager/tree/main"
-            },
-            "time": "2025-03-11T04:52:34+00:00"
+            "transport-options": {
+                "symlink": false,
+                "relative": false
+            }
         },
         {
             "name": "weijiajia/saloonphp-apple-client",
@@ -9551,16 +9619,18 @@
             "dist": {
                 "type": "path",
                 "url": "/var/www/packagist/saloonphp-apple-client",
-                "reference": "80fc7435b995a76a18d6c8bb2b4f88aaeade6401"
+                "reference": "a1f76656396136ed305305d39a984569e20112d7"
             },
             "require": {
+                "league/flysystem": "^3",
                 "php": ">=8.0",
+                "saloonphp/cache-plugin": "^3.0",
                 "saloonphp/saloon": "^3.0",
                 "spatie/laravel-data": "^4.13",
                 "weijiajia/saloonphp-cookie-plugin": "@dev",
                 "weijiajia/saloonphp-header-synchronize-plugin": "@dev",
-                "weijiajia/saloonphp-http-proxy-plugin": "@dev",
-                "weijiajia/saloonphp-logs-plugin": "@dev"
+                "weijiajia/saloonphp-http-proxy-plugin": "dev-main",
+                "weijiajia/saloonphp-logs-plugin": "dev-main"
             },
             "require-dev": {
                 "mockery/mockery": "^1.5",
@@ -9602,7 +9672,7 @@
             "dist": {
                 "type": "path",
                 "url": "/var/www/packagist/saloonphp-cookie-plugin",
-                "reference": "cefccd6692b9d564fb49ca39c8d4b74841b455ea"
+                "reference": "014facc44b3692ddd6fa3779be6b3d6c0eadd464"
             },
             "require": {
                 "php": ">=8.0",
@@ -9711,10 +9781,16 @@
         {
             "name": "weijiajia/saloonphp-http-proxy-plugin",
             "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-http-proxy-plugin.git",
+                "reference": "ae4d198cd07b3eb278454f2196452e965659094c"
+            },
             "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/saloonphp-http-proxy-plugin",
-                "reference": "4bdaedf3e13881c561a298078be21bdf8c7e82f7"
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-http-proxy-plugin/zipball/ae4d198cd07b3eb278454f2196452e965659094c",
+                "reference": "ae4d198cd07b3eb278454f2196452e965659094c",
+                "shasum": ""
             },
             "require": {
                 "php": "^8.0",
@@ -9725,28 +9801,14 @@
                 "pestphp/pest": "^3.7",
                 "phpstan/phpstan": "^1.10"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpHttpProxyPlugin\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Weijiajia\\SaloonphpHttpProxyPlugin\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "vendor/bin/pest"
-                ],
-                "analyse": [
-                    "vendor/bin/phpstan analyse"
-                ],
-                "fix": [
-                    "vendor/bin/php-cs-fixer fix"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9766,38 +9828,31 @@
                 "saloon",
                 "saloonphp"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-http-proxy-plugin/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-http-proxy-plugin/tree/main"
+            },
+            "time": "2025-03-19T12:01:53+00:00"
         },
         {
             "name": "weijiajia/saloonphp-logs-plugin",
             "version": "dev-main",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/jackchang1025/saloonphp-logs-plugin.git",
-                "reference": "0532ea538e1eb1be2ff71c5325b1c00032240d70"
-            },
             "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/saloonphp-logs-plugin/zipball/0532ea538e1eb1be2ff71c5325b1c00032240d70",
-                "reference": "0532ea538e1eb1be2ff71c5325b1c00032240d70",
-                "shasum": ""
+                "type": "path",
+                "url": "/var/www/packagist/saloonphp-logs-plugin",
+                "reference": "b341c8a87bedffbb358caf571bdab2d15847f7f1"
             },
             "require": {
                 "php": "^8.0",
                 "psr/log": "^3.0",
                 "saloonphp/saloon": "^3.0"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpLogsPlugin\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9813,11 +9868,10 @@
                 "plugin",
                 "saloonphp"
             ],
-            "support": {
-                "issues": "https://github.com/jackchang1025/saloonphp-logs-plugin/issues",
-                "source": "https://github.com/jackchang1025/saloonphp-logs-plugin/tree/0.0.6"
-            },
-            "time": "2025-02-28T09:11:28+00:00"
+            "transport-options": {
+                "symlink": false,
+                "relative": false
+            }
         },
         {
             "name": "ysfkaya/filament-phone-input",
@@ -13343,12 +13397,13 @@
         "weijiajia/decrypt-verification-code": 20,
         "weijiajia/http-proxy-manager": 20,
         "weijiajia/saloonphp-apple-client": 20,
-        "weijiajia/saloonphp-logs-plugin": 20
+        "weijiajia/saloonphp-http-proxy-plugin": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.2"
+        "php": "^8.2",
+        "ext-dom": "*"
     },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"
