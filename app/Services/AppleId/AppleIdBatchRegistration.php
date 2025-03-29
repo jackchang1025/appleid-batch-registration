@@ -133,13 +133,13 @@ class AppleIdBatchRegistration
             $this->setupSession();
 
             // 执行验证流程
-            $accountResponse = $this->executeVerificationProcess();
+           $this->executeVerificationProcess();
 
             // 保存注册成功的账户信息
             $this->saveRegisteredAccount();
 
             // 更新状态为注册成功
-            $this->updateSuccessStatus($accountResponse);
+            $this->updateSuccessStatus();
 
             return true;
         } catch (AccountAlreadyExistsException $e) {
@@ -407,15 +407,12 @@ class AppleIdBatchRegistration
     /**
      * 更新注册成功状态
      *
-     * @param Response $accountResponse 账户响应
      * @return void
-     * @throws JsonException
      */
-    protected function updateSuccessStatus(Response $accountResponse): void
+    protected function updateSuccessStatus(): void
     {
         $this->email->update(['status' => EmailStatus::REGISTERED]);
         $this->phone->update(['status' => Phone::STATUS_BOUND]);
-        $this->log('注册成功', ['account_details' => $accountResponse->json()]);
     }
 
     /**
