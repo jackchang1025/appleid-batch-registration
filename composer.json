@@ -15,8 +15,8 @@
         "propaganistas/laravel-phone": "^5.3",
         "symfony/dom-crawler": "^7.2",
         "symfony/intl": "^7.2",
-        "weijiajia/decrypt-verification-code": "dev-main",
-        "weijiajia/http-proxy-manager": "@dev",
+        "weijiajia/decrypt-verification-code": "^0.0.2",
+        "weijiajia/http-proxy-manager": "dev-main",
         "weijiajia/saloonphp-apple-client": "dev-main",
         "ysfkaya/filament-phone-input": "^3.1"
     },

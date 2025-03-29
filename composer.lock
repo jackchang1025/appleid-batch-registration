@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "312f9c198ca9d96b8d077400dbad16f0",
+    "content-hash": "58e32f199f0ba0aeafa08143b5e06042",
     "packages": [
         {
             "name": "amphp/amp",
@@ -2484,16 +2484,16 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "7.9.2",
+            "version": "7.9.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "d281ed313b989f213357e3be1a179f02196ac99b"
+                "reference": "7b2f29fe81dc4da0ca0ea7d42107a0845946ea77"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/d281ed313b989f213357e3be1a179f02196ac99b",
-                "reference": "d281ed313b989f213357e3be1a179f02196ac99b",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/7b2f29fe81dc4da0ca0ea7d42107a0845946ea77",
+                "reference": "7b2f29fe81dc4da0ca0ea7d42107a0845946ea77",
                 "shasum": ""
             },
             "require": {
@@ -2590,7 +2590,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/7.9.2"
+                "source": "https://github.com/guzzle/guzzle/tree/7.9.3"
             },
             "funding": [
                 {
@@ -2606,20 +2606,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-07-24T11:22:20+00:00"
+            "time": "2025-03-27T13:37:11+00:00"
         },
         {
             "name": "guzzlehttp/promises",
-            "version": "2.0.4",
+            "version": "2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/promises.git",
-                "reference": "f9c436286ab2892c7db7be8c8da4ef61ccf7b455"
+                "reference": "7c69f28996b0a6920945dd20b3857e499d9ca96c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/f9c436286ab2892c7db7be8c8da4ef61ccf7b455",
-                "reference": "f9c436286ab2892c7db7be8c8da4ef61ccf7b455",
+                "url": "https://api.github.com/repos/guzzle/promises/zipball/7c69f28996b0a6920945dd20b3857e499d9ca96c",
+                "reference": "7c69f28996b0a6920945dd20b3857e499d9ca96c",
                 "shasum": ""
             },
             "require": {
@@ -2673,7 +2673,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/promises/issues",
-                "source": "https://github.com/guzzle/promises/tree/2.0.4"
+                "source": "https://github.com/guzzle/promises/tree/2.2.0"
             },
             "funding": [
                 {
@@ -2689,20 +2689,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-10-17T10:06:22+00:00"
+            "time": "2025-03-27T13:27:01+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
-            "version": "2.7.0",
+            "version": "2.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "a70f5c95fb43bc83f07c9c948baa0dc1829bf201"
+                "reference": "c2270caaabe631b3b44c85f99e5a04bbb8060d16"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/a70f5c95fb43bc83f07c9c948baa0dc1829bf201",
-                "reference": "a70f5c95fb43bc83f07c9c948baa0dc1829bf201",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/c2270caaabe631b3b44c85f99e5a04bbb8060d16",
+                "reference": "c2270caaabe631b3b44c85f99e5a04bbb8060d16",
                 "shasum": ""
             },
             "require": {
@@ -2789,7 +2789,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.7.0"
+                "source": "https://github.com/guzzle/psr7/tree/2.7.1"
             },
             "funding": [
                 {
@@ -2805,7 +2805,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-07-18T11:15:46+00:00"
+            "time": "2025-03-27T12:30:47+00:00"
         },
         {
             "name": "guzzlehttp/uri-template",
@@ -9477,11 +9477,17 @@
         },
         {
             "name": "weijiajia/decrypt-verification-code",
-            "version": "dev-main",
+            "version": "0.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/decrypt-verification-code.git",
+                "reference": "d685b8c26cb3a77a03903f32dc243a2e4ae6cc0d"
+            },
             "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/decrypt-verification-code",
-                "reference": "0a416bd648ef340eb8b578ef481d5e8abcdeb21b"
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/decrypt-verification-code/zipball/d685b8c26cb3a77a03903f32dc243a2e4ae6cc0d",
+                "reference": "d685b8c26cb3a77a03903f32dc243a2e4ae6cc0d",
+                "shasum": ""
             },
             "require": {
                 "php": "^8.0",
@@ -9494,25 +9500,7 @@
                     "Weijiajia\\DecryptVerificationCode\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Weijiajia\\DecryptVerificationCode\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "phpunit"
-                ],
-                "check-style": [
-                    "phpcs"
-                ],
-                "fix-style": [
-                    "phpcbf"
-                ],
-                "analyse": [
-                    "phpstan analyse"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9530,18 +9518,25 @@
                 "jfbym",
                 "verification"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/decrypt-verification-code/issues",
+                "source": "https://github.com/jackchang1025/decrypt-verification-code/tree/0.0.2"
+            },
+            "time": "2025-03-08T15:40:10+00:00"
         },
         {
             "name": "weijiajia/http-proxy-manager",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/http-proxy-manager",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/http-proxy-manager.git",
                 "reference": "72473db3cb6cd064a5a8b717bec56e419581477c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/72473db3cb6cd064a5a8b717bec56e419581477c",
+                "reference": "72473db3cb6cd064a5a8b717bec56e419581477c",
+                "shasum": ""
             },
             "require": {
                 "illuminate/collections": "^9.0|^10.0|^11.0|^12.0",
@@ -9556,6 +9551,7 @@
                 "pestphp/pest": "^3.0",
                 "symfony/var-dumper": "^6.0|^7.0"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "laravel": {
@@ -9569,22 +9565,7 @@
                     "Weijiajia\\HttpProxyManager\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Weijiajia\\HttpProxyManager\\Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "vendor/bin/pest"
-                ],
-                "test-coverage": [
-                    "vendor/bin/pest --coverage"
-                ],
-                "format": [
-                    "vendor/bin/pint"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9608,10 +9589,11 @@
                 "proxyscrape",
                 "stormproxies"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/http-proxy-manager/issues",
+                "source": "https://github.com/jackchang1025/http-proxy-manager/tree/main"
+            },
+            "time": "2025-03-20T07:49:46+00:00"
         },
         {
             "name": "weijiajia/saloonphp-apple-client",
@@ -9846,22 +9828,30 @@
         {
             "name": "weijiajia/saloonphp-logs-plugin",
             "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "/var/www/packagist/saloonphp-logs-plugin",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-logs-plugin.git",
                 "reference": "b341c8a87bedffbb358caf571bdab2d15847f7f1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-logs-plugin/zipball/b341c8a87bedffbb358caf571bdab2d15847f7f1",
+                "reference": "b341c8a87bedffbb358caf571bdab2d15847f7f1",
+                "shasum": ""
             },
             "require": {
                 "php": "^8.0",
                 "psr/log": "^3.0",
                 "saloonphp/saloon": "^3.0"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "Weijiajia\\SaloonphpLogsPlugin\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -9877,10 +9867,11 @@
                 "plugin",
                 "saloonphp"
             ],
-            "transport-options": {
-                "symlink": false,
-                "relative": false
-            }
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-logs-plugin/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-logs-plugin/tree/main"
+            },
+            "time": "2025-03-21T10:37:02+00:00"
         },
         {
             "name": "ysfkaya/filament-phone-input",
@@ -13403,7 +13394,6 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "roave/security-advisories": 20,
-        "weijiajia/decrypt-verification-code": 20,
         "weijiajia/http-proxy-manager": 20,
         "weijiajia/saloonphp-apple-client": 20
     },
