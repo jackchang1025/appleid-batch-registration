@@ -50,22 +50,13 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Vali
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Verification\SendVerificationEmail;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Account\Verification\SendVerificationEmail as SendVerificationEmailResponse;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Captcha\Captcha as CaptchaResponse;
+use App\Services\CountryLanguageService;
 use App\Services\CloudCode\CloudCodeService;
 
 class AppleIdBatchRegistration
 {
     use HasPhone;
 
-    //验证码
-    public static array $preferredLanguage = [
-        'USA' => 'en_US',
-        'CAN' => 'en_GB',
-    ];
-
-    /**
-     * Apple ID Widget Key 常量
-     */
-    private const string WIDGET_KEY = 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d';
 
     //手机号码验证
     protected Captcha $captcha;
@@ -82,14 +73,24 @@ class AppleIdBatchRegistration
     protected VerificationInfo $verificationInfo;
 
     protected ?Email $email = null;
+
     protected ?CaptchaResponse $captchaResponse = null;
 
     protected Apple $apple;
 
     protected ?Appleid $appleId = null;
-    protected string $appleSessionId;
+
+    protected ?string $appleSessionId = null;
 
     private ?string $code = null;
+
+    protected ?array $direct = null;
+
+    protected ?string $password = null;
+
+    protected ?string $widgetKey = null;
+
+    protected ?string $locale = null;
 
     public function __construct(
         protected AppleBuilder $appleBuilder,
@@ -98,6 +99,53 @@ class AppleIdBatchRegistration
         protected IpInfoService $ipInfoService,
     ) {
 
+    }
+
+
+    public function direct(): array
+    {
+        if ($this->direct === null) {
+
+            $this->direct = $this->parseBootArgs($this->widgetAccount())['direct'] ?? null;
+
+            if (empty($this->direct)) {
+                throw new RuntimeException('direct not found');
+            }
+
+            if (empty($this->direct['sessionId'])) {
+                throw new RuntimeException('sessionId not found');
+            }
+
+            if (empty($this->direct['widgetKey'])) {
+                throw new RuntimeException('widgetKey not found');
+            }
+
+            if (empty($this->direct['config']['localizedResources']['locale'])) {
+                throw new RuntimeException('locale not found');
+            }
+        }
+
+        return $this->direct;
+    }
+
+    protected function password(): string
+    {
+        return $this->password ??= Helper::generatePassword();
+    }
+
+    protected function widgetKey(): string
+    {
+        return $this->widgetKey ??= 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d';
+    }
+
+    protected function getLocale(): string
+    {
+        return $this->locale ??= $this->direct()['config']['localizedResources']['locale'];
+    }
+
+    protected function appleSessionId()
+    {
+        return $this->appleSessionId ??= $this->direct()['sessionId'];
     }
 
     /**
@@ -126,11 +174,12 @@ class AppleIdBatchRegistration
             // 更新邮箱状态为处理中
             $email->update(['status' => EmailStatus::PROCESSING]);
 
+             // 获取手机号码和设置会话
+             $this->setupSession();
+
+
             // 准备注册所需的账户信息
             $this->prepareAccountInfo();
-
-            // 获取手机号码和设置会话
-            $this->setupSession();
 
             // 执行验证流程
            $this->executeVerificationProcess();
@@ -160,6 +209,8 @@ class AppleIdBatchRegistration
         }
     }
 
+
+
     /**
      * 准备注册账户所需的基本信息
      *
@@ -173,14 +224,14 @@ class AppleIdBatchRegistration
             'answer' => '',
         ]);
 
-        $password  = Helper::generatePassword();
         $firstName = fake()->firstName();
         $lastName  = fake()->lastName();
         $birthday  = date('Y-m-d', random_int(strtotime('1950-01-01'), strtotime('2000-12-31')));
 
+
         $this->verificationAccount = VerificationAccount::from([
             'name'             => $this->email->email,
-            'password'         => $password,
+            'password'         => $this->password(),
             'person'           => [
                 'name'           => [
                     'firstName' => $firstName,
@@ -192,7 +243,7 @@ class AppleIdBatchRegistration
                 ],
             ],
             'preferences'      => [
-                'preferredLanguage'    => self::preferredLanguage($this->country),
+                'preferredLanguage'    => $this->getLocale(),
                 'marketingPreferences' => [
                     'appleNews'     => false,
                     'appleUpdates'  => true,
@@ -202,34 +253,55 @@ class AppleIdBatchRegistration
             'verificationInfo' => $this->verificationInfo,
         ]);
 
-        $this->appleId = Appleid::make([
-            'email'     => $this->email->email,
-            'email_uri' => $this->email->email_uri,
-            'password'  => $password,
+        $this->phoneNumberVerification = PhoneNumberVerification::from([
+            'phoneNumber' => [
+                'id'              => 1,
+                'number'          => $this->phone->getPhoneNumberService()->format(PhoneNumberFormat::NATIONAL),
+                'countryCode'     => $this->phone->country_code,
+                'countryDialCode' => $this->phone->country_dial_code,
+                'nonFTEU'         => true,
+            ],
+            'mode'        => 'sms',
         ]);
+
+        $this->captcha = Captcha::from([
+            'id'     => 0,
+            'token'  => '',
+            'answer' => '',
+        ]);
+
+        $this->validate = new Validate(
+            $this->phoneNumberVerification,
+            $this->verificationAccount,
+            $this->captcha,
+            false
+        );
+
+
     }
 
     /**
      * 设置会话和获取手机号码
      *
      * @return void
-     * @throws NumberFormatException
-     * @throws FatalRequestException
-     * @throws RequestException
      */
     protected function setupSession(): void
     {
         $this->phone = $this->getPhone();
 
+        $this->appleId = Appleid::make([
+            'email'     => $this->email->email,
+            'email_uri' => $this->email->email_uri,
+            'password'  => $this->password(),
+        ]);
+
         $this->apple = $this->appleBuilder->build($this->appleId);
         $this->apple->withDebug(true);
 
+        $this->apple->withCountry(CountryLanguageService::getAlpha2Code($this->country));
+
         $this->setupDebugMiddleware();
         $this->setupProxyAndHeaders();
-
-        $this->setupValidationData();
-
-        $this->setSessionId();
     }
 
     /**
@@ -254,64 +326,49 @@ class AppleIdBatchRegistration
     {
         $proxy = $this->apple->getProxySplQueue()->dequeue();
         $ipInfo = $this->ipInfoService->getIpInfo($proxy->getUrl());
+
+        $this->log('ipInfo', $ipInfo->json());
         $timezone = $ipInfo->json('timezone');
 
         $this->apple->appleIdConnector()->headers()->add('X-Apple-I-Timezone', $timezone);
-        $this->apple->appleIdConnector()->headers()->add('Accept-Language', 'en-CA,en-GB;q=0.9,en;q=0.8');
+        $this->apple->appleIdConnector()->headers()->add('Accept-Language', CountryLanguageService::getAcceptLanguage($this->country));
     }
 
     /**
-     * @return void
+     * @return Response
      * @throws FatalRequestException
      * @throws RequestException
      */
-    protected function setSessionId(): void
+    protected function widgetAccount(): Response
     {
-        $this->apple->appleIdConnector()->getAccountResource()->widgetAccount(
-            widgetKey: self::WIDGET_KEY,
+        return $this->apple->appleIdConnector()->getAccountResource()->widgetAccount(
+            widgetKey: $this->widgetKey(),
             referer: 'https://www.icloud.com/',
             appContext: 'icloud',
             lv: '0.3.16'
         );
-
-        $this->appleSessionId = $this->apple->getCookieJar()->getCookieByName('aidsp')?->getValue();
-        if (!$this->appleSessionId) {
-            throw new RuntimeException('X-Apple-Session-Id not found');
-        }
     }
 
     /**
-     * 设置验证数据
-     *
-     * @return void
-     * @throws NumberFormatException
+     * @throws JsonException
      */
-    protected function setupValidationData(): void
+    public function parseBootArgs(Response $response): array
     {
-        $this->phoneNumberVerification = PhoneNumberVerification::from([
-            'phoneNumber' => [
-                'id'              => 1,
-                'number'          => $this->phone->getPhoneNumberService()->format(PhoneNumberFormat::NATIONAL),
-                'countryCode'     => $this->phone->country_code,
-                'countryDialCode' => $this->phone->country_dial_code,
-                'nonFTEU'         => true,
-            ],
-            'mode'        => 'sms',
-        ]);
+        $crawler = $response->dom();
+        $script = $crawler->filter('script#boot_args');
+        if ($script->count() === 0) {
+            throw new RuntimeException('boot_args not found');
+        }
 
-        $this->captcha = Captcha::from([
-            'id'     => 0,
-            'token'  => '',
-            'answer' => '',
-        ]);
+        $json = json_decode($script->text(), true, 512, JSON_THROW_ON_ERROR);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException('Invalid JSON format');
+        }
 
-        $this->validate = new Validate(
-            $this->phoneNumberVerification,
-            $this->verificationAccount,
-            $this->captcha,
-            false
-        );
+        return $json;
     }
+
+
 
     /**
      * 执行验证流程
@@ -330,31 +387,31 @@ class AppleIdBatchRegistration
     protected function executeVerificationProcess(): Response
     {
         // 获取验证码图片
-        $this->captcha($this->appleSessionId, self::WIDGET_KEY);
+        $this->captcha($this->appleSessionId(), $this->widgetKey());
 
         // 验证邮箱和密码
         $this->validateEmailAndPassword();
 
         // 验证验证码
         $this->attemptsCaptcha(
-            appleIdSessionId: $this->appleSessionId,
-            widgetKey: self::WIDGET_KEY
+            appleIdSessionId: $this->appleSessionId(),
+            widgetKey: $this->widgetKey()
         );
 
         // 验证邮箱验证码
-        $this->attemptVerificationEmailCode($this->appleSessionId, self::WIDGET_KEY);
+        $this->attemptVerificationEmailCode($this->appleSessionId(), $this->widgetKey());
 
         // 验证手机验证码
         $this->attemptVerificationPhoneCode(
-            appleIdSessionId: $this->appleSessionId,
-            widgetKey: self::WIDGET_KEY
+            appleIdSessionId: $this->appleSessionId(),
+            widgetKey: $this->widgetKey()
         );
 
         // 提交账户信息
         return $this->apple->appleIdConnector()->getAccountResource()->account(
             validateDto: $this->validate,
-            appleIdSessionId: $this->appleSessionId,
-            appleWidgetKey: self::WIDGET_KEY
+            appleIdSessionId: $this->appleSessionId(),
+            appleWidgetKey: $this->widgetKey()
         );
     }
 
@@ -371,15 +428,15 @@ class AppleIdBatchRegistration
     {
         $this->apple->appleIdConnector()->getAccountResource()->appleid(
             $this->email->email,
-            $this->appleSessionId,
-            self::WIDGET_KEY
+            $this->appleSessionId(),
+            $this->widgetKey()
         );
 
         $this->apple->appleIdConnector()->getAccountResource()->password(
             $this->email->email,
             $this->verificationAccount->password,
-            $this->appleSessionId,
-            self::WIDGET_KEY
+            $this->appleSessionId(),
+            $this->widgetKey()
         );
     }
 
@@ -490,10 +547,6 @@ class AppleIdBatchRegistration
         $this->log('注册失败', ['message' => $e->getMessage()]);
     }
 
-    public static function preferredLanguage(string $country): string
-    {
-        return self::$preferredLanguage[$country] ?? 'en_US';
-    }
 
     protected function debugRequest(): callable
     {
@@ -808,7 +861,7 @@ class AppleIdBatchRegistration
      */
     protected function isValidEmailResponse(\Illuminate\Http\Client\Response $response): bool
     {
-        return $response->json('status') === 1 || $response->json('statusCode') === 200;
+        return $response->json('status') === 1 || $response->json('statusCode') === 200 || $response->json('code') === 0;
     }
 
     /**
@@ -819,7 +872,28 @@ class AppleIdBatchRegistration
      */
     protected function extractEmailCode(\Illuminate\Http\Client\Response $response): ?string
     {
-        return $response->json('message.email_code') ?: $response->json('data.code');
+
+        if ($response->json('message.email_code')) {
+            return $response->json('message.email_code');
+        }
+
+        if ($response->json('data.code')) {
+            return $response->json('data.code');
+        }
+
+        if ($response->json('email_code')) {
+            return $response->json('email_code');
+        }
+
+        $string = $response->json('data.result');
+        if ($string && is_string($string)) {
+            preg_match('/您的验证码是：(\d+)/', $string, $matches);
+            if (isset($matches[1])) {
+                return $matches[1];
+            }
+        }
+
+        return null;
     }
 
     /**

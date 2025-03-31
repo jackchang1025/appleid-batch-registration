@@ -21,15 +21,12 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AuthTvApple\AuthTvAppleConnector
 use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\BuyTvAppleConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\Idmsa\IdmsaConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\TvApple\TvAppleConnector;
-use Weijiajia\SaloonphpAppleClient\Integrations\Icloud\IcloudConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\WebIcloud\WebIcloudConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\Icloud\SetupIcloudConnector;
 use Weijiajia\SaloonphpHeaderSynchronizePlugin\Contracts\HeaderSynchronizeDriver;
-use Weijiajia\SaloonphpHeaderSynchronizePlugin\Driver\FileHeaderSynchronize;
 use Weijiajia\SaloonphpHeaderSynchronizePlugin\Driver\ArrayStoreHeaderSynchronize;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 use Weijiajia\SaloonphpAppleClient\Integrations\FeedbackwsIcloud\FeedbackwsIcloudConnector;
-use Weijiajia\SaloonphpAppleClient\Integrations\AppleIdCdnApple\AppleIdCdnAppleConnector;
 class Apple
 {
     use Macroable;
@@ -50,10 +47,11 @@ class Apple
     protected ?BuyTvAppleConnector $buyTvAppleConnector = null;
     protected ?IcloudConnector $icloudConnector = null;
     protected ?WebIcloudConnector $webIcloudConnector = null;
-    protected ?FeedbackwsIcloudConnector $feedbackwsIcloudConnector = null;
+    protected ?FeedbackwsIcloudConnector $feedBackWsIcloudConnector = null;
     protected ?SetupIcloudConnector $setupIcloudConnector = null;
-    protected ?AppleIdCdnAppleConnector $appleIdCdnAppleConnector = null;
     private ?CookieJar $cookieJar = null;
+
+    protected ?string $country = null;
 
     public function __construct(
         protected AppleIdInterface $appleId,
@@ -61,6 +59,18 @@ class Apple
         protected ?Dispatcher $dispatcher = null
     ) {
 
+    }
+
+    public function withCountry(string $country): static
+    {
+        $this->country = $country;
+
+        return $this;
+    }
+
+    public function getCountry(): ?string
+    {
+        return $this->country;
     }
 
     public function appleAuthenticationConnector(): AppleAuthenticationConnector
@@ -85,44 +95,25 @@ class Apple
         return $this->appleAuthenticationConnector;
     }
 
-    public function feedbackwsIcloudConnector(): FeedbackwsIcloudConnector
+    public function feedBackWsIcloudConnector(): FeedbackwsIcloudConnector
     {
-        if ($this->feedbackwsIcloudConnector === null) {
-            $this->feedbackwsIcloudConnector = new FeedbackwsIcloudConnector();
-            $this->feedbackwsIcloudConnector
+        if ($this->feedBackWsIcloudConnector === null) {
+            $this->feedBackWsIcloudConnector = new FeedbackwsIcloudConnector();
+            $this->feedBackWsIcloudConnector
                 ->withLogger($this->getLogger())
                 ->withCookies($this->getCookieJar())
                 ->withProxyQueue($this->getProxySplQueue())
                 ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
 
             if ($this->debug) {
-                $this->feedbackwsIcloudConnector->debug();
+                $this->feedBackWsIcloudConnector->debug();
             }
 
-            $this->feedbackwsIcloudConnector->tries         = 3;
-            $this->feedbackwsIcloudConnector->retryInterval = 1000;
+            $this->feedBackWsIcloudConnector->tries         = 3;
+            $this->feedBackWsIcloudConnector->retryInterval = 1000;
         }
 
-        return $this->feedbackwsIcloudConnector;
-    }
-
-    public function appleIdCdnAppleConnector(): AppleIdCdnAppleConnector
-    {
-        if ($this->appleIdCdnAppleConnector === null) {
-            $this->appleIdCdnAppleConnector = new AppleIdCdnAppleConnector();
-            $this->appleIdCdnAppleConnector
-                ->withLogger($this->getLogger())
-                ->withProxyQueue($this->getProxySplQueue());
-
-            if ($this->debug) {
-                $this->appleIdCdnAppleConnector->debug();
-            }
-
-            $this->appleIdCdnAppleConnector->tries         = 3;
-            $this->appleIdCdnAppleConnector->retryInterval = 1000;
-        }
-
-        return $this->appleIdCdnAppleConnector;
+        return $this->feedBackWsIcloudConnector;
     }
 
     public function withLogger(LoggerInterface $logger): static
@@ -235,7 +226,14 @@ class Apple
             if ($this->debug) {
                 $proxyConnector->debug();
             }
-            $proxy = $proxyConnector->default();
+
+            if ($this->getCountry()) {
+                $proxy = $proxyConnector->defaultModelIp([
+                    'country' => $this->getCountry(),
+                ]);
+            } else {
+                $proxy = $proxyConnector->defaultModelIp();
+            }
 
             if ($proxy instanceof Collection) {
 
@@ -247,7 +245,6 @@ class Apple
             if ($proxy instanceof ProxyInterface) {
                 return $this->proxySplQueue = (new ProxySplQueue(roundRobinEnabled: true, proxies: [$proxy->getUrl()]));
             }
-            //192.168.31.35
 
             throw new InvalidArgumentException('proxy is not a valid proxy');
         }

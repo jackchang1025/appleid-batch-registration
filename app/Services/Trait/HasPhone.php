@@ -17,7 +17,7 @@ trait HasPhone
 
     protected array $usedPhones = [];
 
-    protected string $country = 'USA';
+    protected ?string $country = null;
 
     /**
      * @return Phone
@@ -34,7 +34,10 @@ trait HasPhone
                 ->whereNotNull(['phone_address', 'phone'])
                 ->whereNotIn('id', $this->usedPhones)
                 ->whereNotIn('id', $blacklistIds)
-                ->where('country_code_alpha3', $this->country)
+                ->where(function ($query) {
+                    $query->where('country_code_alpha3', $this->country)
+                          ->orWhere('country_code', $this->country);
+                })
                 ->orderBy('id','desc')
                 ->lockForUpdate()
                 ->firstOrFail();

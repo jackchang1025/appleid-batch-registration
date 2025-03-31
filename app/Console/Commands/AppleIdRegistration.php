@@ -45,15 +45,6 @@ class AppleIdRegistration extends Command
     protected $description = '注册苹果账号';
 
 
-    //锁
-    protected ?Lock $lock = null;
-
-
-    public function __destruct()
-    {
-        $this->lock && $this->lock->release();
-    }
-
     /**
      * @param AppleClientIdService $appleClientIdService
      * @return void
@@ -70,14 +61,13 @@ class AppleIdRegistration extends Command
      */
     public function handle(AppleClientIdService $appleClientIdService): void
     {
-
         $email = Email::where('email', $this->argument('email'))
-        ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
+         ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
         ->firstOrFail();
 
         $appleIdBatchRegistration = app(AppleIdBatchRegistrationService::class);
 
-        $appleIdBatchRegistration->run($email,$this->option('country'));
+        $appleIdBatchRegistration->run($email,strtoupper($this->option('country')));
 
     }
 

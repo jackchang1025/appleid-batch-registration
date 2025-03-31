@@ -103,10 +103,10 @@ class ProxyConfigurationResource extends Resource
         return [
             Forms\Components\Select::make('configuration.hailiangip.mode')
                 ->options([
-                    'flow' => '默认账密模式',
-                    'dynamic' => '提取模式',
+                    'direct_connection_ip' => '默认账密模式',
+                    'extract_ip' => '提取模式',
                 ])
-                ->default('flow')
+                ->default('direct_connection_ip')
                 ->helperText('选择代理模式'),
 
             Forms\Components\TextInput::make('configuration.hailiangip.orderId')
@@ -178,11 +178,11 @@ class ProxyConfigurationResource extends Resource
         return [
             Forms\Components\Select::make('configuration.stormproxies.mode')
                 ->options([
-                    'flow' => '账密模式',
-                    'dynamic' => '提取模式',
+                    'direct_connection_ip' => '账密模式',
+                    'extract_ip' => '提取模式',
                 ])
 //                ->required()
-                ->default('flow')
+                ->default('direct_connection_ip')
                 ->helperText('选择代理模式'),
 
             Forms\Components\Select::make('configuration.stormproxies.host')
@@ -305,10 +305,10 @@ class ProxyConfigurationResource extends Resource
         return [
             Forms\Components\Select::make('configuration.wandou.mode')
                 ->options([
-                    'flow'    => '账密模式',
-                    'dynamic' => '提取模式',
+                    'direct_connection_ip'    => '账密模式',
+                    'extract_ip' => '提取模式',
                 ])
-                ->default('flow')
+                ->default('direct_connection_ip')
                 ->helperText('选择代理模式'),
 
             Forms\Components\TextInput::make('configuration.wandou.app_key')
@@ -381,10 +381,9 @@ class ProxyConfigurationResource extends Resource
 
             Forms\Components\Select::make('configuration.iproyal.mode')
                 ->options([
-                    'flow'    => '账密模式',
-                    'dynamic' => '提取模式',
+                    'direct_connection_ip'    => '账密模式',
                 ])
-                ->default('flow')
+                ->default('direct_connection_ip')
                 ->helperText('选择代理模式'),
 
                 Forms\Components\TextInput::make('configuration.iproyal.username')
@@ -397,7 +396,7 @@ class ProxyConfigurationResource extends Resource
                         ->helperText('住宅代理密码')
                         ->dehydrated(true),
 
-                    Forms\Components\TextInput::make('configuration.iproyal.endpoint')
+                    Forms\Components\TextInput::make('configuration.iproyal.host')
                         ->label('代理服务器')
                         ->default('geo.iproyal.com')
                         ->helperText('住宅代理服务器地址'),
@@ -432,11 +431,9 @@ class ProxyConfigurationResource extends Resource
                         ->helperText('开启后将尽可能使用相同的IP')
                         ->default(false),
 
-                    Forms\Components\TextInput::make('configuration.iproyal.session_duration')
-                        ->helperText('会话持续时间(分钟),仅在开启粘性会话时有效')
-                        ->numeric()
-                        ->default(10)
-                        ->visible(fn(Forms\Get $get) => $get('configuration.iproyal.sticky_session')),
+                    Forms\Components\TextInput::make('configuration.iproyal.lifetime')
+                        ->helperText('会话持续时间(m:分钟,h:小时,d:天),仅在开启粘性会话时有效')
+                        ->default('10m'),
 
                     Forms\Components\Toggle::make('configuration.iproyal.streaming')
                         ->label('启用高端池')
@@ -460,9 +457,9 @@ class ProxyConfigurationResource extends Resource
 
             Forms\Components\Select::make('configuration.smartdaili.mode')
                 ->options([
-                    'flow' => '账密模式',
+                    'direct_connection_ip' => '账密模式',
                 ])
-                ->default('flow')
+                ->default('direct_connection_ip')
                 ->helperText('选择代理模式'),
 
             Forms\Components\TextInput::make('configuration.smartdaili.username')
@@ -474,7 +471,7 @@ class ProxyConfigurationResource extends Resource
                 ->password()
                 ->helperText('Smartdaili代理密码'),
 
-            Forms\Components\TextInput::make('configuration.smartdaili.endpoint')
+            Forms\Components\TextInput::make('configuration.smartdaili.host')
                 ->label('代理服务器')
                 ->helperText('Smartdaili代理服务器地址'),
 
@@ -500,10 +497,10 @@ class ProxyConfigurationResource extends Resource
 
             Forms\Components\Select::make('configuration.smartproxy.mode')
                 ->options([
-                    'flow' => '账密模式',
-                    // 'dynamic' => '提取模式',
+                    'direct_connection_ip' => '账密模式',
+                    // 'extract_ip' => '提取模式',
                 ])
-                ->default('flow')
+                ->default('direct_connection_ip')
                 ->helperText('选择代理模式'),
 
             Forms\Components\TextInput::make('configuration.smartproxy.username')
