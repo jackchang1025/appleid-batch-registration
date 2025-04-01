@@ -9,7 +9,6 @@ use App\Models\Email;
 use App\Models\Phone;
 use App\Services\Apple;
 use App\Services\AppleBuilder;
-use App\Services\Exception\RegistrationException;
 use App\Services\Helper\Helper;
 use App\Services\IpInfo\IpInfoService;
 use App\Services\Trait\HasPhone;
@@ -39,6 +38,7 @@ use Weijiajia\SaloonphpAppleClient\Exception\Email\MaxRetryGetEmailCodeException
 use Weijiajia\SaloonphpAppleClient\Exception\Phone\MaxRetryGetPhoneCodeException;
 use Weijiajia\SaloonphpAppleClient\Exception\Phone\MaxRetryVerificationPhoneCodeException;
 use Weijiajia\SaloonphpAppleClient\Exception\Phone\PhoneException;
+use Weijiajia\SaloonphpAppleClient\Exception\RegistrationException;
 use Weijiajia\SaloonphpAppleClient\Exception\VerificationCodeException;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Validate\Account as VerificationAccount;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Validate\Captcha;
@@ -102,6 +102,12 @@ class AppleIdBatchRegistration
     }
 
 
+    /**
+     * @return array
+     * @throws FatalRequestException
+     * @throws JsonException
+     * @throws RequestException
+     */
     public function direct(): array
     {
         if ($this->direct === null) {
@@ -128,6 +134,10 @@ class AppleIdBatchRegistration
         return $this->direct;
     }
 
+    /**
+     * @return string
+     * @throws RandomException
+     */
     protected function password(): string
     {
         return $this->password ??= Helper::generatePassword();
@@ -138,12 +148,24 @@ class AppleIdBatchRegistration
         return $this->widgetKey ??= 'd39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d';
     }
 
+    /**
+     * @return string
+     * @throws FatalRequestException
+     * @throws JsonException
+     * @throws RequestException
+     */
     protected function getLocale(): string
     {
         return $this->locale ??= $this->direct()['config']['localizedResources']['locale'];
     }
 
-    protected function appleSessionId()
+    /**
+     * @return mixed
+     * @throws FatalRequestException
+     * @throws JsonException
+     * @throws RequestException
+     */
+    protected function appleSessionId(): string
     {
         return $this->appleSessionId ??= $this->direct()['sessionId'];
     }
@@ -161,7 +183,6 @@ class AppleIdBatchRegistration
      * @throws MaxRetryAttemptsException
      * @throws NumberFormatException
      * @throws RandomException
-     * @throws RegistrationException
      * @throws RequestException
      * @throws Throwable
      */
@@ -176,7 +197,6 @@ class AppleIdBatchRegistration
 
              // 获取手机号码和设置会话
              $this->setupSession();
-
 
             // 准备注册所需的账户信息
             $this->prepareAccountInfo();
@@ -200,10 +220,7 @@ class AppleIdBatchRegistration
         } catch (MaxRetryGetEmailCodeException $e) {
             $this->handleEmailVerificationException($e);
             throw $e;
-        } catch (ClientException $e) {
-            $this->handleClientException($e);
-            throw $e;
-        } catch (Throwable $e) {
+        }catch (Throwable $e) {
             $this->handleGenericException($e);
             throw $e;
         }
@@ -215,7 +232,11 @@ class AppleIdBatchRegistration
      * 准备注册账户所需的基本信息
      *
      * @return void
+     * @throws FatalRequestException
+     * @throws JsonException
+     * @throws NumberFormatException
      * @throws RandomException
+     * @throws RequestException
      */
     protected function prepareAccountInfo(): void
     {
@@ -284,6 +305,7 @@ class AppleIdBatchRegistration
      * 设置会话和获取手机号码
      *
      * @return void
+     * @throws RandomException
      */
     protected function setupSession(): void
     {
@@ -328,8 +350,12 @@ class AppleIdBatchRegistration
         $ipInfo = $this->ipInfoService->getIpInfo($proxy->getUrl());
 
         $this->log('ipInfo', $ipInfo->json());
+
+        var_dump($ipInfo->json());
         $timezone = $ipInfo->json('timezone');
 
+        $this->apple->appleIdConnector()->withForceProxy(true);
+        $this->apple->appleIdConnector()->withProxyEnabled(true);
         $this->apple->appleIdConnector()->headers()->add('X-Apple-I-Timezone', $timezone);
         $this->apple->appleIdConnector()->headers()->add('Accept-Language', CountryLanguageService::getAcceptLanguage($this->country));
     }
@@ -382,7 +408,7 @@ class AppleIdBatchRegistration
      * @throws MaxRetryVerificationEmailCodeException
      * @throws MaxRetryVerificationPhoneCodeException
      * @throws NumberFormatException
-     * @throws RequestException|ConnectionException
+     * @throws RequestException|ConnectionException|RegistrationException|MaxRetryAttemptsException
      */
     protected function executeVerificationProcess(): Response
     {
@@ -512,31 +538,6 @@ class AppleIdBatchRegistration
     }
 
     /**
-     * 处理客户端异常
-     *
-     * @param ClientException $e 异常
-     * @return void
-     * @throws RegistrationException|JsonException
-     */
-    protected function handleClientException(ClientException $e): void
-    {
-        $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
-        $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
-
-        $this->log('注册失败', ['message' => $e->getMessage()]);
-
-        $validationErrors = $e->getResponse()->json('service_errors');
-        if ($validationErrors[0]['code'] ?? '' === '-34607001') {
-            throw new RegistrationException($e->getResponse()->body());
-        }
-
-        $validationErrors = $e->getResponse()->json('validationErrors');
-        if ($validationErrors[0]['code'] ?? '' === 'captchaAnswer.Invalid') {
-            throw new RegistrationException($e->getResponse()->body());
-        }
-    }
-
-    /**
      * 处理通用异常
      *
      * @param Throwable $e 异常
@@ -652,7 +653,7 @@ class AppleIdBatchRegistration
      * @throws ClientException
      * @throws FatalRequestException
      * @throws JsonException
-     * @throws RequestException
+     * @throws RequestException|RegistrationException|MaxRetryAttemptsException
      */
     protected function attemptsCaptcha(
         string $appleIdSessionId,
@@ -674,7 +675,7 @@ class AppleIdBatchRegistration
             }
         }
 
-        throw new RuntimeException("验证码验证失败，已尝试 {$attempts} 次");
+        throw new MaxRetryAttemptsException("验证码验证失败，已尝试 {$attempts} 次");
     }
 
     /**
@@ -701,7 +702,7 @@ class AppleIdBatchRegistration
      * @throws ClientException
      * @throws FatalRequestException
      * @throws JsonException
-     * @throws RequestException
+     * @throws RequestException|RegistrationException
      */
     protected function validateCaptcha(string $appleIdSessionId, string $widgetKey): Response
     {
@@ -914,16 +915,12 @@ class AppleIdBatchRegistration
     ): Response {
         for ($i = 0; $i < $attempts; $i++) {
             try {
-                // 发送手机验证码
                 $this->sendPhoneVerificationCode($appleIdSessionId, $widgetKey);
 
-                // 获取手机验证码
                 $code = $this->attemptGetPhoneCode($this->phone);
 
-                // 设置验证码
                 $this->setPhoneVerificationCode($code);
 
-                // 验证手机验证码
                 return $this->verifyPhoneCode($appleIdSessionId, $widgetKey);
             } catch (PhoneException|MaxRetryGetPhoneCodeException $e) {
 

@@ -27,7 +27,8 @@ trait HasPhone
         return DB::transaction(function () {
 
             // 获取有效黑名单ID
-            $blacklistIds = $this->getActiveBlacklistIds();
+            // $blacklistIds = $this->getActiveBlacklistIds();
+            $blacklistIds = [];
 
             $phone = Phone::query()
                 ->where('status', Phone::STATUS_NORMAL)
