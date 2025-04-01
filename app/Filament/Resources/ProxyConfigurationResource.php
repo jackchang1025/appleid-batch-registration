@@ -440,14 +440,19 @@ class ProxyConfigurationResource extends Resource
                         ->helperText('启用高端IP池')
                         ->default(false),
 
-                    Forms\Components\Toggle::make('configuration.iproyal.skip_isp_static')
+                    Forms\Components\Toggle::make('configuration.iproyal.skipispstatic')
                         ->label('跳过静态ISP')
                         ->helperText('启用跳过静态ISP功能')
                         ->default(false),
+                    
+                    Forms\Components\Toggle::make('configuration.iproyal.forcerandom')
+                    ->label('强制随机')
+                    ->helperText('强制随机IP')
+                    ->default(true),
 
-                    Forms\Components\TextInput::make('configuration.iproyal.skip_ips_list')
+                    Forms\Components\TextInput::make('configuration.iproyal.skipipslist')
                         ->helperText('跳过IP列表ID')
-                        ->default(''),
+                        ->default(null),
         ];
     }
 

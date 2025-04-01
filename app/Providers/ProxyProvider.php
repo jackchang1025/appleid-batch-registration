@@ -24,7 +24,6 @@ class ProxyProvider extends ServiceProvider
     {
         $this->app->singleton(ProxyManager::class, function ($app) {
 
-
             $config = $this->app->make(Repository::class);
 
             try {
@@ -41,7 +40,9 @@ class ProxyProvider extends ServiceProvider
 
                     $config->set("http-proxy-manager.drivers.{$defaultDriver}.mode", $defaultMode);
 
-                    $config->set("http-proxy-manager.drivers.{$defaultDriver}.{$defaultMode}", $proxyConfiguration->configuration[$defaultDriver]);
+                    $defaultConfig = $config->get("http-proxy-manager.drivers.{$defaultDriver}.{$defaultMode}",[]);
+
+                    $config->set("http-proxy-manager.drivers.{$defaultDriver}.{$defaultMode}", array_merge($defaultConfig, $proxyConfiguration->configuration[$defaultDriver]));
 
                 }
 

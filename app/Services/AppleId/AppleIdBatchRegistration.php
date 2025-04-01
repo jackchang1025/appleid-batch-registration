@@ -495,6 +495,7 @@ class AppleIdBatchRegistration
     {
         $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
         $this->phone && $this->phone->update(['status' => Phone::STATUS_INVALID]);
+        $this->log('注册失败', ['message' => $e->getMessage()]);
     }
 
     /**
@@ -507,6 +508,7 @@ class AppleIdBatchRegistration
     {
         $this->email && $this->email->update(['status' => EmailStatus::INVALID]);
         $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
+        $this->log('注册失败', ['message' => $e->getMessage()]);
     }
 
     /**
@@ -728,18 +730,15 @@ class AppleIdBatchRegistration
     ): Response {
         for ($i = 0; $i < $attempts; $i++) {
             try {
-                // 发送验证邮件
+
                 $response = $this->sendVerificationEmail($XAppleSessionId, $widgetKey);
 
-                // 更新验证信息ID
                 $this->validate->account->verificationInfo->id = $response->verificationId;
 
-                // 获取邮箱验证码
                 $emailCode = $this->attemptGetEmailCode($this->email->email, $this->email->email_uri);
 
                 $this->validate->account->verificationInfo->answer = $emailCode;
 
-                // 提交邮箱验证码验证
                 return $this->verifyEmailCode($XAppleSessionId, $widgetKey);
             } catch (VerificationCodeException $e) {
 
