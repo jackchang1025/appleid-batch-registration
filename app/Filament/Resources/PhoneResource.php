@@ -3,11 +3,8 @@
 namespace App\Filament\Resources;
 
 
-use App\Enums\EmailStatus;
 use App\Filament\Resources\PhoneResource\Pages;
-use App\Models\Email;
 use App\Models\Phone;
-use Filament\Actions\CreateAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -99,6 +96,24 @@ class PhoneResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
+
+                BulkAction::make('export_phones')
+                        ->label('批量导出')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('info')
+                        ->action(function (Collection $records,Table $table) {
+
+                            $content = '';
+
+                            foreach ($records as $record) {
+                                /** @var Phone $record */
+                                $content .= "{$record->phone}----{$record->phone_address}\n";
+                            }
+
+                            return response()->streamDownload(function () use ($content) {
+                                echo $content;
+                            }, 'phones_export_' . now()->format('YmdHis') . '.txt');
+                        }),
                 BulkAction::make('update_status')
                     ->label('批量修改状态')
                     ->icon('heroicon-o-pencil-square')

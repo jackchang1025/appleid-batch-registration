@@ -11,15 +11,9 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Infolists\Infolist;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Notifications\Notification;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Actions\BulkAction;
-use App\Jobs\RegisterAppleIdForBrowserJob;
+use Illuminate\Database\Eloquent\Collection;
 
 class EmailResource extends Resource
 {
@@ -78,106 +72,122 @@ class EmailResource extends Resource
                 //     ])),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    BulkAction::make('update_status')
-                        ->label('批量修改状态')
-                        ->icon('heroicon-o-pencil-square')
-                        ->color('primary')
-                        ->form([
-                            Forms\Components\Select::make('status')
-                                ->label('状态')
-                                ->options(EmailStatus::labels())
-                                ->required(),
-                        ])
-                        ->action(function ($records, array $data) {
+                BulkAction::make('export_emails')
+                ->label('批量导出')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('info')
+                ->action(function (Collection $records,Table $table) {
 
-                            $count = 0;
+                    $content = '';
+
+                    foreach ($records as $record) {
+                        /** @var Email $record */
+                        $content .= "{$record->email}----{$record->email_uri}\n";
+                    }
+
+                    return response()->streamDownload(function () use ($content) {
+                        echo $content;
+                    }, 'emails_export_' . now()->format('YmdHis') . '.txt');
+                }),
+
+            BulkAction::make('update_status')
+                ->label('批量修改状态')
+                ->icon('heroicon-o-pencil-square')
+                ->color('primary')
+                ->form([
+                    Forms\Components\Select::make('status')
+                        ->label('状态')
+                        ->options(EmailStatus::labels())
+                        ->required(),
+                ])
+                ->action(function ($records, array $data) {
+
+                    $count = 0;
+
+                    /** @var Email $record */
+                    foreach ($records as $record) {
+                        try {
+                            $record->update([
+                                'status' => $data['status'],
+                            ]);
+
+                            $count++;
+
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('状态更新失败')
+                                ->body("{$record->email} 状态更新失败 {$e->getMessage()}")
+                                ->warning()
+                                ->send();
+                        }
+                    }
+
+                    Notification::make()
+                    ->title('状态更新成功')
+                    ->body("成功更新 {$count} 条数据")
+                    ->success()
+                    ->send();
+                }),
+            BulkAction::make('register_appleid')
+                ->label('批量注册 Apple ID')
+                ->icon('heroicon-o-user-plus')
+                ->color('success')
+                ->form([
+                    Forms\Components\Select::make('country')
+                        ->label('国家')
+                        ->required()
+                        ->searchable()
+                        ->options([
+                            'USA' => '美国',
+                            'CAN' => '加拿大',
+                            'GBR' => '英国',
+                            'AUS' => '澳大利亚',
+                            'NZL' => '新西兰',
+                            'DEU' => '德国',
+                            'FRA' => '法国',
+                            'ITA' => '意大利',
+                            'ESP' => '西班牙',
+                            'JPN' => '日本',
+                            'KOR' => '韩国',
+                            'TWN' => '台湾',
+                            'HKG' => '香港',
+                            'MAC' => '澳门',
+                            'CHN' => '中国大陆',
+                        ])
+                        ->helperText('选择需要注册 Apple ID 的国家'),
+                ])
+                ->action(function ($records, array $data) {
+
+                    $count = 0;
+
+                    foreach ($records as $record) {
+                        try {
 
                             /** @var Email $record */
-                            foreach ($records as $record) {
-                                try {
-                                    $record->update([
-                                        'status' => $data['status'],
-                                    ]);
+                            if ($record->status->value === EmailStatus::AVAILABLE->value || $record->status->value === EmailStatus::FAILED->value){
+                                $count++;
 
-                                    $count++;
-
-                                } catch (\Exception $e) {
-                                    Notification::make()
-                                        ->title('状态更新失败')
-                                        ->body("{$record->email} 状态更新失败 {$e->getMessage()}")
-                                        ->warning()
-                                        ->send();
-                                }
+                                RegisterAppleIdJob::dispatch($record,$data['country']);
+                                continue;
                             }
 
+                            throw new \RuntimeException("邮箱 {$record->email} 状态 {$record->status->value}，无法注册 Apple ID");
+
+                        } catch (\Exception $e) {
                             Notification::make()
-                            ->title('状态更新成功')
-                            ->body("成功更新 {$count} 条数据")
-                            ->success()
-                            ->send();
-                        }),
-                    BulkAction::make('register_appleid')
-                        ->label('批量注册 Apple ID')
-                        ->icon('heroicon-o-user-plus')
-                        ->color('success')
-                        ->form([
-                            Forms\Components\Select::make('country')
-                                ->label('国家')
-                                ->required()
-                                ->searchable()
-                                ->options([
-                                    'USA' => '美国',
-                                    'CAN' => '加拿大',
-                                    'GBR' => '英国',
-                                    'AUS' => '澳大利亚',
-                                    'NZL' => '新西兰',
-                                    'DEU' => '德国',
-                                    'FRA' => '法国',
-                                    'ITA' => '意大利',
-                                    'ESP' => '西班牙',
-                                    'JPN' => '日本',
-                                    'KOR' => '韩国',
-                                    'TWN' => '台湾',
-                                    'HKG' => '香港',
-                                    'MAC' => '澳门',
-                                    'CHN' => '中国大陆',
-                                ])
-                                ->helperText('选择需要注册 Apple ID 的国家'),
-                        ])
-                        ->action(function ($records, array $data) {
-
-                            $count = 0;
-
-                            foreach ($records as $record) {
-                                try {
-
-                                    /** @var Email $record */
-                                    if ($record->status->value === EmailStatus::AVAILABLE->value || $record->status->value === EmailStatus::FAILED->value){
-                                        $count++;
-
-                                        RegisterAppleIdJob::dispatch($record,$data['country']);
-                                        continue;
-                                    }
-
-                                    throw new \RuntimeException("邮箱 {$record->email} 状态 {$record->status->value}，无法注册 Apple ID");
-
-                                } catch (\Exception $e) {
-                                    Notification::make()
-                                        ->title('Apple ID 注册失败')
-                                        ->body("{$record->email} 的 Apple ID 注册失败: {$e->getMessage()}")
-                                        ->warning()
-                                        ->send();
-                                }
-                            }
-
-                            $count && Notification::make()
-                                ->title("{$count} 个 Apple ID 注册任务已加入队列")
-                                ->success()
+                                ->title('Apple ID 注册失败')
+                                ->body("{$record->email} 的 Apple ID 注册失败: {$e->getMessage()}")
+                                ->warning()
                                 ->send();
-                        }),
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                        }
+                    }
+
+                    $count && Notification::make()
+                        ->title("{$count} 个 Apple ID 注册任务已加入队列")
+                        ->success()
+                        ->send();
+                }),
+            Tables\Actions\DeleteBulkAction::make(),
             ])->defaultSort('updated_at', 'desc');
     }
 
