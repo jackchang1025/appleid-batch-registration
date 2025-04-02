@@ -114,7 +114,6 @@ class ProxyConfigurationResource extends Resource
                 ->helperText('代理订单ID'),
             Forms\Components\TextInput::make('configuration.hailiangip.pwd')
 //                ->required()
-                ->password()
                 ->helperText('代理订单密码'),
 
             Forms\Components\TextInput::make('configuration.hailiangip.secret')
@@ -185,6 +184,21 @@ class ProxyConfigurationResource extends Resource
                 ->default('direct_connection_ip')
                 ->helperText('选择代理模式'),
 
+            Forms\Components\TextInput::make('configuration.stormproxies.username')
+            //                ->required()
+                            ->helperText('用户名'),
+            
+            Forms\Components\TextInput::make('configuration.stormproxies.password')
+//                ->required()
+                ->helperText('密码'),
+
+            Forms\Components\TextInput::make('configuration.stormproxies.app_key')
+//                ->required()
+                ->helperText('开放的app_key,可以通过用户个人中心获取'),
+
+            Forms\Components\TextInput::make('configuration.stormproxies.pt')
+                ->helperText('套餐id,提取界面选择套餐可指定对应套餐进行提取'),
+
             Forms\Components\Select::make('configuration.stormproxies.host')
                 ->options([
                     'proxy.stormip.cn' => '智能',
@@ -222,20 +236,7 @@ class ProxyConfigurationResource extends Resource
                 ->helperText('会话持续时间(分钟),仅在开启粘性会话时有效,会指示路由器会话保持有效的持续时间。')
                 ->default('10'),
                 
-            Forms\Components\TextInput::make('configuration.stormproxies.username')
-//                ->required()
-                ->helperText('用户名'),
-
-            Forms\Components\TextInput::make('configuration.stormproxies.password')
-//                ->required()
-                ->helperText('密码'),
-
-            Forms\Components\TextInput::make('configuration.stormproxies.app_key')
-//                ->required()
-                ->helperText('开放的app_key,可以通过用户个人中心获取'),
-
-            Forms\Components\TextInput::make('configuration.stormproxies.pt')
-                ->helperText('套餐id,提取界面选择套餐可指定对应套餐进行提取'),
+           
         ];
     }
 
@@ -498,7 +499,6 @@ class ProxyConfigurationResource extends Resource
 
             Forms\Components\TextInput::make('configuration.smartdaili.password')
                 ->label('密码')
-                ->password()
                 ->helperText('Smartdaili代理密码'),
 
             Forms\Components\TextInput::make('configuration.smartdaili.host')
@@ -518,6 +518,26 @@ class ProxyConfigurationResource extends Resource
                 ])
                 ->default('http')
                 ->helperText('选择代理协议类型'),
+
+                Forms\Components\TextInput::make('configuration.smartdaili.country')
+                ->helperText('国家代码(country-dk,it,ie),是配置国家的关键。取值为两个字母的国家代码 (ISO 3166-1 alpha-2 format)。 留空表示随机')
+                ->default(null),
+
+            Forms\Components\TextInput::make('configuration.smartdaili.state')
+                ->helperText('州/省代码,用于针对美国的一个州。该值应该是该州的名称。一定要选择美国作为国家。留空表示随机')
+                ->default(null),
+
+            Forms\Components\TextInput::make('configuration.smartdaili.city')
+                ->helperText('城市名称。将此参数添加到用户名中将允许你指定要使用的 IP 所在的城市。请将此参数与国家/地区参数一起使用。留空表示随机')
+                ->default(null),
+
+            Forms\Components\Toggle::make('configuration.smartdaili.sticky_session')
+                ->label('启用粘性会话')
+                ->helperText('此选项能够让您在会话期间始终保持代理不变。使用粘性会话，您可以配置“生命周期”参数，该参数决定在切换到新代理之前使用相同代理的时间。这对于需要持续连接到同一IP地址的任务特别有用，例如在访问具有基于会话的身份验证或追踪的Web资源时始终保持会话不变。')
+                ->default(false),
+            Forms\Components\TextInput::make('configuration.smartdaili.sessionduration')
+            ->helperText('会话持续时间(分钟),与会话一起使用。指定粘滞会话时间（以分钟为单位） - 可以设置为 1 到 30 之间的任意数字。如果未指定此参数，会话默认持续 10 分钟。')
+            ->default(10),
         ];
     }
 
@@ -534,17 +554,25 @@ class ProxyConfigurationResource extends Resource
                 ->helperText('选择代理模式'),
 
             Forms\Components\TextInput::make('configuration.smartproxy.username')
-                ->label('套餐账号')
-                ->helperText('套餐账号'),
+                ->label('选择套餐账号')
+                ->helperText('选择套餐账号'),
 
             Forms\Components\TextInput::make('configuration.smartproxy.password')
                 ->label('密码')
-                ->helperText('SmartProxy代理密码'),
+                ->helperText('SmartProxy 代理密码'),
 
-            Forms\Components\TextInput::make('configuration.smartproxy.host')
-                ->label('代理服务器')
-                ->helperText('SmartProxy代理服务器地址'),
+                Forms\Components\Select::make('configuration.smartproxy.host')
+                ->options([
+                    'proxy.smartproxycn.com' => '智能',
+                    'as.smartproxycn.com' => '亚洲区域',
+                    'eu.smartproxycn.com' => '美洲区域',
+                    'us.smartproxycn.com' => '欧洲区域',
+                ])
+//                ->required()
+                ->default('proxy.stormip.cn')
+                ->helperText('选择代理网络(代理网络是指中转服务器的位置)'),
 
+    
             Forms\Components\TextInput::make('configuration.smartproxy.port')
                 ->label('端口')
                 ->numeric()
@@ -579,8 +607,7 @@ class ProxyConfigurationResource extends Resource
             Forms\Components\TextInput::make('configuration.smartproxy.life')
                 ->helperText('尽可能保持一个ip的使用时间(分钟),仅在开启粘性会话时有效')
                 ->numeric()
-                ->default(10)
-                ->visible(fn(Forms\Get $get) => $get('configuration.smartproxy.sticky_session')),
+                ->default(10),
 
             Forms\Components\TextInput::make('configuration.smartproxy.ip')
             ->helperText('指定数据中心地址'),

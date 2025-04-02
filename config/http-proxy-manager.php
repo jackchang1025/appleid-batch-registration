@@ -35,8 +35,13 @@ return [
         'stormproxies' => [
             'mode' => 'extract_ip',
             'direct_connection_ip'    => [
+                'username' => null,
+                'password' => null,
+                'protocol' => 'http',
+                'host' => 'proxy.stormip.cn',
+                'port' => 1000,
                 'session' => null,
-                'life'    => 1,
+                'life'    => null,
                 'area'    => null,
                 'city'    => null,
                 'state'   => null,
@@ -99,6 +104,7 @@ return [
                 'protocol'         => 'http',
                 //是否启用粘性会话
                 'sticky_session'   => false,
+                //指示路由器会话保持有效的持续时间
                 //_session 键指示我们的路由系统为连接创建或解析唯一会话。分配给此键的值必须是随机字母数字字符串，长度恰好为8 个字符。这可确保会话的唯一性和完整性。
                 'session' => null,
                 //_lifetime-键指示路由器会话保持有效的持续时间。最短持续时间设置为1 秒，最长为7 天。这里的格式非常重要：只能指定一个时间单位。此参数在定义粘性会话的运行跨度、平衡会话稳定性和安全性需求方面起着关键作用。
@@ -114,12 +120,26 @@ return [
                 //主机
                 'host'             => 'geo.iproyal.com',
                 //端口
-                'port'             => 443,
+                'port'             => null,
             ],
         ],
         'smartdaili' => [
-            'mode' => 'extract_ip',
-            'extract_ip' => [],
+            'mode' => 'direct_connection_ip',
+            'direct_connection_ip' => [
+                'username' => null,
+                'password' => null,
+                'session' => null,
+                'sticky_session' => false,
+                'life' => 10,
+                'country' => null,
+                'city' => null,
+                'state' => null,
+                'ip' => null,
+                'protocol' => 'http',
+                'host' => 'gate.visitxiangtan.com',
+                'port' => 7000,
+                'sessionduration' => 10,
+            ],
         ],
         'smartproxy' => [
             'mode' => 'extract_ip',
@@ -164,6 +184,9 @@ return [
                 'state' => null,
                 //指定数据中心地址
                 'ip' => null,
+                'protocol' => 'http',
+                'host' => null,
+                'port' => 1000,
             ],
         ],
         'proxyscrape' => [

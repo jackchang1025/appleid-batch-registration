@@ -9481,12 +9481,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/decrypt-verification-code.git",
-                "reference": "6e49d0663b137221a0fb7fad80b8c4eb436f349a"
+                "reference": "4cb7fe7aaf06d007b302ff235d12cc90d2148f3e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/decrypt-verification-code/zipball/6e49d0663b137221a0fb7fad80b8c4eb436f349a",
-                "reference": "6e49d0663b137221a0fb7fad80b8c4eb436f349a",
+                "url": "https://api.github.com/repos/jackchang1025/decrypt-verification-code/zipball/4cb7fe7aaf06d007b302ff235d12cc90d2148f3e",
+                "reference": "4cb7fe7aaf06d007b302ff235d12cc90d2148f3e",
                 "shasum": ""
             },
             "require": {
@@ -9523,7 +9523,7 @@
                 "issues": "https://github.com/jackchang1025/decrypt-verification-code/issues",
                 "source": "https://github.com/jackchang1025/decrypt-verification-code/tree/main"
             },
-            "time": "2025-03-29T16:52:32+00:00"
+            "time": "2025-04-02T16:34:39+00:00"
         },
         {
             "name": "weijiajia/http-proxy-manager",
@@ -9531,12 +9531,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/http-proxy-manager.git",
-                "reference": "b64381f9d243932a07c5396344ee33dcf345e78c"
+                "reference": "1416aa10077e0d1eb8a5c23fed8b6cde8f31fa4d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/b64381f9d243932a07c5396344ee33dcf345e78c",
-                "reference": "b64381f9d243932a07c5396344ee33dcf345e78c",
+                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/1416aa10077e0d1eb8a5c23fed8b6cde8f31fa4d",
+                "reference": "1416aa10077e0d1eb8a5c23fed8b6cde8f31fa4d",
                 "shasum": ""
             },
             "require": {
@@ -9594,7 +9594,7 @@
                 "issues": "https://github.com/jackchang1025/http-proxy-manager/issues",
                 "source": "https://github.com/jackchang1025/http-proxy-manager/tree/main"
             },
-            "time": "2025-04-02T12:27:55+00:00"
+            "time": "2025-04-02T16:25:00+00:00"
         },
         {
             "name": "weijiajia/ip-address",
