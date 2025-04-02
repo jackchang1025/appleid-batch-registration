@@ -14,6 +14,7 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\SendVeri
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\VerificationPhone;
 use Weijiajia\HttpProxyManager\ProxyConnector;
 use Weijiajia\DecryptVerificationCode\CloudCode\CloudCodeConnector;
+use Weijiajia\IpAddress\Request as IpAddressRequest;
 
 enum Request: string
 {
@@ -31,6 +32,7 @@ enum Request: string
     case VERIFICATION_PHONE = VerificationPhone::class;
     case PROXYCONNECTOR = ProxyConnector::class;
     case CLOUDCODECONNECTOR = CloudCodeConnector::class;
+    case IPADDRESSMANAGER = IpAddressRequest::class;
 
     public function label(): string
     {
@@ -47,6 +49,7 @@ enum Request: string
             self::VERIFICATION_PHONE => '验证验证短信',
             self::PROXYCONNECTOR => '获取代理',
             self::CLOUDCODECONNECTOR => '解码验证码',
+            self::IPADDRESSMANAGER => '获取IP地址',
         };
     }
 

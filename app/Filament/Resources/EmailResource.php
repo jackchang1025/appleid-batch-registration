@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Services\CountryLanguageService;
 use App\Enums\EmailStatus;
 use App\Filament\Resources\EmailResource\Pages;
 use App\Jobs\RegisterAppleIdJob;
@@ -137,23 +138,8 @@ class EmailResource extends Resource
                         ->label('国家')
                         ->required()
                         ->searchable()
-                        ->options([
-                            'USA' => '美国',
-                            'CAN' => '加拿大',
-                            'GBR' => '英国',
-                            'AUS' => '澳大利亚',
-                            'NZL' => '新西兰',
-                            'DEU' => '德国',
-                            'FRA' => '法国',
-                            'ITA' => '意大利',
-                            'ESP' => '西班牙',
-                            'JPN' => '日本',
-                            'KOR' => '韩国',
-                            'TWN' => '台湾',
-                            'HKG' => '香港',
-                            'MAC' => '澳门',
-                            'CHN' => '中国大陆',
-                        ])
+                        ->options(CountryLanguageService::labels())
+                        ->optionsLimit(300)
                         ->helperText('选择需要注册 Apple ID 的国家'),
                 ])
                 ->action(function ($records, array $data) {

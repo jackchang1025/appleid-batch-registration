@@ -2,9 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\EmailStatus;
 use App\Models\Email;
-use App\Models\ProxyConfiguration;
 use App\Models\User;
 use App\Services\AppleId\AppleIdBatchRegistration;
 use App\Services\Exception\RegistrationException;
@@ -15,14 +13,11 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Filament\Notifications\Notification;
 use Saloon\Exceptions\Request\Statuses\ServiceUnavailableException;
 use Filament\Notifications\Actions\Action;
-use App\Filament\Resources\EmailResource;
 use App\Filament\Resources\EmailResource\Pages\ViewEmail;
-
+use App\Services\CountryLanguageService;
 class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -42,7 +37,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
      */
     public function __construct(
         protected Email $email,
-        protected string $country = 'USA'
+        protected ?string $country = null
     ) {
         $this->onQueue('default');
     }
@@ -84,7 +79,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     {
         try {
             // 运行注册
-            $appleIdBatchRegistration->run($this->email, $this->country);
+            $appleIdBatchRegistration->run($this->email, CountryLanguageService::make($this->country));
 
             // 显示通知
             Notification::make()

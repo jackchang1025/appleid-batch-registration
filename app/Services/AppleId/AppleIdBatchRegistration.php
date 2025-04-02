@@ -2,6 +2,7 @@
 
 namespace App\Services\AppleId;
 
+use App\Enums\CountryEnum;
 use App\Enums\EmailStatus;
 use App\Enums\Request;
 use App\Models\Appleid;
@@ -52,7 +53,9 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Account\Ver
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Captcha\Captcha as CaptchaResponse;
 use App\Services\CountryLanguageService;
 use App\Services\CloudCode\CloudCodeService;
-
+use Weijiajia\IpAddress\IpAddressManager;
+use Weijiajia\HttpProxyManager\ProxyManager;
+use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 class AppleIdBatchRegistration
 {
     use HasPhone;
@@ -80,6 +83,8 @@ class AppleIdBatchRegistration
 
     protected ?Appleid $appleId = null;
 
+    protected ?ProxySplQueue $proxySplQueue = null;
+
     protected ?string $appleSessionId = null;
 
     private ?string $code = null;
@@ -92,11 +97,16 @@ class AppleIdBatchRegistration
 
     protected ?string $locale = null;
 
+    protected ?string $timezone = null;
+
+    protected ?CountryLanguageService $countryLanguageService = null;
+
     public function __construct(
         protected AppleBuilder $appleBuilder,
         protected LoggerInterface $logger,
         protected CloudCodeService $cloudCodeService,
-        protected IpInfoService $ipInfoService,
+        protected IpAddressManager $ipAddressManager,
+        protected ProxyManager $proxyManager,
     ) {
 
     }
@@ -174,7 +184,7 @@ class AppleIdBatchRegistration
      * 执行苹果ID批量注册流程
      *
      * @param Email $email 电子邮件对象
-     * @param string $country 国家代码
+     * @param null|CountryEnum $country 国家代码
      * @return bool 注册是否成功
      * @throws AccountAlreadyExistsException
      * @throws ClientException
@@ -186,7 +196,7 @@ class AppleIdBatchRegistration
      * @throws RequestException
      * @throws Throwable
      */
-    public function run(Email $email, string $country = 'USA'): bool
+    public function run(Email $email, CountryLanguageService $country): bool
     {
         $this->email   = $email;
         $this->country = $country;
@@ -197,6 +207,14 @@ class AppleIdBatchRegistration
 
              // 获取手机号码和设置会话
              $this->setupSession();
+
+             $this->setupProxy();
+
+             $this->setupDebugMiddleware();
+
+            $this->setupHeaders();
+
+            $this->setupPhone();
 
             // 准备注册所需的账户信息
             $this->prepareAccountInfo();
@@ -260,7 +278,7 @@ class AppleIdBatchRegistration
                 ],
                 'birthday'       => $birthday,
                 'primaryAddress' => [
-                    'country' => $this->country,
+                    'country' => $this->country->getAlpha3Code(),
                 ],
             ],
             'preferences'      => [
@@ -297,20 +315,16 @@ class AppleIdBatchRegistration
             $this->captcha,
             false
         );
-
-
     }
 
     /**
-     * 设置会话和获取手机号码
+     * 设置会话
      *
      * @return void
      * @throws RandomException
      */
     protected function setupSession(): void
     {
-        $this->phone = $this->getPhone();
-
         $this->appleId = Appleid::make([
             'email'     => $this->email->email,
             'email_uri' => $this->email->email_uri,
@@ -319,11 +333,16 @@ class AppleIdBatchRegistration
 
         $this->apple = $this->appleBuilder->build($this->appleId);
         $this->apple->withDebug(true);
+    }
 
-        $this->apple->withCountry(CountryLanguageService::getAlpha2Code($this->country));
+    public function getAlpha2Code(): ?string
+    {
+        return $this->country ? $this->country->getAlpha2Code() : null;
+    }
 
-        $this->setupDebugMiddleware();
-        $this->setupProxyAndHeaders();
+    public function getAlpha2Language(): ?string
+    {
+        return $this->country ? $this->country->getAlpha2Language() : null;
     }
 
     /**
@@ -344,20 +363,53 @@ class AppleIdBatchRegistration
      *
      * @return void
      */
-    protected function setupProxyAndHeaders(): void
+    protected function setupProxy(): void
     {
-        $proxy = $this->apple->getProxySplQueue()->dequeue();
-        $ipInfo = $this->ipInfoService->getIpInfo($proxy->getUrl());
 
-        $this->log('ipInfo', $ipInfo->json());
+        $driver = $this->proxyManager->driver();
+        $driver->debug();
+        $driver->withCountry($this->country->getAlpha2Code());
+        $driver->middleware()->onRequest($this->debugRequest());
+        $driver->middleware()->onResponse($this->debugResponse());
 
-        var_dump($ipInfo->json());
-        $timezone = $ipInfo->json('timezone');
+        $proxy = $driver->defaultModelIp();
 
+        $this->proxySplQueue = new ProxySplQueue(roundRobinEnabled: true);
+        $this->proxySplQueue->enqueue($proxy->getUrl());
+
+        $request = $this->ipAddressManager->driver();
+
+        $request->debug();
+        $request->middleware()->onRequest($this->debugRequest());
+        $request->middleware()->onResponse($this->debugResponse());
+
+        $request->withForceProxy(true)
+            ->withProxyEnabled(true)
+            ->withProxyQueue($this->proxySplQueue);
+
+        $ipInfo = $request->request();
+
+        $this->timezone = $ipInfo->getTimezone();
+        $this->country = CountryLanguageService::make($ipInfo->getCountryCode());
+
+        
+        $this->apple->withProxySplQueue($this->proxySplQueue);
         $this->apple->appleIdConnector()->withForceProxy(true);
         $this->apple->appleIdConnector()->withProxyEnabled(true);
-        $this->apple->appleIdConnector()->headers()->add('X-Apple-I-Timezone', $timezone);
-        $this->apple->appleIdConnector()->headers()->add('Accept-Language', CountryLanguageService::getAcceptLanguage($this->country));
+
+    }
+
+
+    protected function setupPhone(): void
+    {
+        $this->phone = $this->getPhone();
+    }
+
+
+    protected function setupHeaders(): void
+    {
+        $this->apple->appleIdConnector()->headers()->add('X-Apple-I-Timezone', $this->timezone);
+        $this->apple->appleIdConnector()->headers()->add('Accept-Language', $this->country->getAlpha2Language());
     }
 
     /**
@@ -793,7 +845,7 @@ class AppleIdBatchRegistration
                     ],
                 ],
             ],
-            'countryCode' => $this->country,
+            'countryCode' => $this->country->getAlpha3Code(),
         ]);
 
         return $this->apple->appleIdConnector()

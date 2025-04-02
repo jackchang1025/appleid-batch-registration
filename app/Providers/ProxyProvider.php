@@ -46,6 +46,9 @@ class ProxyProvider extends ServiceProvider
 
                 }
 
+
+                // dd($config->get("http-proxy-manager.drivers.{$defaultDriver}.{$defaultMode}"),$proxyConfiguration->configuration[$defaultDriver],$defaultDriver,$proxyConfiguration->configuration);
+
             } catch (\Exception $e) {
 
 

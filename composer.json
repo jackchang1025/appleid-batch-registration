@@ -17,6 +17,7 @@
         "symfony/intl": "^7.2",
         "weijiajia/decrypt-verification-code": "dev-main",
         "weijiajia/http-proxy-manager": "dev-main",
+        "weijiajia/ip-address": "dev-master",
         "weijiajia/saloonphp-apple-client": "dev-main",
         "ysfkaya/filament-phone-input": "^3.1"
     },

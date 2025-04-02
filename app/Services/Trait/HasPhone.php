@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Redis;
 use App\Models\Phone;
 use Illuminate\Support\Facades\DB;
-
+use App\Enums\CountryEnum;
+use App\Services\CountryLanguageService;
 trait HasPhone
 {
      // 添加类常量
@@ -17,7 +18,7 @@ trait HasPhone
 
     protected array $usedPhones = [];
 
-    protected ?string $country = null;
+    protected ?CountryLanguageService $country = null;
 
     /**
      * @return Phone
@@ -35,13 +36,16 @@ trait HasPhone
                 ->whereNotNull(['phone_address', 'phone'])
                 ->whereNotIn('id', $this->usedPhones)
                 ->whereNotIn('id', $blacklistIds)
-                ->where(function ($query) {
-                    $query->where('country_code_alpha3', $this->country)
-                          ->orWhere('country_code', $this->country);
+                ->when($this->country, function ($query) {
+                    $query->where(function($subQuery) {
+                        $subQuery->where('country_code_alpha3', $this->country->getAlpha3Code())
+                                ->orWhere('country_code', $this->country->getAlpha2Code());
+                    });
                 })
                 ->orderBy('id','desc')
                 ->lockForUpdate()
                 ->firstOrFail();
+
 
             $phone->update(['status' => Phone::STATUS_BINDING]);
 

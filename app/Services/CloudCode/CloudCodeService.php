@@ -29,6 +29,7 @@ class CloudCodeService {
     )
     {
         $this->connector->withLogger($this->logger);
+        $this->debug && $this->connector->debug();
     }
 
     public function cloudCodeConnector(): CloudCodeConnector
@@ -49,11 +50,9 @@ class CloudCodeService {
      * @throws RequestException
      * @throws DecryptCloudCodeException
      */
-    public function resolveCaptcha(string $image, ?string $type = null,?bool $debug = null): CloudCodeResponseInterface
+    public function resolveCaptcha(string $image, ?string $type = null): CloudCodeResponseInterface
     {
-        $debug = $debug || $this->debug;
         $type = $type ?: $this->type;
-        $debug && $this->connector->debug();
 
         return $this->connector->decryptCloudCode(
             token: $this->token,

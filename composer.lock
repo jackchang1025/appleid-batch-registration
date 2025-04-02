@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d87842f89d6936ecf28f3f232b052bb1",
+    "content-hash": "74d65fb671fce04f48230766845f3ad9",
     "packages": [
         {
             "name": "amphp/amp",
@@ -9531,12 +9531,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/http-proxy-manager.git",
-                "reference": "dd3378fff754c2193b1baeec62b7dae58c21bd6e"
+                "reference": "b64381f9d243932a07c5396344ee33dcf345e78c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/dd3378fff754c2193b1baeec62b7dae58c21bd6e",
-                "reference": "dd3378fff754c2193b1baeec62b7dae58c21bd6e",
+                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/b64381f9d243932a07c5396344ee33dcf345e78c",
+                "reference": "b64381f9d243932a07c5396344ee33dcf345e78c",
                 "shasum": ""
             },
             "require": {
@@ -9594,7 +9594,70 @@
                 "issues": "https://github.com/jackchang1025/http-proxy-manager/issues",
                 "source": "https://github.com/jackchang1025/http-proxy-manager/tree/main"
             },
-            "time": "2025-04-01T10:39:35+00:00"
+            "time": "2025-04-02T12:27:55+00:00"
+        },
+        {
+            "name": "weijiajia/ip-address",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/ip-address.git",
+                "reference": "ffc6d524ab108ad0822def986df22c1a1692d94e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/ip-address/zipball/ffc6d524ab108ad0822def986df22c1a1692d94e",
+                "reference": "ffc6d524ab108ad0822def986df22c1a1692d94e",
+                "shasum": ""
+            },
+            "require": {
+                "ext-mbstring": "*",
+                "illuminate/support": "^12.0",
+                "php": "^8.2",
+                "psr/log": "^3.0",
+                "saloonphp/saloon": "^3.10",
+                "weijiajia/saloonphp-http-proxy-plugin": "dev-main",
+                "weijiajia/saloonphp-logs-plugin": "dev-main"
+            },
+            "require-dev": {
+                "pestphp/pest": "^3.2"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Weijiajia\\IpAddress\\IpAddressServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Weijiajia\\IpAddress\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "weijiajia",
+                    "email": "shadowmatthew1025@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "IP address information query system, integrating multiple IP geographic location services",
+            "homepage": "https://github.com/jackchang1025/ip-address",
+            "keywords": [
+                "IP Info",
+                "ip address"
+            ],
+            "support": {
+                "issues": "https://github.com/jackchang1025/ip-address/issues",
+                "source": "https://github.com/jackchang1025/ip-address/tree/master"
+            },
+            "time": "2025-04-02T10:37:02+00:00"
         },
         {
             "name": "weijiajia/saloonphp-apple-client",
@@ -13397,6 +13460,7 @@
         "roave/security-advisories": 20,
         "weijiajia/decrypt-verification-code": 20,
         "weijiajia/http-proxy-manager": 20,
+        "weijiajia/ip-address": 20,
         "weijiajia/saloonphp-apple-client": 20
     },
     "prefer-stable": true,
