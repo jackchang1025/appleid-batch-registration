@@ -452,10 +452,10 @@ class ProxyConfigurationResource extends Resource
                 ->helperText('此选项能够让您在会话期间始终保持代理不变。使用粘性会话，您可以配置“生命周期”参数，该参数决定在切换到新代理之前使用相同代理的时间。这对于需要持续连接到同一IP地址的任务特别有用，例如在访问具有基于会话的身份验证或追踪的Web资源时始终保持会话不变。')
                 ->default(false),
 
-            // Forms\Components\TextInput::make('configuration.iproyal.session')
-            // ->label('会话ID')
-            // ->helperText('会话ID(用于粘性会话,如果为空则自动生成)')
-            // ->default(null),
+            Forms\Components\TextInput::make('configuration.iproyal.session')
+            ->label('会话ID')
+            ->helperText('会话ID(用于粘性会话,如果为空则自动生成)')
+            ->default(null),
 
             Forms\Components\TextInput::make('configuration.iproyal.lifetime')
                 ->helperText('会话持续时间(m:分钟,h:小时,d:天),仅在开启粘性会话时有效,会指示路由器会话保持有效的持续时间。最短持续时间设置为1秒，最长持续时间设置为7天。注意这里的格式至关重要：只能指定一个时间单位。这个参数对于定义粘性会话的操作跨度、平衡会话稳定性和安全需求方面都起到非常关键的作用。')
@@ -530,6 +530,10 @@ class ProxyConfigurationResource extends Resource
             Forms\Components\TextInput::make('configuration.smartdaili.city')
                 ->helperText('城市名称。将此参数添加到用户名中将允许你指定要使用的 IP 所在的城市。请将此参数与国家/地区参数一起使用。留空表示随机')
                 ->default(null),
+            Forms\Components\TextInput::make('configuration.smartdaili.session')
+            ->label('会话ID')
+            ->helperText('会话ID(用于粘性会话,如果为空则自动生成)')
+            ->default(null),
 
             Forms\Components\Toggle::make('configuration.smartdaili.sticky_session')
                 ->label('启用粘性会话')

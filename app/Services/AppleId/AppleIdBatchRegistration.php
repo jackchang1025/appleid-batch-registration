@@ -11,7 +11,6 @@ use App\Models\Phone;
 use App\Services\Apple;
 use App\Services\AppleBuilder;
 use App\Services\Helper\Helper;
-use App\Services\IpInfo\IpInfoService;
 use App\Services\Trait\HasPhone;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Client\ConnectionException;
@@ -56,10 +55,10 @@ use App\Services\CloudCode\CloudCodeService;
 use Weijiajia\IpAddress\IpAddressManager;
 use Weijiajia\HttpProxyManager\ProxyManager;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
+use App\Models\ProxyIpStatistic;
 class AppleIdBatchRegistration
 {
     use HasPhone;
-
 
     //手机号码验证
     protected Captcha $captcha;
@@ -100,6 +99,8 @@ class AppleIdBatchRegistration
     protected ?string $timezone = null;
 
     protected ?CountryLanguageService $countryLanguageService = null;
+
+    protected ?ProxyIpStatistic $proxyIpStatistic = null;
 
     public function __construct(
         protected AppleBuilder $appleBuilder,
@@ -220,7 +221,7 @@ class AppleIdBatchRegistration
             $this->prepareAccountInfo();
 
             // 执行验证流程
-           $this->executeVerificationProcess();
+            $this->executeVerificationProcess();
 
             // 保存注册成功的账户信息
             $this->saveRegisteredAccount();
@@ -335,16 +336,6 @@ class AppleIdBatchRegistration
         $this->apple->withDebug(true);
     }
 
-    public function getAlpha2Code(): ?string
-    {
-        return $this->country ? $this->country->getAlpha2Code() : null;
-    }
-
-    public function getAlpha2Language(): ?string
-    {
-        return $this->country ? $this->country->getAlpha2Language() : null;
-    }
-
     /**
      * 设置调试中间件
      *
@@ -389,10 +380,21 @@ class AppleIdBatchRegistration
 
         $ipInfo = $request->request();
 
+        $this->proxyIpStatistic = ProxyIpStatistic::create([
+            'ip_uri'       => $proxy->getUrl(),
+            'real_ip'        => $ipInfo->getIp(),
+            'proxy_provider' => $this->proxyManager->getDefaultDriver(),
+            'country_code'   => $ipInfo->getCountryCode(),
+            'email_id'       => $this->email->id,
+            'ip_info'        => $ipInfo->getResponse()->json(),
+            'is_success'     => false,
+        ]);
+
+
         $this->timezone = $ipInfo->getTimezone();
         $this->country = CountryLanguageService::make($ipInfo->getCountryCode());
 
-        
+
         $this->apple->withProxySplQueue($this->proxySplQueue);
         $this->apple->appleIdConnector()->withForceProxy(true);
         $this->apple->appleIdConnector()->withProxyEnabled(true);
@@ -465,25 +467,19 @@ class AppleIdBatchRegistration
     protected function executeVerificationProcess(): Response
     {
         // 获取验证码图片
-        $this->captcha($this->appleSessionId(), $this->widgetKey());
+        $this->captcha();
 
         // 验证邮箱和密码
         $this->validateEmailAndPassword();
 
         // 验证验证码
-        $this->attemptsCaptcha(
-            appleIdSessionId: $this->appleSessionId(),
-            widgetKey: $this->widgetKey()
-        );
+        $this->attemptsCaptcha();
 
         // 验证邮箱验证码
-        $this->attemptVerificationEmailCode($this->appleSessionId(), $this->widgetKey());
+        $this->attemptVerificationEmailCode();
 
         // 验证手机验证码
-        $this->attemptVerificationPhoneCode(
-            appleIdSessionId: $this->appleSessionId(),
-            widgetKey: $this->widgetKey()
-        );
+        $this->attemptVerificationPhoneCode();
 
         // 提交账户信息
         return $this->apple->appleIdConnector()->getAccountResource()->account(
@@ -548,6 +544,10 @@ class AppleIdBatchRegistration
     {
         $this->email->update(['status' => EmailStatus::REGISTERED]);
         $this->phone->update(['status' => Phone::STATUS_BOUND]);
+
+        if ($this->proxyIpStatistic) {
+            $this->proxyIpStatistic->update(['is_success' => true]);
+        }
     }
 
     /**
@@ -561,6 +561,9 @@ class AppleIdBatchRegistration
         $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
         $this->email && $this->email->update(['status' => EmailStatus::REGISTERED]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
+        if ($this->proxyIpStatistic) {
+            $this->proxyIpStatistic->update(['exception_message' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -574,6 +577,9 @@ class AppleIdBatchRegistration
         $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
         $this->phone && $this->phone->update(['status' => Phone::STATUS_INVALID]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
+        if ($this->proxyIpStatistic) {
+            $this->proxyIpStatistic->update(['exception_message' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -587,6 +593,9 @@ class AppleIdBatchRegistration
         $this->email && $this->email->update(['status' => EmailStatus::INVALID]);
         $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
+        if ($this->proxyIpStatistic) {
+            $this->proxyIpStatistic->update(['exception_message' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -600,6 +609,9 @@ class AppleIdBatchRegistration
         $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
         $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
+        if ($this->proxyIpStatistic) {
+            $this->proxyIpStatistic->update(['exception_message' => $e->getMessage()]);
+        }
     }
 
 
@@ -682,23 +694,19 @@ class AppleIdBatchRegistration
     }
 
     /**
-     * @param string $XAppleIdSessionId
-     * @param string $XAppleWidgetKey
      * @return CaptchaResponse
      * @throws FatalRequestException
      * @throws RequestException
      */
-    protected function captcha(string $XAppleIdSessionId, string $XAppleWidgetKey): CaptchaResponse
+    protected function captcha(): CaptchaResponse
     {
         return $this->captchaResponse = $this->apple->appleIdConnector()->getAccountResource()->captcha(
-            $XAppleIdSessionId,
-            $XAppleWidgetKey
+            $this->appleSessionId(),
+            $this->widgetKey()
         );
     }
 
     /**
-     * @param string $appleIdSessionId
-     * @param string $widgetKey
      * @param int $attempts
      * @return Response
      * @throws AccountAlreadyExistsException
@@ -707,11 +715,7 @@ class AppleIdBatchRegistration
      * @throws JsonException
      * @throws RequestException|RegistrationException|MaxRetryAttemptsException
      */
-    protected function attemptsCaptcha(
-        string $appleIdSessionId,
-        string $widgetKey,
-        int $attempts = 5
-    ): Response {
+    protected function attemptsCaptcha(int $attempts = 5): Response {
 
         for ($i = 0; $i < $attempts; $i++) {
             try {
@@ -720,10 +724,10 @@ class AppleIdBatchRegistration
 
                 $this->updateCaptchaValidation($response);
 
-                return $this->validateCaptcha($appleIdSessionId, $widgetKey);
+                return $this->validateCaptcha();
             } catch (CaptchaException|DecryptCloudCodeException $e) {
 
-                $this->captcha($appleIdSessionId, $widgetKey);
+                $this->captcha();
             }
         }
 
@@ -746,8 +750,6 @@ class AppleIdBatchRegistration
     /**
      * 验证验证码
      *
-     * @param string $appleIdSessionId 会话ID
-     * @param string $widgetKey widget密钥
      * @return Response 验证响应
      * @throws AccountAlreadyExistsException
      * @throws CaptchaException
@@ -756,18 +758,16 @@ class AppleIdBatchRegistration
      * @throws JsonException
      * @throws RequestException|RegistrationException
      */
-    protected function validateCaptcha(string $appleIdSessionId, string $widgetKey): Response
+    protected function validateCaptcha(): Response
     {
         return $this->apple->appleIdConnector()->getAccountResource()->validate(
             validateDto: $this->validate,
-            appleIdSessionId: $appleIdSessionId,
-            appleWidgetKey: $widgetKey
+            appleIdSessionId: $this->appleSessionId(),
+            appleWidgetKey: $this->widgetKey()
         );
     }
 
     /**
-     * @param string $XAppleSessionId
-     * @param string $widgetKey
      * @param int $attempts
      * @return Response
      * @throws ClientException
@@ -776,15 +776,11 @@ class AppleIdBatchRegistration
      * @throws MaxRetryVerificationEmailCodeException
      * @throws RequestException|MaxRetryGetEmailCodeException|ConnectionException
      */
-    protected function attemptVerificationEmailCode(
-        string $XAppleSessionId,
-        string $widgetKey,
-        int $attempts = 5
-    ): Response {
+    protected function attemptVerificationEmailCode(int $attempts = 5): Response {
         for ($i = 0; $i < $attempts; $i++) {
             try {
 
-                $response = $this->sendVerificationEmail($XAppleSessionId, $widgetKey);
+                $response = $this->sendVerificationEmail();
 
                 $this->validate->account->verificationInfo->id = $response->verificationId;
 
@@ -792,7 +788,7 @@ class AppleIdBatchRegistration
 
                 $this->validate->account->verificationInfo->answer = $emailCode;
 
-                return $this->verifyEmailCode($XAppleSessionId, $widgetKey);
+                return $this->verifyEmailCode();
             } catch (VerificationCodeException $e) {
 
             }
@@ -804,15 +800,13 @@ class AppleIdBatchRegistration
     /**
      * 验证邮箱验证码
      *
-     * @param string $XAppleSessionId 会话ID
-     * @param string $widgetKey Widget Key
      * @return Response 验证响应
      * @throws ClientException
      * @throws FatalRequestException
      * @throws JsonException
      * @throws RequestException|VerificationCodeException
      */
-    protected function verifyEmailCode(string $XAppleSessionId, string $widgetKey): Response
+    protected function verifyEmailCode(): Response
     {
         $verificationPut = VerificationEmail::from([
             'name'             => $this->email->email,
@@ -821,19 +815,17 @@ class AppleIdBatchRegistration
 
         return $this->apple->appleIdConnector()->getAccountResource()->verificationEmail(
             $verificationPut,
-            $XAppleSessionId,
-            $widgetKey
+            $this->appleSessionId(),
+            $this->widgetKey()
         );
     }
 
     /**
-     * @param string $XAppleSessionId
-     * @param string $widgetKey
      * @return SendVerificationEmailResponse
      * @throws FatalRequestException
      * @throws RequestException
      */
-    protected function sendVerificationEmail(string $XAppleSessionId, string $widgetKey): SendVerificationEmailResponse
+    protected function sendVerificationEmail(): SendVerificationEmailResponse
     {
         $data = SendVerificationEmail::from([
             'account'     => [
@@ -850,7 +842,7 @@ class AppleIdBatchRegistration
 
         return $this->apple->appleIdConnector()
             ->getAccountResource()
-            ->sendVerificationEmail($data, $XAppleSessionId, $widgetKey)
+            ->sendVerificationEmail($data, $this->appleSessionId(), $this->widgetKey())
             ->dto();
     }
 
@@ -949,8 +941,6 @@ class AppleIdBatchRegistration
     }
 
     /**
-     * @param string $appleIdSessionId
-     * @param string $widgetKey
      * @param int $attempts
      * @return Response
      * @throws ClientException
@@ -960,20 +950,16 @@ class AppleIdBatchRegistration
      * @throws NumberFormatException
      * @throws RequestException|ConnectionException
      */
-    protected function attemptVerificationPhoneCode(
-        string $appleIdSessionId,
-        string $widgetKey,
-        int $attempts = 5
-    ): Response {
+    protected function attemptVerificationPhoneCode(int $attempts = 5): Response {
         for ($i = 0; $i < $attempts; $i++) {
             try {
-                $this->sendPhoneVerificationCode($appleIdSessionId, $widgetKey);
+                $this->sendPhoneVerificationCode();
 
                 $code = $this->attemptGetPhoneCode($this->phone);
 
                 $this->setPhoneVerificationCode($code);
 
-                return $this->verifyPhoneCode($appleIdSessionId, $widgetKey);
+                return $this->verifyPhoneCode();
             } catch (PhoneException|MaxRetryGetPhoneCodeException $e) {
 
                 $this->handlePhoneVerificationFailure();
@@ -988,8 +974,6 @@ class AppleIdBatchRegistration
     /**
      * 发送手机验证码
      *
-     * @param string $appleIdSessionId 会话ID
-     * @param string $widgetKey Widget Key
      * @return Response 发送响应
      * @throws ClientException
      * @throws FatalRequestException
@@ -997,13 +981,22 @@ class AppleIdBatchRegistration
      * @throws PhoneException
      * @throws RequestException
      */
-    protected function sendPhoneVerificationCode(string $appleIdSessionId, string $widgetKey): Response
+    protected function sendPhoneVerificationCode(int $attempts = 5): Response
     {
-        return $this->apple->appleIdConnector()->getAccountResource()->sendVerificationPhone(
-            $this->validate,
-            $appleIdSessionId,
-            $widgetKey
-        );
+        for ($i = 0; $i < $attempts; $i++) {
+            try {
+
+                return $this->apple->appleIdConnector()->getAccountResource()->sendVerificationPhone(
+                    $this->validate,
+                    $this->appleSessionId(),
+                    $this->widgetKey()
+                );
+            } catch (PhoneException $e) {
+                continue;
+            }
+        }
+
+        throw new PhoneException($e->getMessage());
     }
 
     /**
@@ -1022,20 +1015,18 @@ class AppleIdBatchRegistration
     /**
      * 验证手机验证码
      *
-     * @param string $appleIdSessionId 会话ID
-     * @param string $widgetKey Widget Key
      * @return Response 验证响应
      * @throws ClientException
      * @throws FatalRequestException
      * @throws JsonException
      * @throws RequestException|VerificationCodeException
      */
-    protected function verifyPhoneCode(string $appleIdSessionId, string $widgetKey): Response
+    protected function verifyPhoneCode(): Response
     {
         return $this->apple->appleIdConnector()->getAccountResource()->verificationPhone(
             $this->validate,
-            $appleIdSessionId,
-            $widgetKey
+            $this->appleSessionId(),
+            $this->widgetKey()
         );
     }
 
