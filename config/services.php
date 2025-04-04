@@ -34,5 +34,8 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'user_agents' => [
+        'url' => env('USER_AGENTS_URL', 'http://user-agents:3000'),
+    ],
 
 ];

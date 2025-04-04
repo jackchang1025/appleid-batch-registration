@@ -111,6 +111,20 @@ services:
             - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
         networks:
             - sail
+    # 在 services 下添加以下内容
+    user-agents:
+        build:
+            context: './docker/user-agents'
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        ports:
+            - '${USER_AGENTS_PORT:-3000}:3000'
+        networks:
+            - sail
+        healthcheck:
+            test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:3000/health"]
+            retries: 3
+            timeout: 5s
 networks:
     sail:
         driver: bridge
