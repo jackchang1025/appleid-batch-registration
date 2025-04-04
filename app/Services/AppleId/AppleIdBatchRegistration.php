@@ -56,12 +56,17 @@ use Weijiajia\IpAddress\IpAddressManager;
 use Weijiajia\HttpProxyManager\ProxyManager;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 use App\Models\ProxyIpStatistic;
+
+
 class AppleIdBatchRegistration
 {
     use HasPhone;
 
     //手机号码验证
     protected Captcha $captcha;
+
+
+    protected array $phoneCode = [];
 
     //验证账号
     protected PhoneNumberVerification $phoneNumberVerification;
@@ -1075,9 +1080,23 @@ class AppleIdBatchRegistration
 
             // 提取验证码
             $code = self::parse($response->body());
-            if ($code) {
+
+            if(!$code){
+                continue;
+            }
+
+            if (empty($this->phoneCode[$phone->phone])) {
+                $this->phoneCode[$phone->phone] = $code;
                 return $code;
             }
+
+            if ($this->phoneCode[$phone->phone] === $code) {
+                continue;
+            }
+
+            $this->phoneCode[$phone->phone] = $code;
+
+            return $code;
         }
 
         throw new MaxRetryGetPhoneCodeException("尝试获取手机验证码失败，已尝试 {$attempts} 次");
