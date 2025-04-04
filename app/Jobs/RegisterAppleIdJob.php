@@ -81,7 +81,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     {
         try {
 
-            if ($this->email->status->value !== EmailStatus::AVAILABLE->value) {
+            if ($this->email->status->value !== EmailStatus::AVAILABLE->value && $this->email->status->value !== EmailStatus::FAILED->value) {
                 Log::warning("Job for {$this->email->email} skipped: Not available.");
                 $this->delete(); // 删除重复的 Job
                 return;

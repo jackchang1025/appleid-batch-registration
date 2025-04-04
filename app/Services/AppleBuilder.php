@@ -20,7 +20,6 @@ class AppleBuilder
     public function build(AppleIdInterface $appleId):Apple
     {
         return (new Apple($appleId))
-            ->withBasePath(storage_path("app/public/{$appleId->getAppleId()}"))
             ->withLogger($this->logger)
             ->withDispatcher($this->dispatcher)
             ->withProxyManager($this->proxyManager)

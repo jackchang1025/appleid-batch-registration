@@ -202,7 +202,7 @@ class AppleIdBatchRegistration
      * @throws RequestException
      * @throws Throwable
      */
-    public function run(Email $email, CountryLanguageService $country): bool
+    public function run(Email $email, CountryLanguageService $country, ?Phone $phone = null): bool
     {
         $this->email   = $email;
         $this->country = $country;
@@ -220,7 +220,7 @@ class AppleIdBatchRegistration
 
             $this->setupHeaders();
 
-            $this->setupPhone();
+            $this->phone = $phone ?? $this->getPhone();
 
             // 准备注册所需的账户信息
             $this->prepareAccountInfo();
@@ -407,10 +407,7 @@ class AppleIdBatchRegistration
     }
 
 
-    protected function setupPhone(): void
-    {
-        $this->phone = $this->getPhone();
-    }
+ 
 
 
     protected function setupHeaders(): void

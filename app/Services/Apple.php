@@ -3,19 +3,18 @@
 namespace App\Services;
 
 use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Cookie\FileCookieJar;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\Macroable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Saloon\Traits\RequestProperties\HasConfig;
 use Weijiajia\HttpProxyManager\Contracts\ProxyInterface;
 use Weijiajia\HttpProxyManager\ProxyManager;
 use Weijiajia\SaloonphpAppleClient\Contracts\AppleIdInterface;
 use Weijiajia\SaloonphpAppleClient\Integrations\Account\AccountConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleAuthenticationConnector\AppleAuthenticationConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\AppleIdConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\AuthTvApple\AuthTvAppleConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\BuyTvAppleConnector;
@@ -27,6 +26,7 @@ use Weijiajia\SaloonphpHeaderSynchronizePlugin\Contracts\HeaderSynchronizeDriver
 use Weijiajia\SaloonphpHeaderSynchronizePlugin\Driver\ArrayStoreHeaderSynchronize;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 use Weijiajia\SaloonphpAppleClient\Integrations\FeedbackwsIcloud\FeedbackwsIcloudConnector;
+
 class Apple
 {
     use Macroable;
@@ -45,7 +45,6 @@ class Apple
     protected ?TvAppleConnector $tvAppleConnector = null;
     protected ?AuthTvAppleConnector $authTvAppleConnector = null;
     protected ?BuyTvAppleConnector $buyTvAppleConnector = null;
-    protected ?IcloudConnector $icloudConnector = null;
     protected ?WebIcloudConnector $webIcloudConnector = null;
     protected ?FeedbackwsIcloudConnector $feedBackWsIcloudConnector = null;
     protected ?SetupIcloudConnector $setupIcloudConnector = null;
@@ -55,7 +54,6 @@ class Apple
 
     public function __construct(
         protected AppleIdInterface $appleId,
-        protected ?string $basePath = null,
         protected ?Dispatcher $dispatcher = null
     ) {
 
@@ -64,7 +62,6 @@ class Apple
     public function withCountry(string $country): static
     {
         $this->country = $country;
-
         return $this;
     }
 
@@ -97,29 +94,12 @@ class Apple
 
     public function feedBackWsIcloudConnector(): FeedbackwsIcloudConnector
     {
-        if ($this->feedBackWsIcloudConnector === null) {
-            $this->feedBackWsIcloudConnector = new FeedbackwsIcloudConnector();
-            $this->feedBackWsIcloudConnector
-                ->withLogger($this->getLogger())
-                ->withCookies($this->getCookieJar())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
-
-            if ($this->debug) {
-                $this->feedBackWsIcloudConnector->debug();
-            }
-
-            $this->feedBackWsIcloudConnector->tries         = 3;
-            $this->feedBackWsIcloudConnector->retryInterval = 1000;
-        }
-
-        return $this->feedBackWsIcloudConnector;
+        return $this->feedBackWsIcloudConnector ??= $this->configureConnector(new FeedbackwsIcloudConnector());
     }
 
     public function withLogger(LoggerInterface $logger): static
     {
         $this->logger = $logger;
-
         return $this;
     }
 
@@ -130,85 +110,26 @@ class Apple
 
     public function idmsaConnector(): IdmsaConnector
     {
-        if ($this->idmsaConnector === null) {
-            $this->idmsaConnector = new IdmsaConnector(
-                $this->config()->get('serviceKey'),
-                $this->config()->get('redirectUri')
-            );
-            $this->idmsaConnector
-                ->withLogger($this->getLogger())
-                ->withCookies($this->getCookieJar())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
-
-            $this->idmsaConnector->tries         = 3;
-            $this->idmsaConnector->retryInterval = 1000;
-            if ($this->debug) {
-                $this->idmsaConnector->debug();
-            }
-        }
-
-        return $this->idmsaConnector;
+        return $this->idmsaConnector ??= $this->configureConnector(new IdmsaConnector(
+            $this->config()->get('serviceKey'),
+            $this->config()->get('redirectUri')
+        ));
     }
 
     public function webIcloudConnector(): WebIcloudConnector
     {
-        if ($this->webIcloudConnector === null) {
-            $this->webIcloudConnector = new WebIcloudConnector($this->config()->get('web_icloud_base_url'));
-            $this->webIcloudConnector
-                ->withLogger($this->getLogger())
-                ->withCookies($this->getCookieJar())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
-
-            if ($this->debug) {
-                $this->webIcloudConnector->debug();
-            }
-
-            $this->webIcloudConnector->tries         = 3;
-            $this->webIcloudConnector->retryInterval = 1000;
-        }
-
-        return $this->webIcloudConnector;
+        return $this->webIcloudConnector ??= $this->configureConnector(new WebIcloudConnector($this->config()->get('web_icloud_base_url')));
     }
 
     public function withHeaderSynchronizeDriver(HeaderSynchronizeDriver $headerSynchronizeDriver): static
     {
         $this->headerSynchronizeDriver = $headerSynchronizeDriver;
-
         return $this;
     }
 
     public function getCookieJar(): CookieJar
     {
-        return $this->cookieJar ??= new CookieJar(
-            $this->getCookieJarPath()
-        );
-    }
-
-    public function getCookieJarPath(): string
-    {
-        return $this->getBasePath()."/{$this->appleId->getAppleId()}_cookies.json";
-    }
-
-    public function getBasePath(): string
-    {
-        if ($this->basePath === null) {
-            $this->withBasePath(sys_get_temp_dir());
-        }
-
-        return $this->basePath;
-    }
-
-    public function withBasePath(string $basePath): static
-    {
-        if (!is_dir($basePath) && !mkdir($basePath, 0777, true) && !is_dir($basePath)) {
-            throw new RuntimeException(sprintf('Directory "%s" was not created', $basePath));
-        }
-
-        $this->basePath = $basePath;
-
-        return $this;
+        return $this->cookieJar ??= new CookieJar();
     }
 
     public function getAppleId(): AppleIdInterface
@@ -220,20 +141,12 @@ class Apple
     {
         if ($this->proxySplQueue === null) {
 
-            // return $this->proxySplQueue = (new ProxySplQueue(roundRobinEnabled: true, proxies: ['http://192.168.31.35:10811']));
-
             $proxyConnector = $this->getProxyManager()->driver();
             if ($this->debug) {
                 $proxyConnector->debug();
             }
 
-            if ($this->getCountry()) {
-                $proxy = $proxyConnector->defaultModelIp([
-                    'country' => $this->getCountry(),
-                ]);
-            } else {
-                $proxy = $proxyConnector->defaultModelIp();
-            }
+            $proxy = $proxyConnector->withCountry($this->getCountry())->defaultModelIp();
 
             if ($proxy instanceof Collection) {
 
@@ -262,190 +175,91 @@ class Apple
         return $this->headerSynchronizeDriver ??= new ArrayStoreHeaderSynchronize();
     }
 
-    public function getHeaderSynchronizeDriverPath(): string
-    {
-        return $this->getBasePath()."/{$this->appleId->getAppleId()}_headers.json";
-    }
-
     public function withCookieJar(CookieJar $cookieJar): static
     {
         $this->cookieJar = $cookieJar;
-
         return $this;
     }
 
     public function appleIdConnector(): AppleIdConnector
     {
-        if ($this->appleIdConnector === null) {
-            $this->appleIdConnector = new AppleIdConnector();
-            $this->appleIdConnector
-                ->withLogger($this->getLogger())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withCookies($this->getCookieJar())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
-
-            $this->appleIdConnector->tries         = 3;
-            $this->appleIdConnector->retryInterval = 1000;
-            if ($this->debug) {
-                $this->appleIdConnector->debug();
-            }
-        }
-
-        return $this->appleIdConnector;
+        return $this->appleIdConnector ??= $this->configureConnector(new AppleIdConnector());
     }
 
     public function accountConnector(): AccountConnector
     {
-        if ($this->accountConnector === null) {
-            $this->accountConnector = new AccountConnector();
-            $this->accountConnector
-                ->withLogger($this->getLogger())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withCookies($this->getCookieJar())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
-
-            $this->accountConnector->tries         = 3;
-            $this->accountConnector->retryInterval = 1000;
-            if ($this->debug) {
-                $this->accountConnector->debug();
-            }
-        }
-
-        return $this->accountConnector;
+        return $this->accountConnector ??= $this->configureConnector(new AccountConnector());
     }
 
     public function tvAppleConnector(): TvAppleConnector
     {
-        if ($this->tvAppleConnector === null) {
-            $this->tvAppleConnector = new TvAppleConnector();
-            $this->tvAppleConnector
-                ->withLogger($this->getLogger())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withCookies($this->getCookieJar())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
-
-            $this->tvAppleConnector->tries         = 3;
-            $this->tvAppleConnector->retryInterval = 1000;
-            if ($this->debug) {
-                $this->tvAppleConnector->debug();
-            }
-        }
-
-        return $this->tvAppleConnector;
+        return $this->tvAppleConnector ??= $this->configureConnector(new TvAppleConnector());
     }
 
     public function authTvAppleConnector(): AuthTvAppleConnector
     {
-        if ($this->authTvAppleConnector === null) {
-            $this->authTvAppleConnector = new AuthTvAppleConnector();
-            $this->authTvAppleConnector
-                ->withLogger($this->getLogger())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withCookies($this->getCookieJar())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
-
-            $this->authTvAppleConnector->tries         = 3;
-            $this->authTvAppleConnector->retryInterval = 1000;
-            if ($this->debug) {
-                $this->authTvAppleConnector->debug();
-            }
-        }
-
-        return $this->authTvAppleConnector;
+        return $this->authTvAppleConnector ??= $this->configureConnector(new AuthTvAppleConnector());
     }
 
     public function buyTvAppleConnector(): BuyTvAppleConnector
     {
-        if ($this->buyTvAppleConnector === null) {
-            $this->buyTvAppleConnector = new BuyTvAppleConnector();
-            $this->buyTvAppleConnector
-                ->withLogger($this->getLogger())
-                ->withCookies($this->getCookieJar())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
-
-            $this->buyTvAppleConnector->tries         = 3;
-            $this->buyTvAppleConnector->retryInterval = 1000;
-            if ($this->debug) {
-                $this->buyTvAppleConnector->debug();
-            }
-        }
-
-        return $this->buyTvAppleConnector;
-    }
-
-    public function icloudConnector(): IcloudConnector
-    {
-        if ($this->icloudConnector === null) {
-            $this->icloudConnector = new IcloudConnector();
-            $this->icloudConnector
-                ->withLogger($this->getLogger())
-                ->withCookies($this->getCookieJar())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
-
-            $this->icloudConnector->tries         = 3;
-            $this->icloudConnector->retryInterval = 1000;
-            if ($this->debug) {
-                $this->icloudConnector->debug();
-            }
-        }
-
-        return $this->cloudCodeConnector;
+        return $this->buyTvAppleConnector ??= $this->configureConnector(new BuyTvAppleConnector());
     }
 
     public function setupIcloudConnector(): SetupIcloudConnector
     {
-        if ($this->setupIcloudConnector === null) {
-            $this->setupIcloudConnector = new SetupIcloudConnector();
-            $this->setupIcloudConnector
-                ->withLogger($this->getLogger())
-                ->withCookies($this->getCookieJar())
-                ->withProxyQueue($this->getProxySplQueue())
-                ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
+        return $this->setupIcloudConnector ??= $this->configureConnector(new SetupIcloudConnector());
+    }
 
-            $this->setupIcloudConnector->tries         = 3;
-            $this->setupIcloudConnector->retryInterval = 1000;
-            if ($this->debug) {
-                $this->setupIcloudConnector->debug();
-            }
+     /**
+     * 配置通用连接器属性
+     * 
+     * @param mixed $connector 要配置的连接器
+     */
+    protected function configureConnector(AppleConnector $connector): AppleConnector
+    {
+        $connector->withLogger($this->getLogger())
+            ->withCookies($this->getCookieJar())
+            ->withProxyQueue($this->getProxySplQueue())
+            ->withHeaderSynchronizeDriver($this->getHeaderSynchronizeDriver());
+
+        $connector->tries = 3;
+        $connector->retryInterval = 1000;
+        
+        if ($this->debug) {
+            $connector->debug();
         }
 
-        return $this->setupIcloudConnector;
+        return $connector;
     }
 
     public function withDebug(bool $debug): static
     {
         $this->debug = $debug;
-
         return $this;
     }
 
     public function withProxySplQueue(ProxySplQueue $proxySplQueue): static
     {
         $this->proxySplQueue = $proxySplQueue;
-
         return $this;
     }
 
     public function withConfig($key, $value): static
     {
         $this->config()->add($key, $value);
-
         return $this;
     }
 
     public function withProxyManager(ProxyManager $proxyManager): static
     {
         $this->proxyManager = $proxyManager;
-
         return $this;
     }
 
     public function withDispatcher(Dispatcher $dispatcher): static
     {
         $this->dispatcher = $dispatcher;
-
         return $this;
     }
 
