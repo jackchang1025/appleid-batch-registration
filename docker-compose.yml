@@ -78,10 +78,13 @@ services:
             - 'sail-redis:/data'
         networks:
             - sail
+        command: redis-server --requirepass ${REDIS_PASSWORD}
         healthcheck:
             test:
                 - CMD
                 - redis-cli
+                - -a
+                - '${REDIS_PASSWORD}'
                 - ping
             retries: 3
             timeout: 5s
