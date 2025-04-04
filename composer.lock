@@ -9602,12 +9602,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/ip-address.git",
-                "reference": "cf1f95ba30477b3daf31f77b58ee9003a28af9e9"
+                "reference": "adcf97a695c9d8796fcfba20918a44ae726b412b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/ip-address/zipball/cf1f95ba30477b3daf31f77b58ee9003a28af9e9",
-                "reference": "cf1f95ba30477b3daf31f77b58ee9003a28af9e9",
+                "url": "https://api.github.com/repos/jackchang1025/ip-address/zipball/adcf97a695c9d8796fcfba20918a44ae726b412b",
+                "reference": "adcf97a695c9d8796fcfba20918a44ae726b412b",
                 "shasum": ""
             },
             "require": {
@@ -9657,7 +9657,7 @@
                 "issues": "https://github.com/jackchang1025/ip-address/issues",
                 "source": "https://github.com/jackchang1025/ip-address/tree/master"
             },
-            "time": "2025-04-03T09:58:48+00:00"
+            "time": "2025-04-04T08:56:13+00:00"
         },
         {
             "name": "weijiajia/saloonphp-apple-client",

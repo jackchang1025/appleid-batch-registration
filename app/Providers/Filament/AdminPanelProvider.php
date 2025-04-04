@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
             $column->toggleable();
         });
 
-        DatabaseNotifications::pollingInterval('30s');
+        DatabaseNotifications::pollingInterval('5s');
 
         return $panel
             ->default()

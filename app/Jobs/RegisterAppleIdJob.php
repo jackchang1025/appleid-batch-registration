@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Models\Email;
 use App\Models\User;
 use App\Services\AppleId\AppleIdBatchRegistration;
-use App\Services\Exception\RegistrationException;
+use Weijiajia\SaloonphpAppleClient\Exception\RegistrationException;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,6 +18,9 @@ use Saloon\Exceptions\Request\Statuses\ServiceUnavailableException;
 use Filament\Notifications\Actions\Action;
 use App\Filament\Resources\EmailResource\Pages\ViewEmail;
 use App\Services\CountryLanguageService;
+use Illuminate\Support\Facades\Log;
+use App\Enums\EmailStatus;
+
 class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -25,7 +28,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     /**
      * 重试次数
      */
-    public int $tries = 5;
+    public int $tries = 3;
 
     /**
      * 任务超时时间（秒）
@@ -39,7 +42,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
         protected Email $email,
         protected ?string $country = null
     ) {
-        $this->onQueue('default');
+        $this->onQueue('apple_id_registration');
     }
 
     /**
@@ -55,7 +58,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueFor(): int
     {
-        return 60 * 10; // 5分钟
+        return 60 * 60; // 60分钟
     }
 
     /**
@@ -69,15 +72,24 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     }
 
     /**
-     * @param AppleIdBatchRegistration $appleIdBatchRegistration
      * @return void
      * @throws RegistrationException
      * @throws ServiceUnavailableException
      * @throws \Throwable
      */
-    public function handle(AppleIdBatchRegistration $appleIdBatchRegistration): void
+    public function handle():void
     {
         try {
+
+            if ($this->email->status->value !== EmailStatus::AVAILABLE->value) {
+                Log::warning("Job for {$this->email->email} skipped: Not available.");
+                $this->delete(); // 删除重复的 Job
+                return;
+            }
+
+
+            $appleIdBatchRegistration = app(AppleIdBatchRegistration::class);
+
             // 运行注册
             $appleIdBatchRegistration->run($this->email, CountryLanguageService::make($this->country));
 
@@ -94,33 +106,28 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
                 ])
                 ->sendToDatabase(User::first());
 
-            $this->delete();
+            Log::info("{$this->email->email} 注册成功");
+
+            $this->delete(); // 显式删除成功完成的 Job
+            return;
 
         } catch (RegistrationException|ServiceUnavailableException $e) {
 
             //抛出异常
             throw $e;
+            Log::error("{$this->email->email} 注册失败 {$e}");
 
         } catch (Exception $e) {
 
-            // 显示通知
-            Notification::make()
-                ->title("{$this->email->email} 注册失败")
-                ->body($e->getMessage())
-                ->danger()
-                ->actions([
-                    Action::make('view')
-                        ->button()
-                        ->url(ViewEmail::getUrl([
-                            'record' => $this->email->id,
-                        ]), shouldOpenInNewTab: true),
-                ])
-                ->sendToDatabase(User::first());
+            Log::error("{$this->email->email} 注册失败 {$e}");
+            $this->fail($e);
         }
+
     }
 
     public function failed(Exception $exception): void
     {
+
         Notification::make()
             ->title("{$this->email->email} 注册失败")
             ->body($exception->getMessage())
