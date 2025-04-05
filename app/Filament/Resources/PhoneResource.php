@@ -50,6 +50,7 @@ class PhoneResource extends Resource
 
                 Forms\Components\TextInput::make('country_code')->default('')->readOnly(),
                 Forms\Components\TextInput::make('country_dial_code')->default('')->readOnly(),
+                Forms\Components\TextInput::make('country_code_alpha3')->default('')->readOnly(),
             ]);
     }
 

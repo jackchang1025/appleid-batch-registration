@@ -115,7 +115,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
 
             //抛出异常
             throw $e;
-            Log::error("{$this->email->email} 注册失败 {$e}");
+            
 
         } catch (Exception $e) {
 

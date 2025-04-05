@@ -54,6 +54,7 @@ class Email extends Model
             'email' => $this->email,
             'message' => $message,
             'data' => $data,
+            'email_id'=>$this->id,
         ]);
     }
     
