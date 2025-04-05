@@ -13,8 +13,8 @@ enum UserAgentStatus: string
     public function label(): string
     {
         return match($this) {
-            self::ACTIVE => '活跃',
-            self::INACTIVE => '停用',
+            self::ACTIVE => '启用',
+            self::INACTIVE => '禁用',
         };
     }
     

@@ -56,7 +56,7 @@ use Weijiajia\IpAddress\IpAddressManager;
 use Weijiajia\HttpProxyManager\ProxyManager;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 use App\Models\ProxyIpStatistic;
-
+use App\Models\UserAgent;
 
 class AppleIdBatchRegistration
 {
@@ -414,6 +414,12 @@ class AppleIdBatchRegistration
     {
         $this->apple->appleIdConnector()->headers()->add('X-Apple-I-Timezone', $this->timezone);
         $this->apple->appleIdConnector()->headers()->add('Accept-Language', $this->country->getAlpha2Language());
+
+
+        $userAgent = UserAgent::getRandomActive()?->user_agent ?: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36';
+
+        // $this->apple->appleIdConnector()->headers()->add('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36');
+        $this->apple->appleIdConnector()->headers()->add('User-Agent', $userAgent);
     }
 
     /**

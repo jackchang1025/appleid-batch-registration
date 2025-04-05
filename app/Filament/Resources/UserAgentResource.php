@@ -57,15 +57,14 @@ class UserAgentResource extends Resource
     {
         return $table
             ->columns([
-                
+
                 TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),
                     
                 TextColumn::make('user_agent')
                     ->label('UserAgent字符串')
-                    ->searchable()
-                    ->limit(50),
+                    ->searchable(),
                     
                
                 TextColumn::make('status')
