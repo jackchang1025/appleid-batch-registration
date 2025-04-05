@@ -193,9 +193,23 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
-        'supervisor-2' => [
+        'apple_id_registration' => [
             'connection' => 'redis',
             'queue' => ['apple_id_registration'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 128,
+            'tries' => 1,
+            'timeout' => 600,
+            'nice' => 0,
+        ],
+
+        'imports' => [
+            'connection' => 'redis',
+            'queue' => ['imports'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
             'maxProcesses' => 1,
@@ -215,7 +229,12 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
-            'supervisor-2' => [
+            'apple_id_registration' => [
+                'maxProcesses' => 10,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
+            'imports' => [
                 'maxProcesses' => 10,
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
@@ -224,9 +243,12 @@ return [
 
         'local' => [
             'supervisor-1' => [
-                'maxProcesses' => 3,
+                'maxProcesses' => 10,
             ],
-            'supervisor-2' => [
+            'apple_id_registration' => [
+                'maxProcesses' => 10,
+            ],
+            'imports' => [
                 'maxProcesses' => 10,
             ],
         ],
