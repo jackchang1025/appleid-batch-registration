@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'apple_client_info' => [
+        'url' => env('APPLE_CLIENT_INFO_URL'),
+    ],
+
 ];
