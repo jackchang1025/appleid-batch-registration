@@ -34,6 +34,8 @@ use App\Services\Phone\PhoneNumberFactory;
  * @method static \Illuminate\Database\Eloquent\Builder|Phone whereUpdatedAt($value)
  * @property-read mixed $label
  * @method static \Database\Factories\PhoneFactory factory($count = null, $state = [])
+ * @property string|null $country_code_alpha3
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Phone whereCountryCodeAlpha3($value)
  * @mixin \Eloquent
  */
 class Phone extends Model

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
+ * 
+ *
  * @property int $id
  * @property string|null $name
  * @property string $user_agent_string
@@ -19,6 +21,16 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Illuminate\Support\Carbon|null $last_used_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string $user_agent
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserAgent newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserAgent newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserAgent query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserAgent whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserAgent whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserAgent whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserAgent whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UserAgent whereUserAgent($value)
+ * @mixin \Eloquent
  */
 class UserAgent extends Model
 {

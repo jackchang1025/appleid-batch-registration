@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Weijiajia\SaloonphpAppleClient\Contracts\AppleIdInterface;
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $email
