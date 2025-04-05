@@ -1,19 +1,15 @@
 <?php
 
 namespace App\Services;
-use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 use Symfony\Component\Intl\Countries;
 
 class CountryLanguageService
 {
-
-    protected ?ProxySplQueue $proxySplQueue = null;
-
     protected ?string $timezone = null;
 
     public function __construct(protected string $country)
     {
-        
+
     }
 
     public static function make(string $country):static
@@ -23,7 +19,7 @@ class CountryLanguageService
 
     public static function labels(): array
     {
-      
+
         $countries = Countries::getCountryCodes();
         $labels = [];
         foreach ($countries as $code) {
@@ -37,7 +33,7 @@ class CountryLanguageService
         if (strlen($this->country) === 2) {
             return strtoupper($this->country);
         }
-        
+
         return Countries::getAlpha2Code($this->country);
     }
 
@@ -46,14 +42,14 @@ class CountryLanguageService
         if (strlen($this->country) === 3) {
             return strtoupper($this->country);
         }
-        
+
         return Countries::getAlpha3Code($this->country);
     }
 
     public function getAlpha2Language(): string
     {
         $countryCode = $this->getAlpha2Code();
-        
+
         // 默认映射关系
         $defaultMap = [
             'US' => 'en-US,en-GB;q=0.9,en;q=0.8',
@@ -102,10 +98,10 @@ class CountryLanguageService
             return $defaultMap[$countryCode];
         }
 
-        
+
         // 如果不在映射表中，返回英语作为默认语言
         return 'en-US,en-GB;q=0.9,en;q=0.8';
     }
 
-  
+
 }
