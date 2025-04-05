@@ -403,7 +403,7 @@ class AppleIdBatchRegistration
             throw new RuntimeException('fullData not found');
         }
 
-        $this->appleIdConnector->headers()->add('x-apple-i-fd-client-info', $clientId);
+        $this->appleIdConnector->headers()->add('X-Apple-I-FD-Client-Info', $clientId);
     }
 
     /**
