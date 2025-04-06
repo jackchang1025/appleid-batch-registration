@@ -15,7 +15,20 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Request\Account\Verifica
 use Weijiajia\HttpProxyManager\ProxyConnector;
 use Weijiajia\DecryptVerificationCode\CloudCode\CloudCodeConnector;
 use Weijiajia\IpAddress\Request as IpAddressRequest;
-
+use App\Services\Integrations\Phone\PhoneConnector;
+use App\Services\Integrations\Email\EmailConnector;
+use App\Services\Integrations\AppleClientInfo\AppleClientInfoConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\TvApple\TvAppleConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\TvApple\Request\TvAppleRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\AuthTvApple\Request\InitializeSessionRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\AuthTvApple\AuthTvAppleConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\AuthTvApple\Request\AccountNameValidateRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\PodRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\CreateOptionsRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\ValidateAccountFieldsSrvRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\GenerateEmailConfirmationCodeSrvRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\CreateAccountSrvRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\ValidateEmailConfirmationCodeSrvRequest;
 enum Request: string
 {
     case ACCOUNT = Account::class;
@@ -33,7 +46,20 @@ enum Request: string
     case PROXYCONNECTOR = ProxyConnector::class;
     case CLOUDCODECONNECTOR = CloudCodeConnector::class;
     case IPADDRESSMANAGER = IpAddressRequest::class;
-
+    case PHONECONNECTOR = PhoneConnector::class;
+    case EMAILCONNECTOR = EmailConnector::class;
+    case APPLECLIENTINFOREQUEST = AppleClientInfoConnector::class;
+    case TVAPPLECONNECTOR = TvAppleConnector::class;
+    case TVAPPLEREQUEST = TvAppleRequest::class;
+    case AUTHTVAPPLECONNECTOR = AuthTvAppleConnector::class;
+    case INITIALIZESSESSIONREQUEST = InitializeSessionRequest::class;
+    case ACCOUNTNAMEVALIDATEREQUEST = AccountNameValidateRequest::class;
+    case PODREQUEST = PodRequest::class;
+    case CREATEOPTIONSREQUEST = CreateOptionsRequest::class;
+    case VALIDATEACCOUNTFIELDSSRVREQUEST = ValidateAccountFieldsSrvRequest::class;
+    case GENERATEEMAILCONFIRMATIONCODESRVREQUEST = GenerateEmailConfirmationCodeSrvRequest::class;
+    case CREATEACCOUNTSRVREQUEST = CreateAccountSrvRequest::class;
+    case VALIDATEEMAILCONFIRMATIONCODESRVREQUEST = ValidateEmailConfirmationCodeSrvRequest::class;
     public function label(): string
     {
         return match($this) {
@@ -50,6 +76,21 @@ enum Request: string
             self::PROXYCONNECTOR => '获取代理',
             self::CLOUDCODECONNECTOR => '解码验证码',
             self::IPADDRESSMANAGER => '获取IP地址',
+            self::PHONECONNECTOR => '获取手机验证码',
+            self::EMAILCONNECTOR => '获取邮箱验证码',
+            self::APPLECLIENTINFOREQUEST => '获取苹果客户端信息',
+            self::TVAPPLECONNECTOR => '获取tv苹果客户端信息',
+            self::TVAPPLEREQUEST => '获取资源和令牌',
+            self::INITIALIZESSESSIONREQUEST => '获取初始化会话',
+            self::ACCOUNTNAMEVALIDATEREQUEST => '验证账号信息',
+            self::PODREQUEST => '获取pod',
+            self::CREATEOPTIONSREQUEST => '获取创建选项',
+            self::VALIDATEACCOUNTFIELDSSRVREQUEST => '验证账号字段',
+            self::GENERATEEMAILCONFIRMATIONCODESRVREQUEST => '生成邮箱验证码',
+            self::CREATEACCOUNTSRVREQUEST => '创建账号',
+            self::VALIDATEEMAILCONFIRMATIONCODESRVREQUEST => '验证邮箱验证码',
+            self::AUTHTVAPPLECONNECTOR => '获取授权tv苹果',
+
         };
     }
 
