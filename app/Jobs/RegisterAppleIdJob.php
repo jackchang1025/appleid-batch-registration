@@ -40,7 +40,8 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
      */
     public function __construct(
         protected Email $email,
-        protected ?string $country = null
+        protected ?string $country = null,
+        protected ?bool $isRandomUserAgent = false
     ) {
         $this->onQueue('apple_id_registration');
     }
@@ -91,7 +92,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
             $appleIdBatchRegistration = app(AppleIdBatchRegistration::class);
 
             // 运行注册
-            $appleIdBatchRegistration->run($this->email, CountryLanguageService::make($this->country));
+            $appleIdBatchRegistration->run(email: $this->email, country: CountryLanguageService::make($this->country), isRandomUserAgent: $this->isRandomUserAgent);
 
             // 显示通知
             Notification::make()

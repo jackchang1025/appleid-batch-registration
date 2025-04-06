@@ -15,7 +15,7 @@ use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Collection;
-
+use Filament\Forms\Components\Toggle;
 class EmailResource extends Resource
 {
     protected static ?string $model = Email::class;
@@ -146,6 +146,11 @@ class EmailResource extends Resource
                         ->options(CountryLanguageService::labels())
                         ->optionsLimit(300)
                         ->helperText('选择需要注册 Apple ID 的国家'),
+
+                        Toggle::make('is_random_user_agent')
+                            ->label('是否随机生成 User Agent')
+                            ->default(false),
+
                 ])
                 ->action(function ($records, array $data) {
 
@@ -158,7 +163,7 @@ class EmailResource extends Resource
                             if ($record->status->value === EmailStatus::AVAILABLE->value || $record->status->value === EmailStatus::FAILED->value){
                                 $count++;
 
-                                RegisterAppleIdJob::dispatch($record,$data['country']);
+                                RegisterAppleIdJob::dispatch($record,$data['country'],$data['is_random_user_agent']);
                                 continue;
                             }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Trait;
 
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleAuthenticationConnector\Dto\Request\SignInComplete;
 use Weijiajia\SaloonphpAppleClient\Integrations\Idmsa\Dto\Request\SignIn\SignInComplete as IdmsaSignInComplete;

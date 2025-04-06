@@ -49,6 +49,10 @@ class CreateAppleid extends CreateRecord
                     ->gridDirection('row')
                     ->bulkToggleable(),
 
+                Forms\Components\Toggle::make('is_random_user_agent')
+                    ->label('是否随机生成 User Agent')
+                    ->default(false),
+
 
             ]);
     }
@@ -80,7 +84,7 @@ class CreateAppleid extends CreateRecord
                         throw new \Exception("邮箱 {$email} 不存在");
                     }
 
-                    RegisterAppleIdJob::dispatch($email,$data['country']);
+                    RegisterAppleIdJob::dispatch($email,$data['country'],$data['is_random_user_agent']);
                 }
 
                 // 显示通知

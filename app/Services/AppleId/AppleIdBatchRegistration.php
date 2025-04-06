@@ -3,22 +3,19 @@
 namespace App\Services\AppleId;
 
 use App\Enums\EmailStatus;
-use App\Enums\Request;
 use App\Models\Appleid;
 use App\Models\Email;
 use App\Models\Phone;
 use App\Models\ProxyIpStatistic;
 use App\Models\UserAgent;
-use App\Services\CloudCode\CloudCodeService;
 use App\Services\CountryLanguageService;
 use App\Services\Helper\Helper;
 use App\Services\Integrations\AppleClientInfo\AppleClientInfoConnector;
 use App\Services\Integrations\AppleClientInfo\AppleClientInfoRequest;
+use App\Services\Integrations\Email\EmailConnector;
+use App\Services\Integrations\Phone\PhoneConnector;
 use App\Services\Trait\HasPhone;
-use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use JsonException;
 use libphonenumber\PhoneNumberFormat;
 use Propaganistas\LaravelPhone\Exceptions\NumberFormatException;
@@ -29,7 +26,6 @@ use Saloon\Enums\PipeOrder;
 use Saloon\Exceptions\Request\ClientException;
 use Saloon\Exceptions\Request\FatalRequestException;
 use Saloon\Exceptions\Request\RequestException;
-use Saloon\Http\PendingRequest;
 use Saloon\Http\Response;
 use Throwable;
 use Weijiajia\DecryptVerificationCode\CloudCodeResponseInterface;
@@ -41,10 +37,10 @@ use Weijiajia\IpAddress\IpAddressManager;
 use Weijiajia\IpAddress\Request as IpAddressRequest;
 use Weijiajia\SaloonphpAppleClient\Exception\AccountAlreadyExistsException;
 use Weijiajia\SaloonphpAppleClient\Exception\CaptchaException;
-use Weijiajia\SaloonphpAppleClient\Exception\Email\MaxRetryGetEmailCodeException;
+use App\Services\Integrations\Email\Exception\MaxRetryGetEmailCodeException;
 use Weijiajia\SaloonphpAppleClient\Exception\Email\MaxRetryVerificationEmailCodeException;
 use Weijiajia\SaloonphpAppleClient\Exception\MaxRetryAttemptsException;
-use Weijiajia\SaloonphpAppleClient\Exception\Phone\MaxRetryGetPhoneCodeException;
+use App\Services\Integrations\Phone\Exception\MaxRetryGetPhoneCodeException;
 use Weijiajia\SaloonphpAppleClient\Exception\Phone\MaxRetryVerificationPhoneCodeException;
 use Weijiajia\SaloonphpAppleClient\Exception\Phone\PhoneException;
 use Weijiajia\SaloonphpAppleClient\Exception\RegistrationException;
@@ -62,16 +58,14 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Account\Ver
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Captcha\Captcha as CaptchaResponse;
 use Weijiajia\SaloonphpHeaderSynchronizePlugin\Driver\ArrayStoreHeaderSynchronize;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
-
+use Weijiajia\DecryptVerificationCode\CloudCode\CloudCodeConnector;
+use App\Services\Trait\HasLog;
 class AppleIdBatchRegistration
 {
     use HasPhone;
-
+    use HasLog;
     //手机号码验证
     protected Captcha $captcha;
-
-
-    protected array $phoneCode = [];
 
     //验证账号
     protected PhoneNumberVerification $phoneNumberVerification;
@@ -105,15 +99,24 @@ class AppleIdBatchRegistration
     protected ?ProxyConnector $proxyConnector = null;
     protected ?IpAddressRequest $request = null;
     protected ?AppleClientInfoConnector $appleClientInfoConnector = null;
+    protected ?EmailConnector $emailConnector = null;
+    protected ?PhoneConnector $phoneConnector = null;
+    protected ?CloudCodeConnector $cloudCodeConnector = null;
     private ?string $code = null;
+
+    protected bool $isRandomUserAgent = false;
 
     public function __construct(
         protected LoggerInterface $logger,
-        protected CloudCodeService $cloudCodeService,
         protected IpAddressManager $ipAddressManager,
         protected ProxyManager $proxyManager,
     ) {
 
+    }
+
+    public function email(): Email
+    {
+        return $this->email;
     }
 
     /**
@@ -122,6 +125,7 @@ class AppleIdBatchRegistration
      * @param Email $email 电子邮件对象
      * @param CountryLanguageService $country 国家代码
      * @param Phone|null $phone
+     * @param bool $isRandomUserAgent
      * @return bool 注册是否成功
      * @throws AccountAlreadyExistsException
      * @throws ClientException
@@ -133,15 +137,17 @@ class AppleIdBatchRegistration
      * @throws MaxRetryVerificationEmailCodeException
      * @throws MaxRetryVerificationPhoneCodeException
      * @throws NumberFormatException
+     * @throws ProxyModelNotFoundException
      * @throws RandomException
      * @throws RegistrationException
      * @throws RequestException
      * @throws Throwable
      */
-    public function run(Email $email, CountryLanguageService $country, ?Phone $phone = null): bool
+    public function run(Email $email, CountryLanguageService $country, ?Phone $phone = null, bool $isRandomUserAgent = false): bool
     {
         $this->email   = $email;
         $this->country = $country;
+        $this->isRandomUserAgent = $isRandomUserAgent;
 
         try {
             // 更新邮箱状态为处理中
@@ -155,8 +161,6 @@ class AppleIdBatchRegistration
 
             // 获取手机号码和设置会话
             $this->setupAppleIdConnector();
-
-            $this->setupCloudCodeConnector();
 
             $this->setupAppleClientInfoConnector();
 
@@ -194,91 +198,19 @@ class AppleIdBatchRegistration
 
     protected function setupProxyConnector(): void
     {
-        $this->proxyConnector = $this->proxyManager->driver();
+        $this->proxyConnector = $this->proxyManager->forgetDrivers()->driver();
         $this->proxyConnector->withCountry($this->country->getAlpha2Code());
         $this->proxyConnector->withLogger($this->logger);
         $this->proxyConnector->debug();
-        $this->proxyConnector->middleware()->onRequest($this->debugRequest(), 'debugRequest', PipeOrder::LAST);
-        $this->proxyConnector->middleware()->onResponse($this->debugResponse(), 'debugResponse', PipeOrder::LAST);
+        $this->proxyConnector->middleware()->onRequest($this->debugRequest());
+        $this->proxyConnector->middleware()->onResponse($this->debugResponse());
     }
 
-    protected function debugRequest(): callable
-    {
-        return function (PendingRequest $pendingRequest) {
-            $psrRequest = $pendingRequest->createPsrRequest();
 
-            $headers = array_map(function ($value) {
-                return implode(';', $value);
-            }, $psrRequest->getHeaders());
 
-            $connectorClass = $pendingRequest->getConnector()::class;
-            $requestClass   = $pendingRequest->getRequest()::class;
-            $enum           = Request::fromClass($connectorClass) ?? Request::fromClass($requestClass);
 
-            $label = $enum?->label() ?? '未知请求';
 
-            $body = (string)$psrRequest->getBody() ?: '{}';
 
-            try {
-
-                $jsonBody = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-            } catch (JsonException) {
-                $jsonBody = [];
-            }
-
-            $this->log("{$label} 请求", [
-                'connector' => $connectorClass,
-                'request'   => $requestClass,
-                'method'    => $psrRequest->getMethod(),
-                'uri'       => (string)$psrRequest->getUri(),
-                'headers'   => $headers,
-                'proxy'     => $pendingRequest->config()->get(RequestOptions::PROXY),
-                'body'      => $jsonBody,
-            ]);
-        };
-    }
-
-    /**
-     * 记录日志
-     */
-    protected function log(string $message, array $data = []): void
-    {
-        $this->email->createLog($message, $data);
-    }
-
-    protected function debugResponse(): callable
-    {
-        return function (Response $response) {
-            $psrResponse = $response->getPsrResponse();
-
-            $headers = array_map(function ($value) {
-                return implode(';', $value);
-            }, $psrResponse->getHeaders());
-
-            $connectorClass = $response->getConnector()::class;
-            $requestClass   = $response->getRequest()::class;
-
-            $enum  = Request::fromClass($connectorClass) ?? Request::fromClass($requestClass);
-            $label = $enum?->label() ?? '未知响应';
-
-            try {
-                $jsonBody = json_decode($response->body() ?: '{}', true, 512, JSON_THROW_ON_ERROR);
-            } catch (JsonException) {
-                $jsonBody = $response->body();
-
-                //避免字符串过长
-                if (strlen($jsonBody) > 1000) {
-                    $jsonBody = substr($jsonBody, 0, 1000).'...';
-                }
-            }
-
-            $this->log("{$label} 响应", [
-                'status'  => $response->status(),
-                'headers' => $headers,
-                'body'    => $jsonBody,
-            ]);
-        };
-    }
 
     /**
      * @return void
@@ -303,8 +235,8 @@ class AppleIdBatchRegistration
         $this->request = $this->ipAddressManager->driver();
         $this->request->debug();
         $this->request->withLogger($this->logger);
-        $this->request->middleware()->onRequest($this->debugRequest(), 'debugRequest', PipeOrder::LAST);
-        $this->request->middleware()->onResponse($this->debugResponse(), 'debugResponse', PipeOrder::LAST);
+        $this->request->middleware()->onRequest($this->debugRequest());
+        $this->request->middleware()->onResponse($this->debugResponse());
         $this->request->withForceProxy(true)
             ->withProxyEnabled(true)
             ->withProxyQueue($this->proxySplQueue);
@@ -333,33 +265,57 @@ class AppleIdBatchRegistration
      */
     protected function setupAppleIdConnector(): void
     {
+
         $this->appleIdConnector = new AppleIdConnector();
         $this->appleIdConnector->debug();
         $this->appleIdConnector->withLogger($this->logger);
         // $this->appleIdConnector->withCookies(new CookieJar());
         $this->appleIdConnector->withProxyQueue($this->proxySplQueue);
         $this->appleIdConnector->withHeaderSynchronizeDriver(new ArrayStoreHeaderSynchronize());
-        $this->appleIdConnector->middleware()->onRequest($this->debugRequest(), 'debugRequest', PipeOrder::LAST);
-        $this->appleIdConnector->middleware()->onResponse($this->debugResponse(), 'debugResponse', PipeOrder::LAST);
+        $this->appleIdConnector->middleware()->onRequest($this->debugRequest());
+        $this->appleIdConnector->middleware()->onResponse($this->debugResponse());
         $this->appleIdConnector->withForceProxy(true);
         $this->appleIdConnector->withProxyEnabled(true);
     }
 
 
-    protected function setupCloudCodeConnector(): void
+    public function emailConnector(): EmailConnector
     {
-        $this->cloudCodeService->cloudCodeConnector()->debug();
-        $this->cloudCodeService->cloudCodeConnector()->withLogger($this->logger);
-        $this->cloudCodeService->cloudCodeConnector()->middleware()->onRequest(
-            $this->debugRequest(),
-            'debugRequest',
-            PipeOrder::LAST
-        );
-        $this->cloudCodeService->cloudCodeConnector()->middleware()->onResponse(
-            $this->debugResponse(),
-            'debugResponse',
-            PipeOrder::LAST
-        );
+        if ($this->emailConnector === null) {
+            $this->emailConnector = new EmailConnector();
+            $this->emailConnector->withLogger($this->logger);
+            $this->emailConnector->debug();
+            $this->emailConnector->middleware()->onRequest($this->debugRequest());
+            $this->emailConnector->middleware()->onResponse($this->debugResponse());
+        }
+
+        return $this->emailConnector;
+    }
+
+    public function phoneConnector(): PhoneConnector
+    {
+        if ($this->phoneConnector === null) {
+            $this->phoneConnector = new PhoneConnector();
+            $this->phoneConnector->withLogger($this->logger);
+            $this->phoneConnector->debug();
+            $this->phoneConnector->middleware()->onRequest($this->debugRequest());
+            $this->phoneConnector->middleware()->onResponse($this->debugResponse());
+        }
+
+        return $this->phoneConnector;
+    }
+
+    public function cloudCodeConnector(): CloudCodeConnector
+    {
+        if ($this->cloudCodeConnector === null) {
+            $this->cloudCodeConnector = new CloudCodeConnector();
+            $this->cloudCodeConnector->withLogger($this->logger);
+            $this->cloudCodeConnector->debug();
+            $this->cloudCodeConnector->middleware()->onRequest($this->debugRequest());
+            $this->cloudCodeConnector->middleware()->onResponse($this->debugResponse());
+        }
+
+        return $this->cloudCodeConnector;
     }
 
     protected function setupAppleClientInfoConnector(): void
@@ -390,20 +346,21 @@ class AppleIdBatchRegistration
         $this->appleIdConnector->headers()->add('X-Apple-I-Timezone', $this->timezone);
         $this->appleIdConnector->headers()->add('Accept-Language', $this->country->getAlpha2Language());
 
-        $userAgent = UserAgent::getRandomActive(
-        )?->user_agent ?: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36';
+       if($this->isRandomUserAgent){
+            $userAgent = UserAgent::getRandomActive(
+            )?->user_agent ?: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36';
 
-        // $this->apple->appleIdConnector()->headers()->add('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36');
-        $this->appleIdConnector->headers()->add('User-Agent', $userAgent);
+            $this->appleIdConnector->headers()->add('User-Agent', $userAgent);
 
-        $response = $this->getAppleClientInfo($userAgent, $this->country->getAlpha2Language(), $this->timezone);
+            $response = $this->getAppleClientInfo($userAgent, $this->country->getAlpha2Language(), $this->timezone);
 
-        $clientId = $response->json('fullData');
-        if (empty($clientId)) {
-            throw new RuntimeException('fullData not found');
-        }
+            $clientId = $response->json('fullData');
+            if (empty($clientId)) {
+                throw new RuntimeException('fullData not found');
+            }
 
-        $this->appleIdConnector->headers()->add('X-Apple-I-FD-Client-Info', $clientId);
+            $this->appleIdConnector->headers()->add('X-Apple-I-FD-Client-Info', $clientId);
+       }
     }
 
     /**
@@ -690,7 +647,11 @@ class AppleIdBatchRegistration
         for ($i = 0; $i < $attempts; $i++) {
             try {
 
-                $response = $this->cloudCodeService->resolveCaptcha($this->captchaResponse->payload->content);
+                $response = $this->cloudCodeConnector()->decryptCloudCode(
+                    token: config('cloudcode.token'),
+                    type: config('cloudcode.type'),
+                    image: $this->captchaResponse->payload->content
+                );
 
                 $this->updateCaptchaValidation($response);
 
@@ -755,7 +716,7 @@ class AppleIdBatchRegistration
 
                 $this->validate->account->verificationInfo->id = $response->verificationId;
 
-                $emailCode = $this->attemptGetEmailCode($this->email->email, $this->email->email_uri);
+                $emailCode = $this->emailConnector()->attemptGetEmailCode($this->email->email, $this->email->email_uri);
 
                 $this->validate->account->verificationInfo->answer = $emailCode;
 
@@ -795,95 +756,6 @@ class AppleIdBatchRegistration
     }
 
     /**
-     * @param string $email
-     * @param string $uri
-     * @param int $attempts
-     * @return string
-     * @throws MaxRetryGetEmailCodeException|ConnectionException
-     */
-    protected function attemptGetEmailCode(string $email, string $uri, int $attempts = 5): string
-    {
-
-        for ($i = 0; $i < $attempts; $i++) {
-            // 添加延迟时间，避免请求过于频繁
-            sleep($i * 5);
-
-            // 获取邮箱验证码
-            $response = Http::retry(5, 100)->get($uri);
-            $this->log('获取邮箱验证码', ['response' => $response->json()]);
-
-            // 验证响应状态
-            if (!$this->isValidEmailResponse($response)) {
-                continue;
-            }
-
-            // 提取验证码
-            $code = $this->extractEmailCode($response);
-            if (empty($code)) {
-                continue;
-            }
-
-            // 验证缓存中的验证码
-            $cacheCode = Cache::get($email);
-            if ($cacheCode === $code) {
-                continue;
-            }
-
-            // 缓存验证码
-            Cache::put($email, $code, 60 * 30);
-
-            return $code;
-        }
-
-        throw new MaxRetryGetEmailCodeException("尝试获取邮箱验证码失败，已尝试 {$attempts} 次");
-    }
-
-    /**
-     * 验证邮箱响应是否有效
-     *
-     * @param \Illuminate\Http\Client\Response $response 响应对象
-     * @return bool 是否有效
-     */
-    protected function isValidEmailResponse(\Illuminate\Http\Client\Response $response): bool
-    {
-        return $response->json('status') === 1 || $response->json('statusCode') === 200 || $response->json(
-                'code'
-            ) === 0;
-    }
-
-    /**
-     * 提取邮箱验证码
-     *
-     * @param \Illuminate\Http\Client\Response $response 响应对象
-     * @return string|null 验证码
-     */
-    protected function extractEmailCode(\Illuminate\Http\Client\Response $response): ?string
-    {
-
-        if ($response->json('message.email_code')) {
-            return $response->json('message.email_code');
-        }
-
-        if ($response->json('data.code')) {
-            return $response->json('data.code');
-        }
-
-        if ($response->json('email_code')) {
-            return $response->json('email_code');
-        }
-
-        $string = $response->json('data.result');
-        if ($string && is_string($string)) {
-            preg_match('/您的验证码是：(\d+)/', $string, $matches);
-            if (isset($matches[1])) {
-                return $matches[1];
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * 验证邮箱验证码
      *
      * @return Response 验证响应
@@ -916,18 +788,23 @@ class AppleIdBatchRegistration
      * @throws NumberFormatException
      * @throws RequestException|ConnectionException
      */
-    protected function attemptVerificationPhoneCode(int $attempts = 3): Response
+    protected function attemptVerificationPhoneCode(int $attempts = 5): Response
     {
         for ($i = 0; $i < $attempts; $i++) {
             try {
                 $this->sendPhoneVerificationCode();
 
-                $code = $this->attemptGetPhoneCode($this->phone);
+                $code = $this->phoneConnector()->attemptGetPhoneCode($this->phone->phone, $this->phone->phone_address);
 
                 $this->setPhoneVerificationCode($code);
 
                 return $this->verifyPhoneCode();
-            } catch (PhoneException|MaxRetryGetPhoneCodeException $e) {
+            } catch (PhoneException $e) {
+
+                $this->handlePhoneVerificationFailure();
+                throw $e;
+
+            }catch (MaxRetryGetPhoneCodeException $e) {
 
                 $this->handlePhoneVerificationFailure();
 
@@ -965,58 +842,6 @@ class AppleIdBatchRegistration
         }
 
         throw new PhoneException($e->getMessage());
-    }
-
-    /**
-     * @param Phone $phone
-     * @param int $attempts
-     * @return string
-     * @throws MaxRetryGetPhoneCodeException|ConnectionException
-     */
-    protected function attemptGetPhoneCode(Phone $phone, int $attempts = 5): string
-    {
-        for ($i = 0; $i < $attempts; $i++) {
-            // 添加延迟时间，避免请求过于频繁
-            sleep($i * 5);
-
-            // 获取手机验证码
-            $response = Http::retry(5, 100)->get($phone->phone_address);
-
-            $this->log('手机验证码', ['response' => $response->body()]);
-
-            // 提取验证码
-            $code = self::parse($response->body());
-
-            if (!$code) {
-                continue;
-            }
-
-            if (empty($this->phoneCode[$phone->phone])) {
-                $this->phoneCode[$phone->phone] = $code;
-
-                return $code;
-            }
-
-            if ($this->phoneCode[$phone->phone] === $code) {
-                continue;
-            }
-
-            $this->phoneCode[$phone->phone] = $code;
-
-            return $code;
-        }
-
-        throw new MaxRetryGetPhoneCodeException("尝试获取手机验证码失败，已尝试 {$attempts} 次");
-    }
-
-    protected static function parse(string $str): ?string
-    {
-        preg_match_all('/\b\d{6}\b/', $str, $matches);
-        if (isset($matches[1])) {
-            return end($matches[1]);
-        }
-
-        return null;
     }
 
     /**
