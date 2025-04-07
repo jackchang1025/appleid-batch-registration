@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PhoneStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use App\Services\Phone\PhoneNumberFactory;
 
 
 /**
- * 
+ *
  *
  * @method static \Illuminate\Database\Eloquent\Builder|Phone newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Phone newQuery()
@@ -45,24 +46,8 @@ class Phone extends Model
 
     protected $fillable = ['phone','phone_address','country_code','country_dial_code','status','country_code_alpha3'];
 
-    //'{normal:正常,invalid:失效,bound:已绑定,Binding:绑定中}'
-    const string STATUS_NORMAL = 'normal';
-    const string STATUS_INVALID = 'invalid';
-    const string STATUS_BOUND = 'bound';
-    const string STATUS_BINDING = 'Binding';
-
-    public const  array STATUS = [
-        self::STATUS_NORMAL => '正常',
-        self::STATUS_INVALID => '失效',
-        self::STATUS_BOUND => '已绑定',
-        self::STATUS_BINDING => '绑定中',
-    ];
-
-    public const  array STATUS_COLOR = [
-        self::STATUS_NORMAL => 'gray',
-        self::STATUS_INVALID => 'warning',
-        self::STATUS_BOUND => 'success',
-        self::STATUS_BINDING => 'danger',
+    protected $casts = [
+        'status' => PhoneStatus::class,
     ];
 
     protected function countryDialCode(): Attribute
@@ -101,15 +86,6 @@ class Phone extends Model
         return Attribute::make(
             set: function (?string $value, array $attributes) {
                 return $this->getPhoneNumberService($attributes['phone'])->getCountryCodeAlpha3();
-            }
-        );
-    }
-
-    protected function label ():Attribute
-    {
-        return Attribute::make(
-            get: function (?string $value = null, array $attributes = []) {
-                return self::STATUS[$attributes['status']] ?? '未知';
             }
         );
     }

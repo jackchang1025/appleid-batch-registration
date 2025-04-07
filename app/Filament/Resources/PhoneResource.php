@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-
+use App\Enums\PhoneStatus;
 use App\Filament\Resources\PhoneResource\Pages;
 use App\Models\Phone;
 use Filament\Forms;
@@ -44,8 +44,8 @@ class PhoneResource extends Resource
                     ->helperText('请输入有效的URL地址'),
 
                 Forms\Components\Select::make('status')
-                    ->options(Phone::STATUS)
-                    ->default('normal')
+                    ->options(PhoneStatus::labels())
+                    ->default(PhoneStatus::NORMAL->value)
                     ->required(),
 
                 Forms\Components\TextInput::make('country_code')->default('')->readOnly(),
@@ -75,8 +75,8 @@ class PhoneResource extends Resource
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => Phone::STATUS[$state] ?? $state)
-                    ->color(fn (string $state): string => Phone::STATUS_COLOR[$state] ?? 'secondary'),
+                    ->formatStateUsing(fn (PhoneStatus $state): string => $state->label())
+                    ->color(fn (PhoneStatus $state): string => $state->color()),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime('Y-m-d H:i:s')
@@ -89,11 +89,13 @@ class PhoneResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                ->options(Phone::STATUS)
+                ->options(PhoneStatus::labels())
                 ->placeholder('选择状态'),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
@@ -122,7 +124,7 @@ class PhoneResource extends Resource
                     ->form([
                         Forms\Components\Select::make('status')
                             ->label('状态')
-                            ->options(Phone::STATUS)
+                            ->options(PhoneStatus::labels())
                             ->required(),
                     ])
                     ->action(function (Collection $records, array $data) {
@@ -169,6 +171,7 @@ class PhoneResource extends Resource
             'index' => Pages\ListPhones::route('/'),
             'create' => Pages\CreatePhone::route('/create'),
             'edit' => Pages\EditPhone::route('/{record}/edit'),
+            'view' => Pages\ViewPhone::route('/{record}'),
         ];
     }
 }

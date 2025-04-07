@@ -60,6 +60,7 @@ use Weijiajia\SaloonphpHeaderSynchronizePlugin\Driver\ArrayStoreHeaderSynchroniz
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 use Weijiajia\DecryptVerificationCode\CloudCode\CloudCodeConnector;
 use App\Services\Trait\HasLog;
+use App\Enums\PhoneStatus;
 class AppleIdBatchRegistration
 {
     use HasPhone;
@@ -886,7 +887,7 @@ class AppleIdBatchRegistration
         // 添加黑名单
         $this->addActiveBlacklistIds($this->phone->id);
 
-        $this->phone->update(['status' => Phone::STATUS_INVALID]);
+        $this->phone->update(['status' => PhoneStatus::INVALID]);
         $this->phone = $this->getPhone();
 
         $this->validate->phoneNumberVerification = PhoneNumberVerification::from([
@@ -930,7 +931,7 @@ class AppleIdBatchRegistration
     protected function updateSuccessStatus(): void
     {
         $this->email->update(['status' => EmailStatus::REGISTERED]);
-        $this->phone->update(['status' => Phone::STATUS_BOUND]);
+        $this->phone->update(['status' => PhoneStatus::BOUND]);
 
         $this->proxyIpStatistic?->update(['is_success' => true]);
     }
@@ -943,7 +944,7 @@ class AppleIdBatchRegistration
      */
     protected function handleAccountExistsException(AccountAlreadyExistsException $e): void
     {
-        $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
+        $this->phone && $this->phone->update(['status' => PhoneStatus::NORMAL]);
         $this->email && $this->email->update(['status' => EmailStatus::REGISTERED]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
         $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
@@ -958,7 +959,7 @@ class AppleIdBatchRegistration
     protected function handlePhoneVerificationException(MaxRetryVerificationPhoneCodeException $e): void
     {
         $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
-        $this->phone && $this->phone->update(['status' => Phone::STATUS_INVALID]);
+        $this->phone && $this->phone->update(['status' => PhoneStatus::INVALID]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
         $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }
@@ -972,7 +973,7 @@ class AppleIdBatchRegistration
     protected function handleEmailVerificationException(MaxRetryGetEmailCodeException $e): void
     {
         $this->email && $this->email->update(['status' => EmailStatus::INVALID]);
-        $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
+        $this->phone && $this->phone->update(['status' => PhoneStatus::NORMAL]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
         $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }
@@ -985,7 +986,7 @@ class AppleIdBatchRegistration
      */
     protected function handleGenericException(Throwable $e): void
     {
-        $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
+        $this->phone && $this->phone->update(['status' => PhoneStatus::NORMAL]);
         $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
         $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);

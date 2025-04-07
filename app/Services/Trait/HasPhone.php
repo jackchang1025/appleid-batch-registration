@@ -8,6 +8,7 @@ use App\Models\Phone;
 use Illuminate\Support\Facades\DB;
 use App\Enums\CountryEnum;
 use App\Services\CountryLanguageService;
+use App\Enums\PhoneStatus;
 trait HasPhone
 {
      // 添加类常量
@@ -32,7 +33,7 @@ trait HasPhone
             $blacklistIds = [];
 
             $phone = Phone::query()
-                ->where('status', Phone::STATUS_NORMAL)
+                ->where('status', PhoneStatus::NORMAL)
                 ->whereNotNull(['phone_address', 'phone'])
                 ->whereNotIn('id', $this->usedPhones)
                 ->whereNotIn('id', $blacklistIds)
@@ -47,7 +48,7 @@ trait HasPhone
                 ->firstOrFail();
 
 
-            $phone->update(['status' => Phone::STATUS_BINDING]);
+            $phone->update(['status' => PhoneStatus::BINDING]);
 
             $this->usedPhones[] = $phone->id;
 
