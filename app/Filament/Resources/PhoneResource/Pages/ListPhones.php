@@ -4,7 +4,6 @@ namespace App\Filament\Resources\PhoneResource\Pages;
 
 use App\Filament\Resources\PhoneResource;
 use App\Models\Phone;
-use App\Services\Phone\PhoneNumberFactory;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Forms;
@@ -74,22 +73,15 @@ class ListPhones extends ListRecords
                                 continue;
                             }
 
-                            // 使用 PhoneNumberFactory 获取电话号码信息
-                            $phoneService = app(PhoneNumberFactory::class)->create($phone);
-
-                            // 获取国家代码和区号
-                            $countryCode = $phoneService->getCountry();
-                            $countryDialCode = $phoneService->getCountryDialCode();
-                            $countryCodeAlpha3 = $phoneService->getCountryCodeAlpha3();
 
                             // Create new phone record
                             Phone::create([
                                 'phone' => $phone,
                                 'phone_address' => $phoneAddress,
                                 'status' => PhoneStatus::NORMAL,
-                                'country_code' => $countryCode,
-                                'country_code_alpha3' => $countryCodeAlpha3,
-                                'country_dial_code' => $countryDialCode,
+                                'country_code' => '',
+                                'country_code_alpha3' => '',
+                                'country_dial_code' => '',
                             ]);
 
                             $successCount++;
