@@ -2,7 +2,6 @@
 
 namespace App\Services\Integrations\Phone\Request;
 
-
 use Saloon\Http\Request as SaloonRequest;
 use Saloon\Enums\Method;
 use Saloon\Http\Response;
@@ -14,6 +13,10 @@ class Request extends SaloonRequest
     public function __construct(
         public string $endpoint,
     ) {
+        // 确保endpoint包含协议前缀
+        if (!preg_match('/^https?:\/\//i', $endpoint)) {
+            $this->endpoint = 'http://' . $endpoint;
+        }
     }
 
     public function resolveEndpoint(): string
@@ -26,16 +29,18 @@ class Request extends SaloonRequest
         return self::parse($response->body());
     }
 
+    /**
+     * 从字符串中解析出6位数字验证码
+     * 
+     * @param string $str 响应内容
+     * @return string|null 找到的验证码或null
+     */
     protected static function parse(string $str): ?string
     {
         preg_match_all('/\b\d{6}\b/', $str, $matches);
 
-        if (isset($matches[0])) {
+        if (!empty($matches[0])) {
             return end($matches[0]);
-        }
-
-        if (isset($matches[1])) {
-            return end($matches[1]);
         }
 
         return null;

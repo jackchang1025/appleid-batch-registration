@@ -57,6 +57,7 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Veri
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Account\Verification\SendVerificationEmail as SendVerificationEmailResponse;
 use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\Captcha\Captcha as CaptchaResponse;
 use Weijiajia\SaloonphpHeaderSynchronizePlugin\Driver\ArrayStoreHeaderSynchronize;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Request\Account\Widget\Account as AccountDto;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 use Weijiajia\DecryptVerificationCode\CloudCode\CloudCodeConnector;
 use App\Services\Trait\HasLog;
@@ -88,11 +89,9 @@ class AppleIdBatchRegistration
 
     protected ?ProxySplQueue $proxySplQueue = null;
 
-    protected ?string $appleSessionId = null;
-    protected ?array $direct = null;
+    protected ?AccountDto $widgetAccount = null;
     protected ?string $password = null;
     protected ?string $widgetKey = null;
-    protected ?string $locale = null;
     protected ?string $timezone = null;
     protected ?CountryLanguageService $countryLanguageService = null;
     protected ?ProxyIpStatistic $proxyIpStatistic = null;
@@ -103,6 +102,9 @@ class AppleIdBatchRegistration
     protected ?EmailConnector $emailConnector = null;
     protected ?PhoneConnector $phoneConnector = null;
     protected ?CloudCodeConnector $cloudCodeConnector = null;
+
+    protected ?ArrayStoreHeaderSynchronize $headerSynchronize = null;
+
     private ?string $code = null;
 
     protected bool $isRandomUserAgent = false;
@@ -259,6 +261,11 @@ class AppleIdBatchRegistration
 
     }
 
+    protected function headerSynchronize(): ArrayStoreHeaderSynchronize
+    {
+        return $this->headerSynchronize ??= new ArrayStoreHeaderSynchronize();
+    }
+
     /**
      * 设置调试中间件
      *
@@ -272,7 +279,7 @@ class AppleIdBatchRegistration
         $this->appleIdConnector->withLogger($this->logger);
         // $this->appleIdConnector->withCookies(new CookieJar());
         $this->appleIdConnector->withProxyQueue($this->proxySplQueue);
-        $this->appleIdConnector->withHeaderSynchronizeDriver(new ArrayStoreHeaderSynchronize());
+        $this->appleIdConnector->withHeaderSynchronizeDriver($this->headerSynchronize());
         $this->appleIdConnector->middleware()->onRequest($this->debugRequest());
         $this->appleIdConnector->middleware()->onResponse($this->debugResponse());
         $this->appleIdConnector->withForceProxy(true);
@@ -352,15 +359,6 @@ class AppleIdBatchRegistration
             )?->user_agent ?: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36';
 
             $this->appleIdConnector->headers()->add('User-Agent', $userAgent);
-
-            $response = $this->getAppleClientInfo($userAgent, $this->country->getAlpha2Language(), $this->timezone);
-
-            $clientId = $response->json('fullData');
-            if (empty($clientId)) {
-                throw new RuntimeException('fullData not found');
-            }
-
-            $this->appleIdConnector->headers()->add('X-Apple-I-FD-Client-Info', $clientId);
        }
     }
 
@@ -419,7 +417,7 @@ class AppleIdBatchRegistration
                 ],
             ],
             'preferences'      => [
-                'preferredLanguage'    => $this->getLocale(),
+                'preferredLanguage'    => $this->widgetAccount()->locale(),
                 'marketingPreferences' => [
                     'appleNews'     => false,
                     'appleUpdates'  => true,
@@ -464,75 +462,13 @@ class AppleIdBatchRegistration
     }
 
     /**
-     * @return string
-     * @throws FatalRequestException
-     * @throws JsonException
-     * @throws RequestException
-     */
-    protected function getLocale(): string
-    {
-        return $this->locale ??= $this->direct()['config']['localizedResources']['locale'];
-    }
-
-    /**
-     * @return array
-     * @throws FatalRequestException
-     * @throws JsonException
-     * @throws RequestException
-     */
-    public function direct(): array
-    {
-        if ($this->direct === null) {
-
-            $this->direct = $this->parseBootArgs($this->widgetAccount())['direct'] ?? null;
-
-            if (empty($this->direct)) {
-                throw new RuntimeException('direct not found');
-            }
-
-            if (empty($this->direct['sessionId'])) {
-                throw new RuntimeException('sessionId not found');
-            }
-
-            if (empty($this->direct['widgetKey'])) {
-                throw new RuntimeException('widgetKey not found');
-            }
-
-            if (empty($this->direct['config']['localizedResources']['locale'])) {
-                throw new RuntimeException('locale not found');
-            }
-        }
-
-        return $this->direct;
-    }
-
-    /**
-     * @throws JsonException
-     */
-    public function parseBootArgs(Response $response): array
-    {
-        $crawler = $response->dom();
-        $script  = $crawler->filter('script#boot_args');
-        if ($script->count() === 0) {
-            throw new RuntimeException('boot_args not found');
-        }
-
-        $json = json_decode($script->text(), true, 512, JSON_THROW_ON_ERROR);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new RuntimeException('Invalid JSON format');
-        }
-
-        return $json;
-    }
-
-    /**
      * @return Response
      * @throws FatalRequestException
      * @throws RequestException
      */
-    protected function widgetAccount(): Response
+    protected function widgetAccount(): AccountDto
     {
-        return $this->appleIdConnector->getAccountResource()->widgetAccount(
+        return $this->widgetAccount ??= $this->appleIdConnector->getAccountResource()->widgetAccount(
             widgetKey: $this->widgetKey(),
             referer: 'https://www.icloud.com/',
             appContext: 'icloud',
@@ -579,7 +515,7 @@ class AppleIdBatchRegistration
         // 提交账户信息
         return $this->appleIdConnector->getAccountResource()->account(
             validateDto: $this->validate,
-            appleIdSessionId: $this->appleSessionId(),
+            appleIdSessionId: $this->widgetAccount()->appleSessionId(),
             appleWidgetKey: $this->widgetKey()
         );
     }
@@ -592,20 +528,9 @@ class AppleIdBatchRegistration
     protected function captcha(): CaptchaResponse
     {
         return $this->captchaResponse = $this->appleIdConnector->getAccountResource()->captcha(
-            $this->appleSessionId(),
+            $this->widgetAccount()->appleSessionId(),
             $this->widgetKey()
         );
-    }
-
-    /**
-     * @return mixed
-     * @throws FatalRequestException
-     * @throws JsonException
-     * @throws RequestException
-     */
-    protected function appleSessionId(): string
-    {
-        return $this->appleSessionId ??= $this->direct()['sessionId'];
     }
 
     /**
@@ -621,14 +546,14 @@ class AppleIdBatchRegistration
     {
         $this->appleIdConnector->getAccountResource()->appleid(
             $this->email->email,
-            $this->appleSessionId(),
+            $this->widgetAccount()->appleSessionId(),
             $this->widgetKey()
         );
 
         $this->appleIdConnector->getAccountResource()->password(
             $this->email->email,
             $this->verificationAccount->password,
-            $this->appleSessionId(),
+            $this->widgetAccount()->appleSessionId(),
             $this->widgetKey()
         );
     }
@@ -694,7 +619,7 @@ class AppleIdBatchRegistration
     {
         return $this->appleIdConnector->getAccountResource()->validate(
             validateDto: $this->validate,
-            appleIdSessionId: $this->appleSessionId(),
+            appleIdSessionId: $this->widgetAccount()->appleSessionId(),
             appleWidgetKey: $this->widgetKey()
         );
     }
@@ -752,7 +677,7 @@ class AppleIdBatchRegistration
 
         return $this->appleIdConnector
             ->getAccountResource()
-            ->sendVerificationEmail($data, $this->appleSessionId(), $this->widgetKey())
+            ->sendVerificationEmail($data, $this->widgetAccount()->appleSessionId(), $this->widgetKey())
             ->dto();
     }
 
@@ -774,7 +699,7 @@ class AppleIdBatchRegistration
 
         return $this->appleIdConnector->getAccountResource()->verificationEmail(
             $verificationPut,
-            $this->appleSessionId(),
+            $this->widgetAccount()->appleSessionId(),
             $this->widgetKey()
         );
     }
@@ -834,7 +759,7 @@ class AppleIdBatchRegistration
 
                 return $this->appleIdConnector->getAccountResource()->sendVerificationPhone(
                     $this->validate,
-                    $this->appleSessionId(),
+                    $this->widgetAccount()->appleSessionId(),
                     $this->widgetKey()
                 );
             } catch (PhoneException $e) {
@@ -871,7 +796,7 @@ class AppleIdBatchRegistration
     {
         return $this->appleIdConnector->getAccountResource()->verificationPhone(
             $this->validate,
-            $this->appleSessionId(),
+            $this->widgetAccount()->appleSessionId(),
             $this->widgetKey()
         );
     }

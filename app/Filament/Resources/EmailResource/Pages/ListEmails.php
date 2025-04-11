@@ -55,6 +55,9 @@ https://api.acemail.co/lastemail/v2?project_id=1&extend_b64=RBH0zjjlTlF17zqgJUC9
                             $email = trim($parts[0]);
                         }
 
+                        // URL解码，确保特殊字符不被编码
+                        $emailUri = rawurldecode($emailUri);
+
                         try {
                             // Check if email already exists
                             if (Email::where('email', $email)->exists()) {
@@ -63,7 +66,7 @@ https://api.acemail.co/lastemail/v2?project_id=1&extend_b64=RBH0zjjlTlF17zqgJUC9
                             }
 
                             // Create new email record
-                            $emailObj = Email::create([
+                            Email::create([
                                 'email' => $email,
                                 'email_uri' => $emailUri,
                                 'status' => EmailStatus::AVAILABLE->value,

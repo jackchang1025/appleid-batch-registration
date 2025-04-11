@@ -46,7 +46,8 @@ class EmailConnector extends Connector implements HasLoggerInterface
             '213.130.144.243' => new Email8218126243Request($emailUrl),
             'api.acemail.co' => new ApiAcemailCoRequest($emailUrl),
             'authhk.bhdata.com' => new AuthhkBhdataComRequest($emailUrl),
-            default => throw new \InvalidArgumentException('Invalid email URL'),
+            'api.online-disposablemail.com' => new ApiOnlineDisposablemailRequett($emailUrl),
+            default => throw new \InvalidArgumentException('NO FIND EMAIL REQUEST'),
         };
 
         return $this->send($request)->dto();
