@@ -163,7 +163,8 @@ class EmailResource extends Resource
                             if ($record->status->value === EmailStatus::AVAILABLE->value || $record->status->value === EmailStatus::FAILED->value){
                                 $count++;
 
-                                RegisterAppleIdJob::dispatch($record,$data['country'],$data['is_random_user_agent']);
+                                RegisterAppleIdJob::dispatch($record,$data['country'],$data['is_random_user_agent'])
+                                ->delay(now()->addSeconds(random_int(1, 30)));
                                 continue;
                             }
 

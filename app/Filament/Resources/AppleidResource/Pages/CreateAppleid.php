@@ -84,7 +84,8 @@ class CreateAppleid extends CreateRecord
                         throw new \Exception("邮箱 {$email} 不存在");
                     }
 
-                    RegisterAppleIdJob::dispatch($email,$data['country'],$data['is_random_user_agent']);
+                    RegisterAppleIdJob::dispatch($email,$data['country'],$data['is_random_user_agent'])
+                    ->delay(now()->addSeconds(random_int(10, 30)));
                 }
 
                 // 显示通知

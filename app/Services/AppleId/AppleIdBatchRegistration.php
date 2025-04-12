@@ -193,6 +193,10 @@ class AppleIdBatchRegistration
         } catch (MaxRetryGetEmailCodeException $e) {
             $this->handleEmailVerificationException($e);
             throw $e;
+        } catch (RegistrationException $e) {
+
+            self::addActiveBlacklistIds($this->phone->id);
+            throw $e;
         } catch (Throwable $e) {
             $this->handleGenericException($e);
             throw $e;
@@ -727,12 +731,25 @@ class AppleIdBatchRegistration
                 return $this->verifyPhoneCode();
             } catch (PhoneException $e) {
 
-                $this->handlePhoneVerificationFailure();
+                 // 添加黑名单
+                self::addActiveBlacklistIds($this->phone->id);
                 throw $e;
 
             }catch (MaxRetryGetPhoneCodeException $e) {
 
-                $this->handlePhoneVerificationFailure();
+                $this->phone->update(['status' => PhoneStatus::INVALID]);
+                $this->phone = $this->getPhone();
+
+                $this->validate->phoneNumberVerification = PhoneNumberVerification::from([
+                    'phoneNumber' => [
+                        'id'              => 1,
+                        'number'          => $this->phone->getPhoneNumberService()->format(PhoneNumberFormat::NATIONAL),
+                        'countryCode'     => $this->phone->country_code,
+                        'countryDialCode' => $this->phone->country_dial_code,
+                        'nonFTEU'         => true,
+                    ],
+                    'mode'        => 'sms',
+                ]);
 
             } catch (VerificationCodeException $e) {
 
@@ -809,22 +826,7 @@ class AppleIdBatchRegistration
      */
     protected function handlePhoneVerificationFailure(): void
     {
-        // 添加黑名单
-        $this->addActiveBlacklistIds($this->phone->id);
-
-        $this->phone->update(['status' => PhoneStatus::INVALID]);
-        $this->phone = $this->getPhone();
-
-        $this->validate->phoneNumberVerification = PhoneNumberVerification::from([
-            'phoneNumber' => [
-                'id'              => 1,
-                'number'          => $this->phone->getPhoneNumberService()->format(PhoneNumberFormat::NATIONAL),
-                'countryCode'     => $this->phone->country_code,
-                'countryDialCode' => $this->phone->country_dial_code,
-                'nonFTEU'         => true,
-            ],
-            'mode'        => 'sms',
-        ]);
+        
     }
 
     /**
@@ -869,8 +871,8 @@ class AppleIdBatchRegistration
      */
     protected function handleAccountExistsException(AccountAlreadyExistsException $e): void
     {
-        $this->phone && $this->phone->update(['status' => PhoneStatus::NORMAL]);
-        $this->email && $this->email->update(['status' => EmailStatus::REGISTERED]);
+        $this->phone && $this->phone->where('status', PhoneStatus::BINDING)->update(['status' => PhoneStatus::NORMAL]);
+        $this->email && $this->email->where('status', EmailStatus::PROCESSING)->update(['status' => EmailStatus::REGISTERED]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
         $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }
@@ -883,8 +885,8 @@ class AppleIdBatchRegistration
      */
     protected function handlePhoneVerificationException(MaxRetryVerificationPhoneCodeException $e): void
     {
-        $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
-        $this->phone && $this->phone->update(['status' => PhoneStatus::INVALID]);
+        $this->email && $this->email->where('status', EmailStatus::PROCESSING)->update(['status' => EmailStatus::FAILED]);
+        $this->phone && $this->phone->where('status', PhoneStatus::BINDING)->update(['status' => PhoneStatus::INVALID]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
         $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }
@@ -897,8 +899,8 @@ class AppleIdBatchRegistration
      */
     protected function handleEmailVerificationException(MaxRetryGetEmailCodeException $e): void
     {
-        $this->email && $this->email->update(['status' => EmailStatus::INVALID]);
-        $this->phone && $this->phone->update(['status' => PhoneStatus::NORMAL]);
+        $this->email && $this->email->where('status', EmailStatus::PROCESSING)->update(['status' => EmailStatus::INVALID]);
+        $this->phone && $this->phone->where('status', PhoneStatus::BINDING)->update(['status' => PhoneStatus::NORMAL]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
         $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }
@@ -911,8 +913,8 @@ class AppleIdBatchRegistration
      */
     protected function handleGenericException(Throwable $e): void
     {
-        $this->phone && $this->phone->update(['status' => PhoneStatus::NORMAL]);
-        $this->email && $this->email->update(['status' => EmailStatus::FAILED]);
+        $this->phone && $this->phone->where('status', PhoneStatus::BINDING)->update(['status' => PhoneStatus::NORMAL]);
+        $this->email && $this->email->where('status', EmailStatus::PROCESSING)->update(['status' => EmailStatus::FAILED]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
         $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }

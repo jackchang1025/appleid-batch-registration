@@ -69,7 +69,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
      */
     public function backoff(): int
     {
-        return 5;
+        return 30;
     }
 
     /**
