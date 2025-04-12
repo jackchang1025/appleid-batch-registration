@@ -28,23 +28,6 @@ services:
             - redis
             - meilisearch
             - mailpit
-            - client-info-api
-    client-info-api:
-        build:
-            context: './docker/client-info-api'
-            dockerfile: Dockerfile
-        environment:
-            NODE_ENV: development
-            PORT: 3000
-        ports:
-            - '${CLIENT_INFO_API_PORT:-3000}:3000'
-        networks:
-            - sail
-        healthcheck:
-            test: ["CMD", "wget", "--no-verbose", "--spider", "http://localhost:3000/health"]
-            interval: 10s
-            timeout: 5s
-            retries: 3
     supervisor:
         build:
             context: './docker/supervisor'
