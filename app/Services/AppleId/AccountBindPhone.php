@@ -3,8 +3,6 @@
 namespace App\Services\AppleId;
 
 use App\Models\Phone;
-use App\Services\Apple;
-use App\Services\AppleBuilder;
 use App\Services\Helper\Helper;
 use App\Services\Trait\HasPhone;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -15,6 +13,7 @@ use Propaganistas\LaravelPhone\Exceptions\NumberFormatException;
 use Saloon\Exceptions\Request\ClientException;
 use Saloon\Exceptions\Request\FatalRequestException;
 use Saloon\Exceptions\Request\RequestException;
+use Weijiajia\HttpProxyManager\Exception\ProxyModelNotFoundException;
 use Weijiajia\SaloonphpAppleClient\Contracts\AppleIdInterface;
 use Weijiajia\SaloonphpAppleClient\Exception\MaxRetryAttemptsException;
 use Weijiajia\SaloonphpAppleClient\Exception\Phone\PhoneException;
@@ -28,20 +27,165 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\Dto\Response\AccountMana
 use Weijiajia\SaloonphpAppleClient\Integrations\Idmsa\Dto\Request\AppleAuth\VerifyEmailSecurityCode\VerifyEmailSecurityCode;
 use Weijiajia\SaloonphpAppleClient\Integrations\Idmsa\Dto\Response\Auth\VerifyEmailSecurityCode\VerifyEmailSecurityCodeResponse;
 use Weijiajia\SaloonphpHeaderSynchronizePlugin\Driver\ArrayStoreHeaderSynchronize;
-
+use App\Services\Trait\HasLog;
+use App\Models\Email;
+use Psr\Log\LoggerInterface;
+use Weijiajia\SaloonphpAppleClient\Integrations\Account\AccountConnector;
+use App\Services\Trait\HasCookieJar;
+use App\Services\Trait\HasSignIn;
+use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
+use Weijiajia\HttpProxyManager\ProxyManager;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleAuthenticationConnector\AppleAuthenticationConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\Idmsa\IdmsaConnector;
+use App\Models\AppleId;
+use App\Services\Integrations\Email\EmailConnector;
+use App\Services\Integrations\Phone\PhoneConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\AppleId\AppleIdConnector;
 class AccountBindPhone
 {
     use HasPhone;
+    use HasLog;
+    use HasCookieJar;
+    use HasSignIn;
 
-    protected Apple $apple;
+    protected ?ArrayStoreHeaderSynchronize $headers = null;
 
-    public function __construct(protected AppleBuilder $appleBuilder)
+    protected ?Email $email = null;
+
+    protected ?AccountConnector $accountAppleIdConnector = null;
+
+    protected ?ProxySplQueue $proxySplQueue = null;
+
+    protected ?AppleAuthenticationConnector $appleAuthenticationConnector = null;
+
+    protected ?IdmsaConnector $idmsaConnector = null;
+
+    protected ?EmailConnector $emailConnector = null;
+
+    protected ?AppleIdConnector $appleIdConnector = null;
+
+    protected ?PhoneConnector $phoneConnector = null;
+
+    public function __construct(protected LoggerInterface $logger,protected ProxyManager $proxyManager,)
     {
 
     }
+    public function email(): Email
+    {
+        return $this->email;
+    }
 
+    public function headerSynchronize(): ArrayStoreHeaderSynchronize
+    {
+        return $this->headers ??= new ArrayStoreHeaderSynchronize();
+    }
+
+    public function accountConnector(): AccountConnector
+    {
+        if ($this->accountAppleIdConnector === null) {
+            $this->accountAppleIdConnector = new AccountConnector();
+            $this->accountAppleIdConnector->withLogger($this->logger);
+            $this->accountAppleIdConnector->debug();
+            $this->accountAppleIdConnector->withHeaderSynchronizeDriver($this->headerSynchronize());
+            $this->accountAppleIdConnector->withCookies($this->cookieJar());
+            $this->accountAppleIdConnector->withProxyQueue($this->proxySplQueue());
+            $this->accountAppleIdConnector->middleware()->onRequest($this->debugRequest());
+            $this->accountAppleIdConnector->middleware()->onResponse($this->debugResponse());
+        }
+        return $this->accountAppleIdConnector;
+    }
+
+        /**
+     * @return ProxySplQueue
+     * @throws ProxyModelNotFoundException
+     */
+    public function proxySplQueue(): ProxySplQueue
+    {
+        if ($this->proxySplQueue === null) {
+            $proxyConnector = $this->proxyManager->forgetDrivers()->driver();
+            $proxyConnector->withLogger($this->logger);
+            $proxyConnector->debug();
+            $proxyConnector->middleware()->onRequest($this->debugRequest());
+            $proxyConnector->middleware()->onResponse($this->debugResponse());
+            $proxy               = $proxyConnector->defaultModelIp();
+            $this->proxySplQueue = new ProxySplQueue(roundRobinEnabled: true);
+            $this->proxySplQueue->enqueue($proxy->getUrl());
+        }
+        return $this->proxySplQueue;
+    }
+
+    public function appleAuthenticationConnector(): AppleAuthenticationConnector{
+        if ($this->appleAuthenticationConnector === null) {
+            $this->appleAuthenticationConnector = new AppleAuthenticationConnector(config('services.apple_auth.base_url'));
+            $this->appleAuthenticationConnector->withLogger($this->logger);
+            $this->appleAuthenticationConnector->debug();
+            $this->appleAuthenticationConnector->withProxyQueue($this->proxySplQueue());
+            $this->appleAuthenticationConnector->withCookies($this->cookieJar());
+            $this->appleAuthenticationConnector->withHeaderSynchronizeDriver($this->headerSynchronize());
+            $this->appleAuthenticationConnector->middleware()->onRequest($this->debugRequest());
+            $this->appleAuthenticationConnector->middleware()->onResponse($this->debugResponse());
+        }
+        return $this->appleAuthenticationConnector;
+    }
+
+    public function serviceKey(): string{
+        return 'af1139274f266b22b68c2a3e7ad932cb3c0bbe854e13a79af78dcc73136882c3';
+    }
+
+    public function idmsaConnector(): IdmsaConnector{
+        if ($this->idmsaConnector === null) {
+            $this->idmsaConnector = new IdmsaConnector($this->serviceKey(),'https://account.apple.com');
+            $this->idmsaConnector->withLogger($this->logger);
+            $this->idmsaConnector->debug();
+            $this->idmsaConnector->withProxyQueue($this->proxySplQueue());
+            $this->idmsaConnector->withCookies($this->cookieJar());
+            $this->idmsaConnector->withHeaderSynchronizeDriver($this->headerSynchronize());
+            $this->idmsaConnector->middleware()->onRequest($this->debugRequest());
+            $this->idmsaConnector->middleware()->onResponse($this->debugResponse());
+        }
+        return $this->idmsaConnector;
+    }
+
+    public function emailConnector(): EmailConnector{
+        if ($this->emailConnector === null) {
+            $this->emailConnector = new EmailConnector();
+            $this->emailConnector->withLogger($this->logger);
+            $this->emailConnector->debug();
+            $this->emailConnector->middleware()->onRequest($this->debugRequest());
+            $this->emailConnector->middleware()->onResponse($this->debugResponse());
+        }
+        return $this->emailConnector;
+    }
+
+    public function phoneConnector(): PhoneConnector{
+        if ($this->phoneConnector === null) {
+            $this->phoneConnector = new PhoneConnector();
+            $this->phoneConnector->withLogger($this->logger);
+            $this->phoneConnector->debug();
+            $this->phoneConnector->middleware()->onRequest($this->debugRequest());
+            $this->phoneConnector->middleware()->onResponse($this->debugResponse());
+        }
+        return $this->phoneConnector;
+    }
+    protected function appleIdConnector(): AppleIdConnector
+    {
+
+        if ($this->appleIdConnector === null) {
+            $this->appleIdConnector = new AppleIdConnector();
+            $this->appleIdConnector->debug();
+            $this->appleIdConnector->withLogger($this->logger);
+            $this->appleIdConnector->withCookies($this->cookieJar());
+            $this->appleIdConnector->withProxyQueue($this->proxySplQueue());
+            $this->appleIdConnector->withHeaderSynchronizeDriver($this->headerSynchronize());
+            $this->appleIdConnector->middleware()->onRequest($this->debugRequest());
+            $this->appleIdConnector->middleware()->onResponse($this->debugResponse());
+            $this->appleIdConnector->withForceProxy(true);
+            $this->appleIdConnector->withProxyEnabled(true);
+        }
+        return $this->appleIdConnector;
+    }
     /**
-     * @param AppleIdInterface $appleId
+     * @param AppleId $appleId
      * @return mixed
      * @throws ClientException
      * @throws MaxRetryAttemptsException
@@ -51,49 +195,34 @@ class AccountBindPhone
      * @throws FatalRequestException
      * @throws SignInException
      */
-    public function run(AppleIdInterface $appleId): RepairResponse
+    public function run(AppleId $appleId): RepairResponse
     {
-        if ($appleId->getEmailUri() === null) {
-            throw new InvalidArgumentException('email uri is null');
-        }
+        $this->email = $appleId->HasOneEmail;
+        $this->accountConnector()->getResources()->signIn();
 
-        $this->apple = $this->appleBuilder->build($appleId);
-        $this->apple->withDebug(true);
+        $this->signIn($appleId->getAppleId(), $appleId->getPassword());
 
-        /** @var ArrayStoreHeaderSynchronize $headers */
-        $headers = $this->apple->getHeaderSynchronizeDriver();
-
-        file_exists($this->apple->getCookieJarPath()) && unlink($this->apple->getCookieJarPath());
-        file_exists($this->apple->getHeaderSynchronizeDriverPath()) && unlink(
-            $this->apple->getHeaderSynchronizeDriverPath()
-        );
-
-        $this->apple->accountConnector()->getResources()->signIn();
-
-        $this->apple->signIn($appleId->getAppleId(), $appleId->getPassword());
-
-        $id = $this->apple->getAppleAuth()->direct->twoSV->emailVerification['id'] ?? null;
+        $id = $this->getAppleAuth()->direct->twoSV->emailVerification['id'] ?? null;
         if ($id === null) {
             throw new InvalidArgumentException('get email verification id failed');
         }
 
         $this->attemptsVerifyEmail($appleId, $id);
 
-        $headers->add('X-Apple-Session-Token', $headers->get('X-Apple-Repair-Session-Token'));
+        $this->headerSynchronize()->add('X-Apple-Session-Token',$this->headerSynchronize()->get('X-Apple-Repair-Session-Token'));
 
-        $serviceKey = $this->apple->config()->get('serviceKey');
-        $this->apple->appleIdConnector()->getRepairResource()->widgetRepair($serviceKey);
+        $this->appleIdConnector()->getRepairResource()->widgetRepair($this->serviceKey());
 
-        $sessionId = $this->apple->getCookieJar()->getCookieByName('aidsp')?->getValue();
+        $sessionId = $this->cookieJar()->getCookieByName('aidsp')?->getValue();
         if ($sessionId === null) {
             throw new InvalidArgumentException('get session id failed');
         }
 
-        $this->apple->appleIdConnector()->getRepairResource()->options($serviceKey, $sessionId);
+        $this->appleIdConnector()->getRepairResource()->options($this->serviceKey(), $sessionId);
 
-        $response = $this->attemptsVerifyPhone($serviceKey, $sessionId);
+        $response = $this->attemptsVerifyPhone($sessionId);
 
-        return $this->apple->appleIdConnector()->getRepairResource()->repair(
+        return $this->appleIdConnector()->getRepairResource()->repair(
             RepairData::from([
                 'phoneNumberVerification' => [
                     'phoneNumber' => [
@@ -104,7 +233,7 @@ class AccountBindPhone
                     ],
                 ],
             ]),
-            $serviceKey,
+            $this->serviceKey(),
             $sessionId
         );
     }
@@ -120,7 +249,7 @@ class AccountBindPhone
      * @throws RequestException
      */
     protected function attemptsVerifyEmail(
-        AppleIdInterface $appleId,
+        AppleId $appleId,
         string $id,
         int $attempts = 5
     ): VerifyEmailSecurityCodeResponse {
@@ -128,9 +257,9 @@ class AccountBindPhone
         for ($i = 0; $i < $attempts; $i++) {
 
             try {
-                $code = Helper::attemptEmailVerificationCode($appleId->getAppleId(), $appleId->getEmailUri());
+                $code = $this->emailConnector()->attemptGetEmailCode($appleId->getAppleId(), $appleId->getEmailUri());
 
-                return $this->apple->idmsaConnector()->getAuthenticateResources()->verifyEmailSecurityCode(
+                return $this->idmsaConnector()->getAuthenticateResources()->verifyEmailSecurityCode(
                     VerifyEmailSecurityCode::from([
                         'id'           => $id,
                         'securityCode' => ['code' => $code],
@@ -156,7 +285,7 @@ class AccountBindPhone
      * @throws ModelNotFoundException
      * @throws NumberFormatException|MaxRetryAttemptsException
      */
-    protected function attemptsVerifyPhone(string $widgetKey, string $sessionId, int $attempts = 5): RepairResponse
+    protected function attemptsVerifyPhone(string $sessionId, int $attempts = 5): RepairResponse
     {
         for ($i = 0; $i < $attempts; $i++) {
 
@@ -164,7 +293,7 @@ class AccountBindPhone
 
                 $this->phone = $this->getPhone();
 
-                $response = $this->apple->appleIdConnector()->getRepairResource()->verifyPhone(
+                $response = $this->appleIdConnector()->getRepairResource()->verifyPhone(
                     PhoneData::from([
                         'phoneNumberVerification' => [
                             'phoneNumber' => [
@@ -177,7 +306,7 @@ class AccountBindPhone
                             'mode'        => 'sms',
                         ],
                     ]),
-                    $widgetKey,
+                    $this->serviceKey(),
                     $sessionId
                 );
 
@@ -185,9 +314,9 @@ class AccountBindPhone
                     throw new InvalidArgumentException('phone number id is null');
                 }
 
-                $code = Helper::attemptPhoneVerificationCode($this->phone->phone_address);
+                $code = $this->phoneConnector()->attemptGetPhoneCode($this->phone->phone, $this->phone->phone_address);
 
-                $response = $this->apple->appleIdConnector()->getRepairResource()->verifySecurityCode(
+                $response = $this->appleIdConnector()->getRepairResource()->verifySecurityCode(
                     SecurityCode::from([
                         'phoneNumberVerification' => [
                             'phoneNumber'  => [
@@ -200,7 +329,7 @@ class AccountBindPhone
                             'securityCode' => ['code' => $code],
                         ],
                     ]),
-                    $widgetKey,
+                    $this->serviceKey(),
                     $sessionId
                 );
 

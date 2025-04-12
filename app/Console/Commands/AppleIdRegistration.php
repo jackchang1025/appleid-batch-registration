@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Services\AppleClientIdService;
 use App\Services\Exception\RegistrationException;
 use Illuminate\Console\Command;
 use JsonException;
@@ -16,6 +15,7 @@ use Weijiajia\SaloonphpAppleClient\Exception\MaxRetryAttemptsException;
 use App\Models\Email;
 use App\Services\AppleId\AppleIdBatchRegistration as AppleIdBatchRegistrationService;
 use App\Enums\EmailStatus;
+use App\Models\Phone;
 use App\Services\CountryLanguageService;
 
 class AppleIdRegistration extends Command
@@ -25,7 +25,7 @@ class AppleIdRegistration extends Command
      *
      * @var string
      */
-    protected $signature = "app:apple-id-registration {email} {--C|country=CAN}";
+    protected $signature = "app:apple-id-registration {email} {--P|phone=} {--C|country=CAN} {--R|random-user-agent=}";
 
     /**
      * The console command description.
@@ -36,7 +36,6 @@ class AppleIdRegistration extends Command
 
 
     /**
-     * @param AppleClientIdService $appleClientIdService
      * @return void
      * @throws ClientException
      * @throws FatalRequestException
@@ -57,7 +56,17 @@ class AppleIdRegistration extends Command
 
         $appleIdBatchRegistration = app(AppleIdBatchRegistrationService::class);
 
-        $appleIdBatchRegistration->run($email,CountryLanguageService::make($this->option('country')));
+        if($phone = $this->option('phone')){
+
+            $phone = Phone::where('phone', 'like', '%'.$phone.'%')->firstOrFail();
+        }
+
+        $appleIdBatchRegistration->run(
+            $email,
+            CountryLanguageService::make($this->option('country')),
+            $phone,
+           (bool) $this->option('random-user-agent')
+        );
 
     }
 

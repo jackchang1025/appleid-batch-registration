@@ -23,21 +23,56 @@ use Weijiajia\SaloonphpAppleClient\Exception\VerificationCodeException;
 use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Data\CreateAccountSrvData;
 use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Data\ValidateAccountFieldsSrvData;
 use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Data\ValidateEmailConfirmationCodeSrvResponse;
+use Psr\Log\LoggerInterface;
+use Weijiajia\HttpProxyManager\ProxyManager;
+use Weijiajia\IpAddress\IpAddressManager;
+use GuzzleHttp\Cookie\CookieJar;
+use Weijiajia\SaloonphpAppleClient\Integrations\TvApple\TvAppleConnector;
+use App\Services\Trait\HasLog;
+use Weijiajia\SaloonphpAppleClient\Integrations\AuthTvApple\AuthTvAppleConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\BuyTvAppleConnector;
+use App\Services\Integrations\Email\EmailConnector;
+use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 
 class AppleIdTvRegistration
 {
+    use HasLog;
 
-    protected Apple $apple;
     private ?string $code = null;
 
-    public function __construct(protected AppleBuilder $appleBuilder)
+    protected Email $email;
+
+    protected ?TvAppleConnector $tvAppleConnector = null;
+
+    protected ?AuthTvAppleConnector $authTvAppleConnector = null;
+    protected ?BuyTvAppleConnector $buyTvAppleConnector = null;
+    protected ?EmailConnector $emailConnector = null;
+    protected ?ProxySplQueue $proxySplQueue = null;
+
+    public function __construct(
+        protected LoggerInterface $logger,
+        protected IpAddressManager $ipAddressManager,
+        protected ProxyManager $proxyManager,
+    )
     {
 
+    }
+
+    public function cookieJar(): CookieJar
+    {
+        return new CookieJar();
+    }
+
+    public function email(): Email
+    {
+        return $this->email;
     }
 
     /**
      * @param Email $email
      * @return Appleid
+     * @throws AccountAlreadyExistsException
+     * @throws MaxRetryAttemptsException
      * @throws AccountAlreadyExistsException
      * @throws MaxRetryAttemptsException
      * @throws RegistrationException
@@ -49,7 +84,7 @@ class AppleIdTvRegistration
      */
     public function run(Email $email): Appleid
     {
-
+        $this->email = $email;
         // 生成随机个人信息
         $password   = Helper::generatePassword();
         $firstName  = fake()->firstName();
@@ -58,14 +93,6 @@ class AppleIdTvRegistration
         $birthDay   = fake()->dayOfMonth($birthMonth);
         $birthYear  = (int)date('Y', random_int(strtotime('1950-01-01'), strtotime('2000-12-31')));
 
-        $appleId = Appleid::make([
-            'email'     => $email->email,
-            'email_uri' => $email->email_uri,
-            'password'  => $password,
-        ]);
-
-        $this->apple = $this->appleBuilder->build($appleId);
-        $this->apple->withDebug(true);
 
         try {
 
@@ -101,45 +128,34 @@ class AppleIdTvRegistration
                 'HttpOnly' => true,
             ]);
 
-            $this->apple->getCookieJar()->setCookie($geo);
-            $this->apple->getCookieJar()->setCookie($site);
-            $this->apple->getCookieJar()->setCookie($dslang);
+            $this->cookieJar()->setCookie($geo);
+            $this->cookieJar()->setCookie($site);
+            $this->cookieJar()->setCookie($dslang);
 
             $token = $this->getResourcesAndToken();
 //            $token = 'eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IldlYlBsYXlLaWQifQ.eyJpc3MiOiJBTVBXZWJQbGF5IiwiaWF0IjoxNzQxNzI0OTk2LCJleHAiOjE3NTcyNzY5OTYsInJvb3RfaHR0cHNfb3JpZ2luIjpbImFwcGxlLmNvbSJdfQ.i_WhpwafmgxICuONMXJ53rrBoNsK7jZGHsedk4ioocywCC7LZGYMT1DZnM-1wmwqUa9yWFdepV4ErgZcBYG5Hg';
 
-            $email->createLog('获取资源和令牌', ['token' => $token]);
-
-            $initializeSessionResponse = $this->apple->authTvAppleConnector()
+            $initializeSessionResponse = $this->authTvAppleConnector()
                 ->getResources()
                 ->getInitializeSession();
 
-            $email->createLog('获取初始化会话', $initializeSessionResponse->toArray());
-
-
-            $response = $this->apple->authTvAppleConnector()
+            $response = $this->authTvAppleConnector()
                 ->getResources()
                 ->getAccountNameValidate($email->email, $initializeSessionResponse->pageUUID);
-
-            $email->createLog('账号验证', $response->toArray());
 
             if ($response->accountNameAvailable === false) {
                 throw new AccountAlreadyExistsException($response->getResponse()->body());
             }
 
-            $podResponse = $this->apple->buyTvAppleConnector()
+            $this->buyTvAppleConnector()
                 ->getResources()
                 ->pod();
 
-            $email->createLog('获取 pod', ['response' => $podResponse->json()]);
-
-            $createOptionsResponse = $this->apple->buyTvAppleConnector()->getResources()->createOptions();
-
-            $email->createLog('获取创建选项', $createOptionsResponse->toArray());
+            $createOptionsResponse = $this->buyTvAppleConnector()->getResources()->createOptions();
 
             $data = ValidateAccountFieldsSrvData::from([
-                'email'             => $email->email,
-                'acAccountName'     => $email->email,
+                'email'             => $this->email->email,
+                'acAccountName'     => $this->email->email,
                 'firstName'         => $firstName,
                 'lastName'          => $lastName,
                 'birthMonth'        => $birthMonth,
@@ -149,20 +165,16 @@ class AppleIdTvRegistration
                 'pageUUID'          => $createOptionsResponse->pageUUID,
             ]);
 
-            $validateAccountFieldsSrvResponse = $this->apple->buyTvAppleConnector()
+            $this->buyTvAppleConnector()
                 ->getResources()
                 ->validateAccountFieldsSrv($data);
 
-            $email->createLog('验证账号字段', $validateAccountFieldsSrvResponse->toArray());
 
-            $generateEmailConfirmationCodeSrvResponse = $this->apple->buyTvAppleConnector()
+            $generateEmailConfirmationCodeSrvResponse = $this->buyTvAppleConnector()
                 ->getResources()
                 ->generateEmailConfirmationCodeSrv($email->email);
 
-            $email->createLog('生成邮箱验证码', $generateEmailConfirmationCodeSrvResponse->toArray());
-
-            $validateEmailConfirmationCodeSrvResponse = $this->attemptsVerifyEmail(
-                $email,
+            $validateEmailConfirmationCodeSrvResponse = $this->verifyEmail(
                 $generateEmailConfirmationCodeSrvResponse->clientToken
             );
 
@@ -180,13 +192,11 @@ class AppleIdTvRegistration
                 'clientToken'       => $validateEmailConfirmationCodeSrvResponse->clientToken,
             ]);
 
-            $createAccountSrvResponse = $this->apple->buyTvAppleConnector()
+            $this->buyTvAppleConnector()
                 ->getResources()
                 ->createAccountSrv($token, $data);
 
-            $email->createLog('创建账号数据', $createAccountSrvResponse->toArray());
-
-            $email->update([
+            $this->email->update([
                 'status' => EmailStatus::REGISTERED,
             ]);
 
@@ -199,21 +209,94 @@ class AppleIdTvRegistration
             ]);
 
         } catch (AccountAlreadyExistsException $e) {
-            $email->update([
+            $this->email->update([
                 'status' => EmailStatus::REGISTERED,
             ]);
 
-            $email->createLog("账号已注册", ['message' => $e->getMessage()]);
+            $this->log("账号已注册", ['message' => $e->getMessage()]);
             throw $e;
 
         } catch (Throwable $e) {
-            $email->update([
+            $this->email->update([
                 'status' => EmailStatus::FAILED,
             ]);
 
-            $email->createLog("注册失败", ['message' => $e->getMessage()]);
+            $this->log("注册失败", ['message' => $e->getMessage()]);
             throw $e;
         }
+    }
+
+    public function tvAppleConnector(): TvAppleConnector
+    {
+        if ($this->tvAppleConnector === null) {
+            $this->tvAppleConnector = new TvAppleConnector();
+            $this->tvAppleConnector->withLogger($this->logger);
+            $this->tvAppleConnector->debug();
+            $this->tvAppleConnector->withProxyQueue($this->proxySplQueue());
+            $this->tvAppleConnector->withCookies($this->cookieJar());
+
+            $this->tvAppleConnector->middleware()->onRequest($this->debugRequest());
+            $this->tvAppleConnector->middleware()->onResponse($this->debugResponse());
+        }
+
+        return $this->tvAppleConnector;
+    }
+
+    public function authTvAppleConnector(): AuthTvAppleConnector{
+        if ($this->authTvAppleConnector === null) {
+            $this->authTvAppleConnector = new AuthTvAppleConnector();
+            $this->authTvAppleConnector->withLogger($this->logger);
+            $this->authTvAppleConnector->debug();
+            $this->authTvAppleConnector->withProxyQueue($this->proxySplQueue());
+            $this->authTvAppleConnector->withCookies($this->cookieJar());
+            $this->authTvAppleConnector->middleware()->onRequest($this->debugRequest());
+            $this->authTvAppleConnector->middleware()->onResponse($this->debugResponse());
+        }
+        return $this->authTvAppleConnector;
+    }
+
+    public function buyTvAppleConnector(): BuyTvAppleConnector{
+        if ($this->buyTvAppleConnector === null) {
+            $this->buyTvAppleConnector = new BuyTvAppleConnector();
+            $this->buyTvAppleConnector->withLogger($this->logger);
+            $this->buyTvAppleConnector->debug();
+            $this->buyTvAppleConnector->withProxyQueue($this->proxySplQueue());
+            $this->buyTvAppleConnector->withCookies($this->cookieJar());
+            $this->buyTvAppleConnector->middleware()->onRequest($this->debugRequest());
+            $this->buyTvAppleConnector->middleware()->onResponse($this->debugResponse());
+        }
+        return $this->buyTvAppleConnector;
+    }
+
+    public function emailConnector(): EmailConnector
+    {
+        if ($this->emailConnector === null) {
+            $this->emailConnector = new EmailConnector();
+            $this->emailConnector->withLogger($this->logger);
+            $this->emailConnector->debug();
+            $this->emailConnector->middleware()->onRequest($this->debugRequest());
+            $this->emailConnector->middleware()->onResponse($this->debugResponse());
+        }
+        return $this->emailConnector;
+    }
+
+    /**
+     * @return ProxySplQueue
+     * @throws ProxyModelNotFoundException
+     */
+    public function proxySplQueue(): ProxySplQueue
+    {
+        if ($this->proxySplQueue === null) {
+            $proxyConnector = $this->proxyManager->forgetDrivers()->driver();
+            $proxyConnector->withLogger($this->logger);
+            $proxyConnector->debug();
+            $proxyConnector->middleware()->onRequest($this->debugRequest());
+            $proxyConnector->middleware()->onResponse($this->debugResponse());
+            $proxy               = $proxyConnector->defaultModelIp();
+            $this->proxySplQueue = new ProxySplQueue(roundRobinEnabled: true);
+            $this->proxySplQueue->enqueue($proxy->getUrl());
+        }
+        return $this->proxySplQueue;
     }
 
     /**
@@ -225,7 +308,7 @@ class AppleIdTvRegistration
     private function getResourcesAndToken(): ?string
     {
 
-        $response = $this->apple->tvAppleConnector()->getResources()->getTvApple();
+        $response = $this->tvAppleConnector()->getResources()->getTvApple();
 
         $meta    = $response->dom()->filter('meta[name="web-tv-app/config/environment"]');
         $content = $meta->attr('content');
@@ -253,48 +336,23 @@ class AppleIdTvRegistration
     }
 
     /**
-     * @param Email $email
      * @param string $clientToken
-     * @param int $attempts
      * @return ValidateEmailConfirmationCodeSrvResponse
      * @throws MaxRetryAttemptsException
      * @throws RegistrationException
      * @throws FatalRequestException
      * @throws RequestException
      */
-    protected function attemptsVerifyEmail(
-        Email $email,
-        string $clientToken,
-        int $attempts = 5
-    ): ValidateEmailConfirmationCodeSrvResponse {
+    protected function verifyEmail(string $clientToken): ValidateEmailConfirmationCodeSrvResponse {
 
-        for ($i = 0; $i < $attempts; $i++) {
+        $this->code = $this->emailConnector()->attemptGetEmailCode($this->email->email, $this->email->email_uri);
 
-            try {
-
-                $this->code = Helper::attemptEmailVerificationCode($email->email, $email->email_uri);
-
-                $email->createLog('获取邮箱验证码', ['code' => $this->code]);
-
-                $validateEmailConfirmationCodeSrvResponse = $this->apple->buyTvAppleConnector()
-                    ->getResources()
-                    ->validateEmailConfirmationCodeSrv(
-                        email: $email->email,
-                        clientToken: $clientToken,
-                        secretCode: $this->code
-                    );
-
-                $email->createLog('验证邮箱验证码', $validateEmailConfirmationCodeSrvResponse->toArray());
-
-                return $validateEmailConfirmationCodeSrvResponse;
-
-            } catch (VerificationCodeException $e) {
-
-                $email->createLog('验证邮箱验证码失败', ['message' => $e->getMessage()]);
-
-            }
-        }
-
-        throw new MaxRetryAttemptsException(" {$attempts} 次验证邮箱验证码失败");
+        return $this->buyTvAppleConnector()
+            ->getResources()
+            ->validateEmailConfirmationCodeSrv(
+                email: $this->email->email,
+                clientToken: $clientToken,
+                secretCode: $this->code
+            );
     }
 }
