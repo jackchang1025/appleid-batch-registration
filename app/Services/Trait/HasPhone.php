@@ -6,14 +6,14 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Redis;
 use App\Models\Phone;
 use Illuminate\Support\Facades\DB;
-use App\Enums\CountryEnum;
 use App\Services\CountryLanguageService;
 use App\Enums\PhoneStatus;
+use Illuminate\Support\Collection;
 trait HasPhone
 {
      // 添加类常量
-     public const  PHONE_BLACKLIST_KEY = 'phone_code_blacklist';
-     public const  BLACKLIST_EXPIRE_SECONDS = 3600; // 1小时过期
+     public const PHONE_BLACKLIST_KEY = 'phone_code_blacklist';
+     public const BLACKLIST_EXPIRE_SECONDS = 3600; // 1小时过期
 
     protected ?Phone $phone = null;
 
@@ -22,15 +22,14 @@ trait HasPhone
     protected ?CountryLanguageService $country = null;
 
     /**
+     * @throws ModelNotFoundException
      * @return Phone
      */
     public function getPhone(): Phone
     {
         return DB::transaction(function () {
-
             // 获取有效黑名单ID
-            // $blacklistIds = $this->getActiveBlacklistIds();
-            $blacklistIds = [];
+            $blacklistIds = self::getActiveBlacklistIds();
 
             $phone = Phone::query()
                 ->where('status', PhoneStatus::NORMAL)
@@ -47,7 +46,6 @@ trait HasPhone
                 ->lockForUpdate()
                 ->firstOrFail();
 
-
             $phone->update(['status' => PhoneStatus::BINDING]);
 
             $this->usedPhones[] = $phone->id;
@@ -55,12 +53,13 @@ trait HasPhone
             return $phone;
         });
     }
-     /**
+
+    /**
      * 获取当前有效的黑名单手机号ID
      *
      * @return array
      */
-    protected function getActiveBlacklistIds(): array
+    protected static function getActiveBlacklistIds(): array
     {
         // 获取所有黑名单记录
         $blacklist = Redis::hgetall(self::PHONE_BLACKLIST_KEY);
@@ -71,9 +70,40 @@ trait HasPhone
         }));
     }
 
-    protected function addActiveBlacklistIds(int $id): void
+    /**
+     * 将手机号添加到黑名单
+     *
+     * @param int $id 手机号ID
+     * @return void
+     */
+    protected static function addActiveBlacklistIds(int $id): void
     {
+        // 将手机号添加到Redis黑名单
         Redis::hset(self::PHONE_BLACKLIST_KEY, $id, now()->timestamp);
         Redis::expire(self::PHONE_BLACKLIST_KEY, self::BLACKLIST_EXPIRE_SECONDS);
+        
+        // 同时更新手机号状态为黑名单
+        Phone::where('id', $id)->update(['status' => PhoneStatus::BLACKLIST]);
+    }
+    
+   /**
+     * 清理已过期的黑名单状态
+     * 
+     * @return Collection
+     */
+    public static function cleanExpiredBlacklist(): Collection
+    {
+        // 获取Redis中的有效黑名单
+        $activeBlacklistIds = self::getActiveBlacklistIds();
+
+        // 获取所有状态为黑名单的手机号
+        $blacklistPhones = Phone::where('status', PhoneStatus::BLACKLIST)->whereNotIn('id',$activeBlacklistIds)->get();
+        
+        // 找出已经不在Redis黑名单中的手机号ID 将这些手机号状态恢复为正常
+        return $blacklistPhones
+            ->map(function(Phone $phone){
+                $phone->update(['status' => PhoneStatus::NORMAL]);
+                return $phone->id;
+            });
     }
 }

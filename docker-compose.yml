@@ -11,8 +11,7 @@ services:
         ports:
             - '${APP_PORT:-80}:80'
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-        # command: >
-        #     chmod -R 777 /var/www/html/storage
+        # command: bash -c "chmod -R 777 /var/www/html/storage"
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
@@ -57,6 +56,7 @@ services:
         volumes:
             - '.:/var/www/html'
             - './docker/supervisor/horizon.conf:/etc/supervisor/conf.d/horizon.conf'
+            - './docker/supervisor/scheduler.conf:/etc/supervisor/conf.d/scheduler.conf'
         networks:
             - sail
         depends_on:

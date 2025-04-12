@@ -8,6 +8,7 @@ enum PhoneStatus: string
     case INVALID = 'invalid';
     case BOUND = 'bound';
     case BINDING = 'Binding';
+    case BLACKLIST = 'blacklist';
     
     /**
      * 获取状态的中文描述
@@ -19,6 +20,7 @@ enum PhoneStatus: string
             self::INVALID => '失效',
             self::BOUND => '已绑定',
             self::BINDING => '绑定中',
+            self::BLACKLIST => '黑名单',
         };
     }
     
@@ -32,6 +34,7 @@ enum PhoneStatus: string
             self::INVALID => 'warning',
             self::BOUND => 'success',
             self::BINDING => 'danger',
+            self::BLACKLIST => 'danger',
         };
     }
     
@@ -45,6 +48,7 @@ enum PhoneStatus: string
             self::INVALID->value => self::INVALID->label(),
             self::BOUND->value => self::BOUND->label(),
             self::BINDING->value => self::BINDING->label(),
+            self::BLACKLIST->value => self::BLACKLIST->label(),
         ];
     }
     
@@ -58,6 +62,7 @@ enum PhoneStatus: string
             self::INVALID->value => self::INVALID->color(),
             self::BOUND->value => self::BOUND->color(),
             self::BINDING->value => self::BINDING->color(),
+            self::BLACKLIST->value => self::BLACKLIST->color(),
         ];
     }
 }
