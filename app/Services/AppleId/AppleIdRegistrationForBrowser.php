@@ -15,7 +15,7 @@ use App\Services\AppleId\Pages\ICloudTermsConditionsPage;
 use App\Models\Appleid;
 use App\Enums\EmailStatus;
 use Weijiajia\SaloonphpAppleClient\Exception\AccountException;
-class AppleIdRegistration
+class AppleIdRegistrationForBrowser
 {
     use HasPhone;
 

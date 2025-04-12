@@ -2,9 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\EmailStatus;
 use App\Models\Email;
-use App\Models\ProxyConfiguration;
 use App\Models\User;
 use App\Services\AppleId\AppleIdBatchRegistration;
 use App\Services\Exception\RegistrationException;
@@ -21,7 +19,7 @@ use Saloon\Exceptions\Request\Statuses\ServiceUnavailableException;
 use Filament\Notifications\Actions\Action;
 use App\Filament\Resources\EmailResource\Pages\ViewEmail;
 use App\Services\AppleId\Pages\PageManager;
-use App\Services\AppleId\AppleIdRegistration;
+use App\Services\AppleId\AppleIdRegistrationForBrowser;
 
 class RegisterAppleIdForBrowserJob implements ShouldQueue, ShouldBeUnique
 {
@@ -84,12 +82,12 @@ class RegisterAppleIdForBrowserJob implements ShouldQueue, ShouldBeUnique
     {
         try {
 
-            $appleIdRegistration = new AppleIdRegistration(
+            $appleIdRegistration = new AppleIdRegistrationForBrowser(
                 pageManager:$pageManager,
                 country:$this->country,
                 email:$this->email,
             );
-    
+
             $appleIdRegistration->register();
 
             Log::info("AppleID registration successful for email: {$this->email->email}");

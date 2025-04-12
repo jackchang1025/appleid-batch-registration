@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 use App\Services\AppleId\AppleIdBatchRegistration;
 use App\Models\Phone;
 use Illuminate\Support\Str;
-use App\Services\AppleId\AppleIdRegistration;
+use App\Services\AppleId\AppleIdRegistrationForBrowser;
 use App\Services\AppleId\Pages\PageManager;
 use App\Models\Email;
 
@@ -49,7 +49,7 @@ class AppleClientInfo extends Command
      */
     public function handle(PageManager $pageManager)
     {
-        $appleIdRegistration = new AppleIdRegistration(
+        $appleIdRegistration = new AppleIdRegistrationForBrowser(
             pageManager:$pageManager,
             country:'CAN',
             email:Email::where('email','=','MichelleGreen4isv@gmail.com')->first(),
