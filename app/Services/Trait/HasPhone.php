@@ -31,18 +31,23 @@ trait HasPhone
             // 获取有效黑名单ID
             $blacklistIds = self::getActiveBlacklistIds();
 
-            $phone = Phone::query()
+            // 创建基本查询
+            $query = Phone::query()
                 ->where('status', PhoneStatus::NORMAL)
                 ->whereNotNull(['phone_address', 'phone'])
                 ->whereNotIn('id', $this->usedPhones)
-                ->whereNotIn('id', $blacklistIds)
-                ->when($this->country, function ($query) {
-                    $query->where(function($subQuery) {
-                        $subQuery->where('country_code_alpha3', $this->country->getAlpha3Code())
-                                ->orWhere('country_code', $this->country->getAlpha2Code());
-                    });
-                })
-                ->orderBy('id','desc')
+                ->whereNotIn('id', $blacklistIds);
+            
+            // 如果国家条件存在，直接添加国家筛选条件
+            if ($this->country) {
+                $query->where(function($subQuery) {
+                    $subQuery->where('country_code_alpha3', $this->country->getAlpha3Code())
+                            ->orWhere('country_code', $this->country->getAlpha2Code());
+                });
+            }
+            
+            // 完成查询
+            $phone = $query->orderBy('id','desc')
                 ->lockForUpdate()
                 ->firstOrFail();
 
