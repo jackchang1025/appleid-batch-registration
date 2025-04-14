@@ -28,7 +28,6 @@ services:
             - redis
             - meilisearch
             - mailpit
-            - supervisor
     supervisor:
         build:
             context: './docker/supervisor'
