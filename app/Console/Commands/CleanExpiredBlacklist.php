@@ -28,11 +28,9 @@ class CleanExpiredBlacklist extends Command
     public function handle()
     {
         $this->info('开始清理过期的手机黑名单...');
-        Log::info('开始清理过期的手机黑名单...');
         
         $expiredPhoneIds = AppleIdBatchRegistration::cleanExpiredBlacklist();
 
         $this->info('清理的手机号ID：' . $expiredPhoneIds->implode(','));
-        Log::info('清理的手机号ID：' . $expiredPhoneIds->implode(','));
     }
 } 
