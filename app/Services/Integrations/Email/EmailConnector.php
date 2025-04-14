@@ -11,7 +11,7 @@ use App\Services\Integrations\Email\Exception\MaxRetryGetEmailCodeException;
 use Saloon\Exceptions\Request\FatalRequestException;
 use Saloon\Exceptions\Request\RequestException;
 use Saloon\Http\Request;
-
+use Illuminate\Support\Facades\Cache;
 class EmailConnector extends Connector implements HasLoggerInterface
 {
     use HasLogger;
@@ -74,17 +74,17 @@ class EmailConnector extends Connector implements HasLoggerInterface
                     continue;
                 }
 
-                if ((self::$emailHistory[$email] ?? null) === $code) {
+                if (Cache::get('email_code_' . $email,null) === $code) {
                     continue;
-                }
+                }   
 
-                self::$emailHistory[$email] = $code;
+                Cache::put('email_code_' . $email, $code, 60 * 60 * 24);
                 return $code;
 
             } catch (GetEmailCodeException) {
                 continue;
             }
         }
-        throw new MaxRetryGetEmailCodeException('Failed to get email code');
+        throw new MaxRetryGetEmailCodeException('Failed to get email code after ' . $attempts . ' attempts');
     }
 }

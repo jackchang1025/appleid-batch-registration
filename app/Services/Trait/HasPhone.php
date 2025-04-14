@@ -33,10 +33,17 @@ trait HasPhone
 
             // 创建基本查询
             $query = Phone::query()
-                ->where('status', PhoneStatus::NORMAL)
-                ->whereNotNull(['phone_address', 'phone'])
-                ->whereNotIn('id', $this->usedPhones)
-                ->whereNotIn('id', $blacklistIds);
+                    ->where('status', PhoneStatus::NORMAL)
+                    ->whereNotNull(['phone_address', 'phone']);
+
+            // 只有在数组不为空时才添加 whereNotIn 条件
+            if (!empty($this->usedPhones)) {
+                $query->whereNotIn('id', $this->usedPhones);
+            }
+
+            if (!empty($blacklistIds)) {
+                $query->whereNotIn('id', $blacklistIds);
+            }
             
             // 如果国家条件存在，直接添加国家筛选条件
             if ($this->country) {
@@ -46,15 +53,34 @@ trait HasPhone
                 });
             }
             
-            // 完成查询
-            $phone = $query->orderBy('id','desc')
-                ->lockForUpdate()
-                ->firstOrFail();
-
+            // 使用 FOR UPDATE SKIP LOCKED 安全地锁定一行记录
+            // 这样即使在高并发下也不会导致整个表被锁
+            $sql = $query->orderBy('id', 'desc')
+                ->limit(1)
+                ->toSql();
+                
+            // 手动添加 SKIP LOCKED 子句
+            $sql .= " FOR UPDATE SKIP LOCKED";
+            
+            $bindings = $query->getBindings();
+            
+            // 执行优化的SQL语句获取一个可用的手机号记录
+            $result = DB::select($sql, $bindings);
+            
+            if (empty($result)) {
+                throw new ModelNotFoundException('没有可用的手机号');
+            }
+            
+            // 将结果转换为Phone模型
+            $phoneData = (array)$result[0];
+            $phone = Phone::find($phoneData['id']);
+            
+            // 更新手机号状态为绑定中
             $phone->update(['status' => PhoneStatus::BINDING]);
-
+            
+            // 记录已使用的手机号
             $this->usedPhones[] = $phone->id;
-
+            
             return $phone;
         });
     }

@@ -26,11 +26,6 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * 重试次数
-     */
-    public int $tries = 3;
-
-    /**
      * 任务超时时间（秒）
      */
     public int|float $timeout = 60 * 10;
@@ -63,16 +58,6 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     }
 
     /**
-     * 计算重试任务之前要等待的秒数
-     *
-     * @return int
-     */
-    public function backoff(): int
-    {
-        return 30;
-    }
-
-    /**
      * @return void
      * @throws RegistrationException
      * @throws ServiceUnavailableException
@@ -89,7 +74,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
             }
 
 
-            $appleIdBatchRegistration = app(AppleIdBatchRegistration::class);
+            $appleIdBatchRegistration = app()->make(AppleIdBatchRegistration::class);
 
             // 运行注册
             $appleIdBatchRegistration->run(email: $this->email, country: CountryLanguageService::make($this->country), isRandomUserAgent: $this->isRandomUserAgent);
@@ -112,26 +97,13 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
             $this->delete(); // 显式删除成功完成的 Job
             return;
 
-        } catch (RegistrationException|ServiceUnavailableException $e) {
-
-            //抛出异常
-            throw $e;
-            
-
-        } catch (Exception $e) {
+        }catch (Exception|\Throwable $e) {
 
             Log::error("{$this->email->email} 注册失败 {$e}");
-            $this->fail($e);
-        }
 
-    }
-
-    public function failed(Exception $exception): void
-    {
-
-        Notification::make()
+            Notification::make()
             ->title("{$this->email->email} 注册失败")
-            ->body($exception->getMessage())
+            ->body($e->getMessage())
             ->danger()
             ->actions([
                 Action::make('view')
@@ -141,5 +113,7 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
                     ]), shouldOpenInNewTab: true),
             ])
             ->sendToDatabase(User::first());
+        }
+
     }
 }

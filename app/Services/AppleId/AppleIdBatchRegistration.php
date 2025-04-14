@@ -10,8 +10,6 @@ use App\Models\ProxyIpStatistic;
 use App\Models\UserAgent;
 use App\Services\CountryLanguageService;
 use App\Services\Helper\Helper;
-use App\Services\Integrations\AppleClientInfo\AppleClientInfoConnector;
-use App\Services\Integrations\AppleClientInfo\AppleClientInfoRequest;
 use App\Services\Integrations\Email\EmailConnector;
 use App\Services\Integrations\Phone\PhoneConnector;
 use App\Services\Trait\HasPhone;
@@ -21,8 +19,6 @@ use libphonenumber\PhoneNumberFormat;
 use Propaganistas\LaravelPhone\Exceptions\NumberFormatException;
 use Psr\Log\LoggerInterface;
 use Random\RandomException;
-use RuntimeException;
-use Saloon\Enums\PipeOrder;
 use Saloon\Exceptions\Request\ClientException;
 use Saloon\Exceptions\Request\FatalRequestException;
 use Saloon\Exceptions\Request\RequestException;
@@ -38,6 +34,7 @@ use Weijiajia\IpAddress\Request as IpAddressRequest;
 use Weijiajia\SaloonphpAppleClient\Exception\AccountAlreadyExistsException;
 use Weijiajia\SaloonphpAppleClient\Exception\CaptchaException;
 use App\Services\Integrations\Email\Exception\MaxRetryGetEmailCodeException;
+use App\Services\Integrations\Email\Exception\EmailException;
 use Weijiajia\SaloonphpAppleClient\Exception\Email\MaxRetryVerificationEmailCodeException;
 use Weijiajia\SaloonphpAppleClient\Exception\MaxRetryAttemptsException;
 use App\Services\Integrations\Phone\Exception\MaxRetryGetPhoneCodeException;
@@ -93,12 +90,10 @@ class AppleIdBatchRegistration
     protected ?string $password = null;
     protected ?string $widgetKey = null;
     protected ?string $timezone = null;
-    protected ?CountryLanguageService $countryLanguageService = null;
     protected ?ProxyIpStatistic $proxyIpStatistic = null;
     protected ?AppleIdConnector $appleIdConnector = null;
     protected ?ProxyConnector $proxyConnector = null;
     protected ?IpAddressRequest $request = null;
-    protected ?AppleClientInfoConnector $appleClientInfoConnector = null;
     protected ?EmailConnector $emailConnector = null;
     protected ?PhoneConnector $phoneConnector = null;
     protected ?CloudCodeConnector $cloudCodeConnector = null;
@@ -165,8 +160,6 @@ class AppleIdBatchRegistration
             // 获取手机号码和设置会话
             $this->setupAppleIdConnector();
 
-            $this->setupAppleClientInfoConnector();
-
             $this->setupHeaders();
 
             $this->phone = $phone ?? $this->getPhone();
@@ -190,12 +183,14 @@ class AppleIdBatchRegistration
         } catch (MaxRetryVerificationPhoneCodeException $e) {
             $this->handlePhoneVerificationException($e);
             throw $e;
-        } catch (MaxRetryGetEmailCodeException $e) {
+        } catch (MaxRetryGetEmailCodeException|EmailException $e) {
             $this->handleEmailVerificationException($e);
             throw $e;
         } catch (RegistrationException $e) {
 
             self::addActiveBlacklistIds($this->phone->id);
+            $this->email->update(['status' => EmailStatus::FAILED]);
+
             throw $e;
         } catch (Throwable $e) {
             $this->handleGenericException($e);
@@ -212,12 +207,6 @@ class AppleIdBatchRegistration
         $this->proxyConnector->middleware()->onRequest($this->debugRequest());
         $this->proxyConnector->middleware()->onResponse($this->debugResponse());
     }
-
-
-
-
-
-
 
     /**
      * @return void
@@ -249,16 +238,6 @@ class AppleIdBatchRegistration
             ->withProxyQueue($this->proxySplQueue);
 
         $ipInfo = $this->request->request();
-
-        $this->proxyIpStatistic = ProxyIpStatistic::create([
-            'ip_uri'         => $this->proxySplQueue->dequeue()?->getUrl(),
-            'real_ip'        => $ipInfo->getIp(),
-            'proxy_provider' => $this->proxyManager->getDefaultDriver(),
-            'country_code'   => $ipInfo->getCountryCode(),
-            'email_id'       => $this->email->id,
-            'ip_info'        => $ipInfo->getResponse()->json(),
-            'is_success'     => false,
-        ]);
 
         $this->timezone = $ipInfo->getTimezone();
         $this->country  = CountryLanguageService::make($ipInfo->getCountryCode());
@@ -330,28 +309,8 @@ class AppleIdBatchRegistration
         return $this->cloudCodeConnector;
     }
 
-    protected function setupAppleClientInfoConnector(): void
-    {
-        $this->appleClientInfoConnector = new AppleClientInfoConnector(config('services.apple_client_info.url'));
-        $this->appleClientInfoConnector->debug();
-        $this->appleClientInfoConnector->withLogger($this->logger);
-        $this->appleClientInfoConnector->middleware()->onRequest(
-            $this->debugRequest(),
-            'debugRequest',
-            PipeOrder::LAST
-        );
-        $this->appleClientInfoConnector->middleware()->onResponse(
-            $this->debugResponse(),
-            'debugResponse',
-            PipeOrder::LAST
-        );
-    }
-
     /**
      * @return void
-     * @throws FatalRequestException
-     * @throws JsonException
-     * @throws RequestException
      */
     protected function setupHeaders(): void
     {
@@ -366,31 +325,13 @@ class AppleIdBatchRegistration
        }
     }
 
-    /**
-     * @param string $userAgent
-     * @param string $language
-     * @param string $timeZone
-     * @return Response
-     * @throws FatalRequestException
-     * @throws RequestException
-     */
-    protected function getAppleClientInfo(string $userAgent, string $language, string $timeZone): Response
-    {
-        $request = new AppleClientInfoRequest(
-            $userAgent,
-            $language,
-            $timeZone,
-        );
 
-        return $this->appleClientInfoConnector->send($request);
-    }
 
     /**
      * 准备注册账户所需的基本信息
      *
      * @return void
      * @throws FatalRequestException
-     * @throws JsonException
      * @throws NumberFormatException
      * @throws RandomException
      * @throws RequestException
@@ -466,7 +407,7 @@ class AppleIdBatchRegistration
     }
 
     /**
-     * @return Response
+     * @return AccountDto
      * @throws FatalRequestException
      * @throws RequestException
      */
@@ -498,6 +439,7 @@ class AppleIdBatchRegistration
      * @throws MaxRetryVerificationPhoneCodeException
      * @throws NumberFormatException
      * @throws RequestException|ConnectionException|RegistrationException|MaxRetryAttemptsException
+     * @throws PhoneException
      */
     protected function executeVerificationProcess(): Response
     {
@@ -527,7 +469,7 @@ class AppleIdBatchRegistration
     /**
      * @return CaptchaResponse
      * @throws FatalRequestException
-     * @throws RequestException|JsonException
+     * @throws RequestException
      */
     protected function captcha(): CaptchaResponse
     {
@@ -716,7 +658,7 @@ class AppleIdBatchRegistration
      * @throws JsonException
      * @throws MaxRetryVerificationPhoneCodeException
      * @throws NumberFormatException
-     * @throws RequestException|ConnectionException
+     * @throws RequestException|PhoneException
      */
     protected function attemptVerificationPhoneCode(int $attempts = 5): Response
     {
@@ -819,17 +761,6 @@ class AppleIdBatchRegistration
     }
 
     /**
-     * 处理手机验证失败
-     *
-     * @return void
-     * @throws NumberFormatException
-     */
-    protected function handlePhoneVerificationFailure(): void
-    {
-        
-    }
-
-    /**
      * 保存注册成功的账户信息
      *
      * @return void
@@ -859,8 +790,6 @@ class AppleIdBatchRegistration
     {
         $this->email->update(['status' => EmailStatus::REGISTERED]);
         $this->phone->update(['status' => PhoneStatus::BOUND]);
-
-        $this->proxyIpStatistic?->update(['is_success' => true]);
     }
 
     /**
@@ -872,9 +801,8 @@ class AppleIdBatchRegistration
     protected function handleAccountExistsException(AccountAlreadyExistsException $e): void
     {
         $this->phone && $this->phone->where('status', PhoneStatus::BINDING)->update(['status' => PhoneStatus::NORMAL]);
-        $this->email && $this->email->where('status', EmailStatus::PROCESSING)->update(['status' => EmailStatus::REGISTERED]);
+        $this->email->update(['status' => EmailStatus::REGISTERED]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
-        $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }
 
     /**
@@ -885,10 +813,9 @@ class AppleIdBatchRegistration
      */
     protected function handlePhoneVerificationException(MaxRetryVerificationPhoneCodeException $e): void
     {
-        $this->email && $this->email->where('status', EmailStatus::PROCESSING)->update(['status' => EmailStatus::FAILED]);
+        $this->email->update(['status' => EmailStatus::FAILED]);
         $this->phone && $this->phone->where('status', PhoneStatus::BINDING)->update(['status' => PhoneStatus::INVALID]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
-        $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }
 
     /**
@@ -897,12 +824,11 @@ class AppleIdBatchRegistration
      * @param MaxRetryGetEmailCodeException $e 异常
      * @return void
      */
-    protected function handleEmailVerificationException(MaxRetryGetEmailCodeException $e): void
+    protected function handleEmailVerificationException(MaxRetryGetEmailCodeException|EmailException $e): void
     {
-        $this->email && $this->email->where('status', EmailStatus::PROCESSING)->update(['status' => EmailStatus::INVALID]);
+        $this->email->update(['status' => EmailStatus::INVALID]);
         $this->phone && $this->phone->where('status', PhoneStatus::BINDING)->update(['status' => PhoneStatus::NORMAL]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
-        $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }
 
     /**
@@ -914,9 +840,8 @@ class AppleIdBatchRegistration
     protected function handleGenericException(Throwable $e): void
     {
         $this->phone && $this->phone->where('status', PhoneStatus::BINDING)->update(['status' => PhoneStatus::NORMAL]);
-        $this->email && $this->email->where('status', EmailStatus::PROCESSING)->update(['status' => EmailStatus::FAILED]);
+        $this->email->update(['status' => EmailStatus::FAILED]);
         $this->log('注册失败', ['message' => $e->getMessage()]);
-        $this->proxyIpStatistic?->update(['exception_message' => $e->getMessage()]);
     }
 }
 

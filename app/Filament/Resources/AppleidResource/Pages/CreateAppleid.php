@@ -75,17 +75,16 @@ class CreateAppleid extends CreateRecord
                 $count = count($data['emails']);
 
 
-            
+
                 foreach ($data['emails'] as $email) {
 
                     $email = Email::where('email', $email)->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])->first();
 
                     if (!$email) {
-                        throw new \Exception("邮箱 {$email} 不存在");
+                        throw new \RuntimeException("邮箱 {$email} 不存在");
                     }
 
-                    RegisterAppleIdJob::dispatch($email,$data['country'],$data['is_random_user_agent'])
-                    ->delay(now()->addSeconds(random_int(10, 30)));
+                    RegisterAppleIdJob::dispatch($email,$data['country'],$data['is_random_user_agent']);
                 }
 
                 // 显示通知

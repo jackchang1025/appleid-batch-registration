@@ -15,6 +15,7 @@
         "propaganistas/laravel-phone": "^5.3",
         "symfony/dom-crawler": "^7.2",
         "symfony/intl": "^7.2",
+        "symfony/panther": "^2.2",
         "weijiajia/decrypt-verification-code": "dev-main",
         "weijiajia/http-proxy-manager": "dev-main",
         "weijiajia/ip-address": "dev-master",
