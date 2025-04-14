@@ -44,6 +44,7 @@ services:
         networks:
             - sail
         depends_on:
+            - laravel.test #确保supervisor服务在laravel.test之后启动
             - mysql
             - redis
     mysql:
