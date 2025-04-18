@@ -17,6 +17,16 @@ class CountryLanguageService
         return new static($country);
     }
 
+    public function getCountry(): string
+    {
+        return $this->country;
+    }
+
+    public function getName(): string
+    {
+        return Countries::getName($this->country);
+    }
+
     public static function labels(): array
     {
 

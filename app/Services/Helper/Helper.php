@@ -28,7 +28,6 @@ class Helper
      */
     public static function generatePassword(int $minLength = 8, int $maxLength = 20): string
     {
-        // Validate input parameters
         if ($minLength < 8) {
             throw new \InvalidArgumentException('Minimum length must be at least 8 to accommodate required character types');
         }
@@ -51,20 +50,19 @@ class Helper
         // Start with empty password
         $password = '';
 
-        // Add one character from each required set
-        foreach ($charSets as $type => $chars) {
-            $randomIndex = random_int(0, strlen($chars) - 1);
-            $password .= $chars[$randomIndex];
+        foreach ($charSets as $chars) {
+            $password .= $chars[random_int(0, strlen($chars) - 1)];
         }
 
         // Create a combined character set for remaining characters
         $allChars = implode('', $charSets);
         $allCharsLength = strlen($allChars) - 1;
 
-        // Fill the remaining length with random characters
-        $remainingLength = $length - count($charSets);
-        for ($i = 0; $i < $remainingLength; $i++) {
-            $password .= $allChars[random_int(0, $allCharsLength)];
+        while (strlen($password) < $length) {
+            $nextChar = $allChars[random_int(0, $allCharsLength)];
+            if ($nextChar !== substr($password, -1)) {
+                $password .= $nextChar;
+            }
         }
 
         // Shuffle the password to avoid predictable patterns

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0984938373ccaf2c086055627b4ea7d1",
+    "content-hash": "6651bca8edbc95d9f1f55c4b9b9dc246",
     "packages": [
         {
             "name": "amphp/amp",
@@ -10208,12 +10208,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/http-proxy-manager.git",
-                "reference": "1416aa10077e0d1eb8a5c23fed8b6cde8f31fa4d"
+                "reference": "5d84e5bb131d475ad88e2949552ad9736dae2549"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/1416aa10077e0d1eb8a5c23fed8b6cde8f31fa4d",
-                "reference": "1416aa10077e0d1eb8a5c23fed8b6cde8f31fa4d",
+                "url": "https://api.github.com/repos/jackchang1025/http-proxy-manager/zipball/5d84e5bb131d475ad88e2949552ad9736dae2549",
+                "reference": "5d84e5bb131d475ad88e2949552ad9736dae2549",
                 "shasum": ""
             },
             "require": {
@@ -10271,7 +10271,7 @@
                 "issues": "https://github.com/jackchang1025/http-proxy-manager/issues",
                 "source": "https://github.com/jackchang1025/http-proxy-manager/tree/main"
             },
-            "time": "2025-04-02T16:25:00+00:00"
+            "time": "2025-04-17T12:05:45+00:00"
         },
         {
             "name": "weijiajia/ip-address",
@@ -10279,12 +10279,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/ip-address.git",
-                "reference": "adcf97a695c9d8796fcfba20918a44ae726b412b"
+                "reference": "9acbdc9d5087b0b0b6ca62d7d7860b3eecea472f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/ip-address/zipball/adcf97a695c9d8796fcfba20918a44ae726b412b",
-                "reference": "adcf97a695c9d8796fcfba20918a44ae726b412b",
+                "url": "https://api.github.com/repos/jackchang1025/ip-address/zipball/9acbdc9d5087b0b0b6ca62d7d7860b3eecea472f",
+                "reference": "9acbdc9d5087b0b0b6ca62d7d7860b3eecea472f",
                 "shasum": ""
             },
             "require": {
@@ -10334,7 +10334,56 @@
                 "issues": "https://github.com/jackchang1025/ip-address/issues",
                 "source": "https://github.com/jackchang1025/ip-address/tree/master"
             },
-            "time": "2025-04-04T08:56:13+00:00"
+            "time": "2025-04-17T08:14:57+00:00"
+        },
+        {
+            "name": "weijiajia/saloonphp-5sim",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jackchang1025/saloonphp-5SIM.git",
+                "reference": "322f40ef8b86733e096aa09eadd93c86de52f343"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-5SIM/zipball/322f40ef8b86733e096aa09eadd93c86de52f343",
+                "reference": "322f40ef8b86733e096aa09eadd93c86de52f343",
+                "shasum": ""
+            },
+            "require": {
+                "nesbot/carbon": "^3.0",
+                "php": "^8.0",
+                "saloonphp/saloon": "^3.0",
+                "spatie/laravel-data": "^4.13",
+                "weijiajia/saloonphp-logs-plugin": "dev-main"
+            },
+            "require-dev": {
+                "pestphp/pest": "3.x-dev",
+                "symfony/var-dumper": "7.3.x-dev"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Weijiajia\\Saloonphp\\FiveSim\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "weijiajia",
+                    "email": "your-email@example.com"
+                }
+            ],
+            "description": "5SIM API client for SaloonPHP",
+            "support": {
+                "issues": "https://github.com/jackchang1025/saloonphp-5SIM/issues",
+                "source": "https://github.com/jackchang1025/saloonphp-5SIM/tree/main"
+            },
+            "time": "2025-04-18T10:55:04+00:00"
         },
         {
             "name": "weijiajia/saloonphp-apple-client",
@@ -10342,12 +10391,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/jackchang1025/saloonphp-apple-client.git",
-                "reference": "bc6eefa1273951f9dc5a38387121c6ff3df24357"
+                "reference": "edaf1c90d1ba91dc5044772ae415a827a591f1f0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jackchang1025/saloonphp-apple-client/zipball/bc6eefa1273951f9dc5a38387121c6ff3df24357",
-                "reference": "bc6eefa1273951f9dc5a38387121c6ff3df24357",
+                "url": "https://api.github.com/repos/jackchang1025/saloonphp-apple-client/zipball/edaf1c90d1ba91dc5044772ae415a827a591f1f0",
+                "reference": "edaf1c90d1ba91dc5044772ae415a827a591f1f0",
                 "shasum": ""
             },
             "require": {
@@ -10398,7 +10447,7 @@
                 "issues": "https://github.com/jackchang1025/saloonphp-apple-client/issues",
                 "source": "https://github.com/jackchang1025/saloonphp-apple-client/tree/main"
             },
-            "time": "2025-04-14T11:21:58+00:00"
+            "time": "2025-04-17T08:19:19+00:00"
         },
         {
             "name": "weijiajia/saloonphp-cookie-plugin",
@@ -14738,6 +14787,7 @@
         "weijiajia/decrypt-verification-code": 20,
         "weijiajia/http-proxy-manager": 20,
         "weijiajia/ip-address": 20,
+        "weijiajia/saloonphp-5sim": 20,
         "weijiajia/saloonphp-apple-client": 20
     },
     "prefer-stable": true,

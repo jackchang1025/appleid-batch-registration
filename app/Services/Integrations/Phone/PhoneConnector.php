@@ -7,7 +7,6 @@ use Weijiajia\SaloonphpLogsPlugin\Contracts\HasLoggerInterface;
 use Weijiajia\SaloonphpLogsPlugin\HasLogger;
 use Saloon\Traits\Plugins\AlwaysThrowOnErrors;
 use App\Services\Integrations\Phone\Exception\GetPhoneCodeException;
-use App\Services\Integrations\Phone\Exception\MaxRetryGetPhoneCodeException;
 use Saloon\Exceptions\Request\FatalRequestException;
 use Saloon\Exceptions\Request\RequestException;
 use Saloon\Http\Request;
@@ -56,7 +55,7 @@ class PhoneConnector extends Connector implements HasLoggerInterface
      * @param int $attempts
      * @return string
      * @throws FatalRequestException
-     * @throws MaxRetryGetPhoneCodeException
+     * @throws GetPhoneCodeException
      * @throws RequestException
      */
     public function attemptGetPhoneCode(string $phone, string $url, int $attempts = 5): string
@@ -82,6 +81,6 @@ class PhoneConnector extends Connector implements HasLoggerInterface
                 continue;
             }
         }
-        throw new MaxRetryGetPhoneCodeException('Failed to get phone code');
+        throw new GetPhoneCodeException('Failed to get phone code');
     }
 }

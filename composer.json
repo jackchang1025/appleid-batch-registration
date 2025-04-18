@@ -19,6 +19,7 @@
         "weijiajia/decrypt-verification-code": "dev-main",
         "weijiajia/http-proxy-manager": "dev-main",
         "weijiajia/ip-address": "dev-master",
+        "weijiajia/saloonphp-5sim": "dev-main",
         "weijiajia/saloonphp-apple-client": "dev-main",
         "ysfkaya/filament-phone-input": "^3.1"
     },

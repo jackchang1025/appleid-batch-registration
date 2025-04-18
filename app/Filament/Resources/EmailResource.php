@@ -16,6 +16,11 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Components\Toggle;
+use App\Services\Phone\PhoneDepositoryFacroty;
+use Filament\Forms\Components\Card;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\View;
 class EmailResource extends Resource
 {
     protected static ?string $model = Email::class;
@@ -145,12 +150,86 @@ class EmailResource extends Resource
                         ->searchable()
                         ->options(CountryLanguageService::labels())
                         ->optionsLimit(300)
-                        ->helperText('选择需要注册 Apple ID 的国家'),
+                        ->helperText('选择需要注册 Apple ID 的国家')
+                        ->live(),
 
-                        Toggle::make('is_random_user_agent')
-                            ->label('是否随机生成 User Agent')
-                            ->default(false),
+                    Forms\Components\Select::make('phone_repository')
+                        ->label('手机号来源')
+                        ->required()
+                        ->searchable()
+                        ->options([
+                            'database' => '数据库',
+                            'five_sim' => '5sim',
+                        ])
+                        ->helperText('选择需要注册 Apple ID 的手机号来源')
+                        ->live(),
 
+                    // Card::make()
+                    //     ->visible(fn (Forms\Get $get): bool => $get('phone_repository'))
+                    //     ->schema([
+                    //         Placeholder::make('product_info')
+                    //             ->label('产品列表和价格信息')
+                    //             ->content(function (Forms\Get $get) {
+                    //                 $country = $get('country');
+                    //                 $phoneRepository = $get('phone_repository');
+                                    
+                    //                 if (!$country || !$phoneRepository) {
+                    //                     return '请先选择国家和手机号来源';
+                    //                 }
+                                    
+                    //                 try {
+                    //                     $phoneDepository = app(PhoneDepositoryFacroty::class)->make($phoneRepository);
+                    //                     $products = $phoneDepository->getProducts($country);
+                                        
+                    //                     if (empty($products)) {
+                    //                         return '没有可用的产品';
+                    //                     }
+                                        
+                    //                     // 格式化显示产品信息
+                    //                     $html = '<div class="overflow-x-auto">';
+                    //                     $html .= '<table class="min-w-full divide-y divide-gray-200">';
+                    //                     $html .= '<thead><tr>';
+                    //                     $html .= '<th class="px-4 py-2 text-left">产品名称</th>';
+                    //                     $html .= '<th class="px-4 py-2 text-left">类别</th>';
+                    //                     $html .= '<th class="px-4 py-2 text-left">数量</th>';
+                    //                     $html .= '<th class="px-4 py-2 text-left">价格</th>';
+                    //                     $html .= '</tr></thead>';
+                    //                     $html .= '<tbody>';
+                                        
+                    //                     foreach ($products as $name => $data) {
+                    //                         $html .= '<tr>';
+                    //                         $html .= '<td class="px-4 py-2">' . htmlspecialchars($name) . '</td>';
+                    //                         $html .= '<td class="px-4 py-2">' . htmlspecialchars($data['Category'] ?? 'N/A') . '</td>';
+                    //                         $html .= '<td class="px-4 py-2">' . htmlspecialchars($data['Qty'] ?? 0) . '</td>';
+                    //                         $html .= '<td class="px-4 py-2">' . htmlspecialchars($data['Price'] ?? 0) . '</td>';
+                    //                         $html .= '</tr>';
+                    //                     }
+                                        
+                    //                     $html .= '</tbody></table></div>';
+                    //                     return $html;
+                    //                 } catch (\Exception $e) {
+                    //                     return '获取产品信息失败: ' . $e->getMessage();
+                    //                 }
+                    //             }),
+                    //     ]),
+                    
+                    // Forms\Components\Select::make('product')
+                    //     ->label('服务类型')
+                    //     ->options([
+                    //         'apple' => 'Apple',
+                    //         'telegram' => 'Telegram',
+                    //         'whatsapp' => 'WhatsApp',
+                    //         'google' => 'Google',
+                    //         'facebook' => 'Facebook',
+                    //         'instagram' => 'Instagram',
+                    //     ])
+                    //     ->default('apple')
+                    //     ->visible(fn (Forms\Get $get): bool => $get('phone_repository') === 'five_sim')
+                    //     ->helperText('选择需要使用的5sim服务类型'),
+                      
+                    Toggle::make('is_random_user_agent')
+                        ->label('是否随机生成 User Agent')
+                        ->default(false),
                 ])
                 ->action(function ($records, array $data) {
 
@@ -163,7 +242,13 @@ class EmailResource extends Resource
                             if ($record->status->value === EmailStatus::AVAILABLE->value || $record->status->value === EmailStatus::FAILED->value){
                                 $count++;
 
-                                RegisterAppleIdJob::dispatch($record,$data['country'],$data['is_random_user_agent']);
+                                RegisterAppleIdJob::dispatch(
+                                    $record,
+                                    $data['country'],
+                                    $data['is_random_user_agent'],
+                                    $data['phone_repository'],
+                                    $data['product'] ?? 'apple'
+                                );
                                 continue;
                             }
 

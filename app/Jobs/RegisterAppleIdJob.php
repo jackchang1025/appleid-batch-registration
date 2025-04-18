@@ -20,7 +20,7 @@ use App\Filament\Resources\EmailResource\Pages\ViewEmail;
 use App\Services\CountryLanguageService;
 use Illuminate\Support\Facades\Log;
 use App\Enums\EmailStatus;
-
+use App\Services\Phone\PhoneDepositoryFacroty;
 class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -36,7 +36,8 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
     public function __construct(
         protected Email $email,
         protected ?string $country = null,
-        protected ?bool $isRandomUserAgent = false
+        protected ?bool $isRandomUserAgent = false,
+        protected ?string $phoneRepository = null
     ) {
         $this->onQueue('apple_id_registration');
     }
@@ -73,11 +74,16 @@ class RegisterAppleIdJob implements ShouldQueue, ShouldBeUnique
                 return;
             }
 
-
             $appleIdBatchRegistration = app()->make(AppleIdBatchRegistration::class);
+            $phoneDepositoryFacroty = app()->make(PhoneDepositoryFacroty::class);
 
             // 运行注册
-            $appleIdBatchRegistration->run(email: $this->email, country: CountryLanguageService::make($this->country), isRandomUserAgent: $this->isRandomUserAgent);
+            $appleIdBatchRegistration->run(
+                email: $this->email, 
+                country: CountryLanguageService::make($this->country), 
+                isRandomUserAgent: $this->isRandomUserAgent, 
+                phoneDepository: $phoneDepositoryFacroty->make($this->phoneRepository)
+            );
 
             // 显示通知
             Notification::make()

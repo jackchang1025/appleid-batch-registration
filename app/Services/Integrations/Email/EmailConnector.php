@@ -2,6 +2,7 @@
 
 namespace App\Services\Integrations\Email;
 
+use App\Services\Integrations\Email\Exception\EmailException;
 use Saloon\Http\Connector;
 use Weijiajia\SaloonphpLogsPlugin\Contracts\HasLoggerInterface;
 use Weijiajia\SaloonphpLogsPlugin\HasLogger;
@@ -38,7 +39,7 @@ class EmailConnector extends Connector implements HasLoggerInterface
      * @return string|null
      * @throws FatalRequestException
      * @throws RequestException
-     * @throws GetEmailCodeException
+     * @throws GetEmailCodeException|EmailException
      */
     public function getEmailCode(string $emailUrl): ?string
     {
@@ -59,8 +60,8 @@ class EmailConnector extends Connector implements HasLoggerInterface
      * @param int $attempts
      * @return string
      * @throws FatalRequestException
-     * @throws MaxRetryGetEmailCodeException
-     * @throws RequestException
+     * @throws GetEmailCodeException
+     * @throws RequestException|EmailException
      */
     public function attemptGetEmailCode(string $email, string $uri, int $attempts = 5): string
     {
@@ -76,7 +77,7 @@ class EmailConnector extends Connector implements HasLoggerInterface
 
                 if (Cache::get('email_code_' . $email,null) === $code) {
                     continue;
-                }   
+                }
 
                 Cache::put('email_code_' . $email, $code, 60 * 60 * 24);
                 return $code;
@@ -85,6 +86,6 @@ class EmailConnector extends Connector implements HasLoggerInterface
                 continue;
             }
         }
-        throw new MaxRetryGetEmailCodeException('Failed to get email code after ' . $attempts . ' attempts');
+        throw new GetEmailCodeException('Failed to get email code after ' . $attempts . ' attempts');
     }
 }

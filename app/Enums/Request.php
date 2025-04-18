@@ -17,7 +17,6 @@ use Weijiajia\DecryptVerificationCode\CloudCode\CloudCodeConnector;
 use Weijiajia\IpAddress\Request as IpAddressRequest;
 use App\Services\Integrations\Phone\PhoneConnector;
 use App\Services\Integrations\Email\EmailConnector;
-use App\Services\Integrations\AppleClientInfo\AppleClientInfoConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\TvApple\TvAppleConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\TvApple\Request\TvAppleRequest;
 use Weijiajia\SaloonphpAppleClient\Integrations\AuthTvApple\Request\InitializeSessionRequest;
@@ -29,13 +28,15 @@ use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\ValidateAccou
 use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\GenerateEmailConfirmationCodeSrvRequest;
 use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\CreateAccountSrvRequest;
 use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\Request\ValidateEmailConfirmationCodeSrvRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\SetupIcloud\Request\Setup\Ws\GetTermsRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\SetupIcloud\Request\Setup\Ws\CreateLiteAccountRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\SetupIcloud\Request\Setup\Ws\ValidateRequest;
+use Weijiajia\SaloonphpAppleClient\Integrations\Icloud\Request\Icloud as IcloudRequest;
 enum Request: string
 {
     case ACCOUNT = Account::class;
     case ACCOUNT_WIDGET = AccountWidget::class;
-
     case APPLEID = Appleid::class;
-
     case PASSWORD = Password::class;
     case CAPTCHA = Captcha::class;
     case VALIDATE = Validate::class;
@@ -48,7 +49,6 @@ enum Request: string
     case IPADDRESSMANAGER = IpAddressRequest::class;
     case PHONECONNECTOR = PhoneConnector::class;
     case EMAILCONNECTOR = EmailConnector::class;
-    case APPLECLIENTINFOREQUEST = AppleClientInfoConnector::class;
     case TVAPPLECONNECTOR = TvAppleConnector::class;
     case TVAPPLEREQUEST = TvAppleRequest::class;
     case AUTHTVAPPLECONNECTOR = AuthTvAppleConnector::class;
@@ -60,6 +60,10 @@ enum Request: string
     case GENERATEEMAILCONFIRMATIONCODESRVREQUEST = GenerateEmailConfirmationCodeSrvRequest::class;
     case CREATEACCOUNTSRVREQUEST = CreateAccountSrvRequest::class;
     case VALIDATEEMAILCONFIRMATIONCODESRVREQUEST = ValidateEmailConfirmationCodeSrvRequest::class;
+    case GETTERMSREQUEST = GetTermsRequest::class;
+    case CREATELITEACCOUNTREQUEST = CreateLiteAccountRequest::class;
+    case VALIDATEREQUEST = ValidateRequest::class;
+    case ICLOUDREQUEST = IcloudRequest ::class;
     public function label(): string
     {
         return match($this) {
@@ -78,7 +82,6 @@ enum Request: string
             self::IPADDRESSMANAGER => '获取IP地址',
             self::PHONECONNECTOR => '获取手机验证码',
             self::EMAILCONNECTOR => '获取邮箱验证码',
-            self::APPLECLIENTINFOREQUEST => '获取苹果客户端信息',
             self::TVAPPLECONNECTOR => '获取tv苹果客户端信息',
             self::TVAPPLEREQUEST => '获取资源和令牌',
             self::INITIALIZESSESSIONREQUEST => '获取初始化会话',
@@ -90,7 +93,10 @@ enum Request: string
             self::CREATEACCOUNTSRVREQUEST => '创建账号',
             self::VALIDATEEMAILCONFIRMATIONCODESRVREQUEST => '验证邮箱验证码',
             self::AUTHTVAPPLECONNECTOR => '获取授权tv苹果',
-
+            self::GETTERMSREQUEST => '获取条款',
+            self::CREATELITEACCOUNTREQUEST => '创建lite账号',
+            self::VALIDATEREQUEST => '验证账号',
+            self::ICLOUDREQUEST => '初始化 iCloud',
         };
     }
 

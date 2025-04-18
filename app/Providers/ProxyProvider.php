@@ -40,9 +40,9 @@ class ProxyProvider extends ServiceProvider
 
                     $config->set("http-proxy-manager.drivers.{$defaultDriver}.mode", $defaultMode);
 
-                    $defaultConfig = $config->get("http-proxy-manager.drivers.{$defaultDriver}.{$defaultMode}",[]);
+                    $defaultConfig = $config->get("http-proxy-manager.drivers.{$defaultDriver}",[]);
 
-                    $config->set("http-proxy-manager.drivers.{$defaultDriver}.{$defaultMode}", array_merge($defaultConfig, $proxyConfiguration->configuration[$defaultDriver]));
+                    $config->set("http-proxy-manager.drivers.{$defaultDriver}", array_merge($defaultConfig, $proxyConfiguration->configuration[$defaultDriver]));
 
                 }
 
