@@ -21,8 +21,8 @@ use Weijiajia\SaloonphpAppleClient\Integrations\AuthTvApple\AuthTvAppleConnector
 use Weijiajia\SaloonphpAppleClient\Integrations\BuyTvApple\BuyTvAppleConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\Idmsa\IdmsaConnector;
 use Weijiajia\SaloonphpAppleClient\Integrations\TvApple\TvAppleConnector;
-use Weijiajia\SaloonphpAppleClient\Integrations\WebIcloud\WebIcloudConnector;
-use Weijiajia\SaloonphpAppleClient\Integrations\Icloud\SetupIcloudConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\Icloud\WebIcloudConnector;
+use Weijiajia\SaloonphpAppleClient\Integrations\SetupIcloud\SetupIcloudConnector;
 use Weijiajia\SaloonphpHeaderSynchronizePlugin\Contracts\HeaderSynchronizeDriver;
 use Weijiajia\SaloonphpHeaderSynchronizePlugin\Driver\ArrayStoreHeaderSynchronize;
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;

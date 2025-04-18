@@ -2,8 +2,12 @@
 
 namespace App\Services\AppleId;
 
+use App\Enums\PhoneStatus;
 use App\Models\Phone;
 use App\Services\Helper\Helper;
+use App\Services\Integrations\Email\Exception\EmailException;
+use App\Services\Integrations\Email\Exception\GetEmailCodeException;
+use App\Services\Integrations\Phone\Exception\GetPhoneCodeException;
 use App\Services\Trait\HasPhone;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use InvalidArgumentException;
@@ -80,6 +84,9 @@ class AccountBindPhone
         return $this->headers ??= new ArrayStoreHeaderSynchronize();
     }
 
+    /**
+     * @throws ProxyModelNotFoundException
+     */
     public function accountConnector(): AccountConnector
     {
         if ($this->accountAppleIdConnector === null) {
@@ -114,6 +121,9 @@ class AccountBindPhone
         return $this->proxySplQueue;
     }
 
+    /**
+     * @throws ProxyModelNotFoundException
+     */
     public function appleAuthenticationConnector(): AppleAuthenticationConnector{
         if ($this->appleAuthenticationConnector === null) {
             $this->appleAuthenticationConnector = new AppleAuthenticationConnector(config('services.apple_auth.base_url'));
@@ -132,6 +142,9 @@ class AccountBindPhone
         return 'af1139274f266b22b68c2a3e7ad932cb3c0bbe854e13a79af78dcc73136882c3';
     }
 
+    /**
+     * @throws ProxyModelNotFoundException
+     */
     public function idmsaConnector(): IdmsaConnector{
         if ($this->idmsaConnector === null) {
             $this->idmsaConnector = new IdmsaConnector($this->serviceKey(),'https://account.apple.com');
@@ -184,20 +197,25 @@ class AccountBindPhone
         }
         return $this->appleIdConnector;
     }
+
     /**
      * @param AppleId $appleId
      * @return mixed
      * @throws ClientException
-     * @throws MaxRetryAttemptsException
-     * @throws RequestException
-     * @throws JsonException
-     * @throws NumberFormatException
+     * @throws EmailException
      * @throws FatalRequestException
+     * @throws GetEmailCodeException
+     * @throws GetPhoneCodeException
+     * @throws JsonException
+     * @throws MaxRetryAttemptsException
+     * @throws NumberFormatException
+     * @throws ProxyModelNotFoundException
+     * @throws RequestException
      * @throws SignInException
      */
     public function run(AppleId $appleId): RepairResponse
     {
-        $this->email = $appleId->HasOneEmail;
+        $this->email = $appleId->hasOneEmail;
         $this->accountConnector()->getResources()->signIn();
 
         $this->signIn($appleId->getAppleId(), $appleId->getPassword());
@@ -239,14 +257,17 @@ class AccountBindPhone
     }
 
     /**
-     * @param AppleIdInterface $appleId
+     * @param AppleId $appleId
      * @param string $id
      * @param int $attempts
      * @return VerifyEmailSecurityCodeResponse
      * @throws ClientException
      * @throws FatalRequestException
      * @throws MaxRetryAttemptsException
+     * @throws ProxyModelNotFoundException
      * @throws RequestException
+     * @throws EmailException
+     * @throws GetEmailCodeException
      */
     protected function attemptsVerifyEmail(
         AppleId $appleId,
@@ -276,14 +297,14 @@ class AccountBindPhone
     }
 
     /**
-     * @param string $widgetKey
      * @param string $sessionId
      * @param int $attempts
      * @return RepairResponse
      * @throws FatalRequestException
+     * @throws GetPhoneCodeException
+     * @throws MaxRetryAttemptsException
+     * @throws NumberFormatException
      * @throws RequestException
-     * @throws ModelNotFoundException
-     * @throws NumberFormatException|MaxRetryAttemptsException
      */
     protected function attemptsVerifyPhone(string $sessionId, int $attempts = 5): RepairResponse
     {
@@ -333,13 +354,13 @@ class AccountBindPhone
                     $sessionId
                 );
 
-                $this->phone->update(['status' => Phone::STATUS_BOUND]);
+                $this->phone->update(['status' => PhoneStatus::BOUND]);
 
                 return $response;
             } catch (VerificationCodeException|VerificationCodeSentTooManyTimesException|PhoneException $e) {
 
-                $this->addActiveBlacklistIds($this->phone->id);
-                $this->phone && $this->phone->update(['status' => Phone::STATUS_NORMAL]);
+                self::addActiveBlacklistIds($this->phone->id);
+                $this->phone && $this->phone->update(['status' => PhoneStatus::NORMAL]);
             }
         }
 

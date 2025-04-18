@@ -2,6 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\EmailStatus;
+use App\Models\Email;
+use App\Models\Phone;
+use App\Services\AppleId\AppleIdBatchRegistration as AppleIdBatchRegistrationService;
+use App\Services\CountryLanguageService;
 use App\Services\Exception\RegistrationException;
 use Illuminate\Console\Command;
 use JsonException;
@@ -10,14 +15,13 @@ use Random\RandomException;
 use Saloon\Exceptions\Request\ClientException;
 use Saloon\Exceptions\Request\FatalRequestException;
 use Saloon\Exceptions\Request\RequestException;
+use Throwable;
 use Weijiajia\SaloonphpAppleClient\Exception\AccountAlreadyExistsException;
 use Weijiajia\SaloonphpAppleClient\Exception\MaxRetryAttemptsException;
-use App\Models\Email;
-use App\Services\AppleId\AppleIdBatchRegistration as AppleIdBatchRegistrationService;
-use App\Enums\EmailStatus;
-use App\Models\Phone;
-use App\Services\CountryLanguageService;
-
+use InvalidArgumentException;
+use App\Services\Phone\DatabasePhone;
+use App\Services\Phone\FiveSimPhone;
+use App\Services\Phone\PhoneDepositoryFacroty;
 class AppleIdRegistration extends Command
 {
     /**
@@ -25,7 +29,13 @@ class AppleIdRegistration extends Command
      *
      * @var string
      */
-    protected $signature = "app:apple-id-registration {email} {--P|phone=} {--C|country=CAN} {--R|random-user-agent=}";
+    protected $signature = "apple-id:register-icloud
+                            {email}
+                            {--P|phone=}
+                            {--PD|phone-depository=database}
+                            {--C|country=CAN} 
+                            {--R|random-user-agent=}
+                            ";
 
     /**
      * The console command description.
@@ -44,28 +54,29 @@ class AppleIdRegistration extends Command
      * @throws RandomException
      * @throws RegistrationException
      * @throws RequestException
-     * @throws \Throwable
+     * @throws Throwable
      * @throws AccountAlreadyExistsException
      * @throws MaxRetryAttemptsException
      */
-    public function handle(): void
+    public function handle(PhoneDepositoryFacroty $phoneDepositoryFacroty): void
     {
         $email = Email::where('email', $this->argument('email'))
-         ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
-        ->firstOrFail();
+            // ->whereIn('status', [EmailStatus::AVAILABLE, EmailStatus::FAILED])
+            ->firstOrFail();
 
         $appleIdBatchRegistration = app(AppleIdBatchRegistrationService::class);
 
-        if($phone = $this->option('phone')){
+        if ($phone = $this->option('phone')) {
 
             $phone = Phone::where('phone', 'like', '%'.$phone.'%')->firstOrFail();
         }
 
+        $phoneDepository = $phoneDepositoryFacroty->make($this->option('phone-depository'));
+
         $appleIdBatchRegistration->run(
-            $email,
-            CountryLanguageService::make($this->option('country')),
-            $phone,
-           (bool) $this->option('random-user-agent')
+            email: $email,
+            country: CountryLanguageService::make($this->option('country')),
+            phoneDepository: $phoneDepository,
         );
 
     }

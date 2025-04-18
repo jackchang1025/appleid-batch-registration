@@ -8,12 +8,15 @@ use App\Models\Email;
 use App\Services\Apple;
 use App\Services\AppleBuilder;
 use App\Services\Helper\Helper;
+use App\Services\Integrations\Email\Exception\EmailException;
+use App\Services\Integrations\Email\Exception\GetEmailCodeException;
 use GuzzleHttp\Cookie\SetCookie;
 use JsonException;
 use RuntimeException;
 use Saloon\Exceptions\Request\FatalRequestException;
 use Saloon\Exceptions\Request\RequestException;
 use Throwable;
+use Weijiajia\HttpProxyManager\Exception\ProxyModelNotFoundException;
 use Weijiajia\SaloonphpAppleClient\Exception\AccountAlreadyExistsException;
 use Weijiajia\SaloonphpAppleClient\Exception\AccountException;
 use Weijiajia\SaloonphpAppleClient\Exception\CreateAccountException;
@@ -216,7 +219,15 @@ class AppleIdTvRegistration
             $this->log("账号已注册", ['message' => $e->getMessage()]);
             throw $e;
 
-        } catch (Throwable $e) {
+        } catch (EmailException $e) {
+            $this->email->update([
+                'status' => EmailStatus::INVALID,
+            ]);
+
+            $this->log("账号失效", ['message' => $e->getMessage()]);
+            throw $e;
+
+        }catch (Throwable $e) {
             $this->email->update([
                 'status' => EmailStatus::FAILED,
             ]);
@@ -226,6 +237,9 @@ class AppleIdTvRegistration
         }
     }
 
+    /**
+     * @throws ProxyModelNotFoundException
+     */
     public function tvAppleConnector(): TvAppleConnector
     {
         if ($this->tvAppleConnector === null) {
@@ -234,7 +248,7 @@ class AppleIdTvRegistration
             $this->tvAppleConnector->debug();
             $this->tvAppleConnector->withProxyQueue($this->proxySplQueue());
             $this->tvAppleConnector->withCookies($this->cookieJar());
-
+            $this->tvAppleConnector->headers()->add('accept-language','en-ca');
             $this->tvAppleConnector->middleware()->onRequest($this->debugRequest());
             $this->tvAppleConnector->middleware()->onResponse($this->debugResponse());
         }
@@ -242,11 +256,15 @@ class AppleIdTvRegistration
         return $this->tvAppleConnector;
     }
 
+    /**
+     * @throws ProxyModelNotFoundException
+     */
     public function authTvAppleConnector(): AuthTvAppleConnector{
         if ($this->authTvAppleConnector === null) {
             $this->authTvAppleConnector = new AuthTvAppleConnector();
             $this->authTvAppleConnector->withLogger($this->logger);
             $this->authTvAppleConnector->debug();
+            $this->authTvAppleConnector->headers()->add('accept-language','en-ca');
             $this->authTvAppleConnector->withProxyQueue($this->proxySplQueue());
             $this->authTvAppleConnector->withCookies($this->cookieJar());
             $this->authTvAppleConnector->middleware()->onRequest($this->debugRequest());
@@ -255,11 +273,15 @@ class AppleIdTvRegistration
         return $this->authTvAppleConnector;
     }
 
+    /**
+     * @throws ProxyModelNotFoundException
+     */
     public function buyTvAppleConnector(): BuyTvAppleConnector{
         if ($this->buyTvAppleConnector === null) {
             $this->buyTvAppleConnector = new BuyTvAppleConnector();
             $this->buyTvAppleConnector->withLogger($this->logger);
             $this->buyTvAppleConnector->debug();
+            $this->buyTvAppleConnector->headers()->add('accept-language','en-ca');
             $this->buyTvAppleConnector->withProxyQueue($this->proxySplQueue());
             $this->buyTvAppleConnector->withCookies($this->cookieJar());
             $this->buyTvAppleConnector->middleware()->onRequest($this->debugRequest());
@@ -303,7 +325,7 @@ class AppleIdTvRegistration
      * @return string|null
      * @throws FatalRequestException
      * @throws JsonException
-     * @throws RequestException
+     * @throws RequestException|ProxyModelNotFoundException
      */
     private function getResourcesAndToken(): ?string
     {
@@ -338,10 +360,12 @@ class AppleIdTvRegistration
     /**
      * @param string $clientToken
      * @return ValidateEmailConfirmationCodeSrvResponse
-     * @throws MaxRetryAttemptsException
-     * @throws RegistrationException
      * @throws FatalRequestException
+     * @throws RegistrationException
      * @throws RequestException
+     * @throws VerificationCodeException
+     * @throws EmailException
+     * @throws GetEmailCodeException|ProxyModelNotFoundException
      */
     protected function verifyEmail(string $clientToken): ValidateEmailConfirmationCodeSrvResponse {
 
