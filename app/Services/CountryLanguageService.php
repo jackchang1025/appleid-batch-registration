@@ -27,13 +27,13 @@ class CountryLanguageService
         return Countries::getName($this->country);
     }
 
-    public static function labels(): array
+    public static function labels(?string $displayLocale = null): array
     {
 
         $countries = Countries::getCountryCodes();
         $labels = [];
         foreach ($countries as $code) {
-            $labels[$code] = Countries::getName($code);
+            $labels[$code] = Countries::getName($code, $displayLocale);
         }
         return $labels;
     }

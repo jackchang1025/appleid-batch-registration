@@ -148,7 +148,7 @@ class EmailResource extends Resource
                         ->label('国家')
                         ->required()
                         ->searchable()
-                        ->options(CountryLanguageService::labels())
+                        ->options(CountryLanguageService::labels('zh-CN'))
                         ->optionsLimit(300)
                         ->helperText('选择需要注册 Apple ID 的国家')
                         ->live(),
