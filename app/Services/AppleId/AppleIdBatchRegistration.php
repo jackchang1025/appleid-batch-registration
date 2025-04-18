@@ -3,7 +3,6 @@
 namespace App\Services\AppleId;
 
 use App\Enums\EmailStatus;
-use App\Enums\PhoneStatus;
 use App\Models\Appleid;
 use App\Models\Email;
 use App\Models\UserAgent;
@@ -22,7 +21,6 @@ use GuzzleHttp\Cookie\CookieJar;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Str;
 use JsonException;
-use libphonenumber\PhoneNumberFormat;
 use Propaganistas\LaravelPhone\Exceptions\NumberFormatException;
 use Psr\Log\LoggerInterface;
 use Random\RandomException;
@@ -67,7 +65,6 @@ use Weijiajia\SaloonphpHeaderSynchronizePlugin\Driver\ArrayStoreHeaderSynchroniz
 use Weijiajia\SaloonphpHttpProxyPlugin\ProxySplQueue;
 use Weijiajia\Saloonphp\FiveSim\FiveSimConnector;
 use App\Services\Phone\PhoneDepository;
-use Symfony\Component\Intl\Countries;
 class AppleIdBatchRegistration
 {
     use HasLog;
@@ -180,16 +177,16 @@ class AppleIdBatchRegistration
             // 获取手机号码和设置会话
             $this->setupAppleIdConnector();
 
-            $icloudResponse = $this->icloudConnector()->getAuthenticateResources()->icloud();
+            // $icloudResponse = $this->icloudConnector()->getAuthenticateResources()->icloud();
 
-            $this->clientBuildNumber = $icloudResponse->clientBuildNumber();
-            if ($this->clientBuildNumber === null) {
-                throw new RuntimeException('get client build number failed');
-            }
-            $this->clientMasteringNumber = $icloudResponse->clientMasteringNumber();
-            if ($this->clientMasteringNumber === null) {
-                throw new RuntimeException('get client mastering number failed');
-            }
+            // $this->clientBuildNumber = $icloudResponse->clientBuildNumber();
+            // if ($this->clientBuildNumber === null) {
+            //     throw new RuntimeException('get client build number failed');
+            // }
+            // $this->clientMasteringNumber = $icloudResponse->clientMasteringNumber();
+            // if ($this->clientMasteringNumber === null) {
+            //     throw new RuntimeException('get client mastering number failed');
+            // }
 
 
             $this->setupHeaders();
