@@ -32,6 +32,10 @@ use Weijiajia\SaloonphpAppleClient\Integrations\SetupIcloud\Request\Setup\Ws\Get
 use Weijiajia\SaloonphpAppleClient\Integrations\SetupIcloud\Request\Setup\Ws\CreateLiteAccountRequest;
 use Weijiajia\SaloonphpAppleClient\Integrations\SetupIcloud\Request\Setup\Ws\ValidateRequest;
 use Weijiajia\SaloonphpAppleClient\Integrations\Icloud\Request\Icloud as IcloudRequest;
+use Weijiajia\Saloonphp\FiveSim\Requests\Purchase\BuyNumber;
+use Weijiajia\Saloonphp\FiveSim\Requests\Order\CheckOrder;
+use Weijiajia\Saloonphp\FiveSim\Requests\Order\CancelOrder;
+use Weijiajia\Saloonphp\FiveSim\Requests\Order\FinishOrder;
 enum Request: string
 {
     case ACCOUNT = Account::class;
@@ -64,6 +68,10 @@ enum Request: string
     case CREATELITEACCOUNTREQUEST = CreateLiteAccountRequest::class;
     case VALIDATEREQUEST = ValidateRequest::class;
     case ICLOUDREQUEST = IcloudRequest ::class;
+    case BUYNUMBER = BuyNumber::class;
+    case CHECKORDER = CheckOrder::class;
+    case CANCELORDER = CancelOrder::class;
+    case FINISHORDER = FinishOrder::class;
     public function label(): string
     {
         return match($this) {
@@ -97,6 +105,10 @@ enum Request: string
             self::CREATELITEACCOUNTREQUEST => '创建lite账号',
             self::VALIDATEREQUEST => '验证账号',
             self::ICLOUDREQUEST => '初始化 iCloud',
+            self::BUYNUMBER => '购买号码',
+            self::CHECKORDER => '检查订单',
+            self::CANCELORDER => '取消订单',
+            self::FINISHORDER => '完成订单',
         };
     }
 
