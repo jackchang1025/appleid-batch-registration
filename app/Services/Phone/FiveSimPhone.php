@@ -52,7 +52,7 @@ class FiveSimPhone implements PhoneDepository
 
     public function getPhoneCode(Phone $phone): string
     {
-        for ($i = 1; $i <= 5; $i++) {
+        for ($i = 1; $i <= 10; $i++) {
 
             sleep($i * 5);
 
