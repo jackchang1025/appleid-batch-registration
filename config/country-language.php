@@ -29,6 +29,12 @@ return [
     'SK' => 'sk-SK,sk;q=0.9,en;q=0.8',  // 斯洛伐克
     'SI' => 'sl-SI,sl;q=0.9,en;q=0.8',  // 斯洛文尼亚
     'TR' => 'tr-TR,tr;q=0.9,en;q=0.8',  // 土耳其
+    'UA' => 'uk-UA,uk;q=0.9,ru;q=0.8,en;q=0.7',  // 乌克兰
+    'HR' => 'hr-HR,hr;q=0.9,en;q=0.8',  // 克罗地亚
+    'RS' => 'sr-RS,sr;q=0.9,en;q=0.8',  // 塞尔维亚
+    'IS' => 'is-IS,is;q=0.9,en;q=0.8',  // 冰岛
+    'CY' => 'el-CY,el;q=0.9,tr-CY;q=0.8,en;q=0.7',  // 塞浦路斯
+    'MT' => 'mt-MT,mt;q=0.9,en;q=0.8',  // 马耳他
     
     // 北美
     'CA' => 'en-CA,fr-CA;q=0.9,en;q=0.8,fr;q=0.7',  // 加拿大（双语：英语、法语）
@@ -43,6 +49,11 @@ return [
     'CO' => 'es-CO,es;q=0.9,en;q=0.8',  // 哥伦比亚
     'PE' => 'es-PE,es;q=0.9,en;q=0.8',  // 秘鲁
     'VE' => 'es-VE,es;q=0.9,en;q=0.8',  // 委内瑞拉
+    'UY' => 'es-UY,es;q=0.9,en;q=0.8',  // 乌拉圭
+    'PY' => 'es-PY,es;q=0.9,en;q=0.8',  // 巴拉圭
+    'EC' => 'es-EC,es;q=0.9,en;q=0.8',  // 厄瓜多尔
+    'CR' => 'es-CR,es;q=0.9,en;q=0.8',  // 哥斯达黎加
+    'PA' => 'es-PA,es;q=0.9,en;q=0.8',  // 巴拿马
     
     // 亚洲
     'CN' => 'zh-CN,zh;q=0.9,en;q=0.8',  // 中国
@@ -58,6 +69,19 @@ return [
     'TH' => 'th-TH,th;q=0.9,en;q=0.8',  // 泰国
     'TW' => 'zh-TW,zh;q=0.9,en;q=0.8',  // 台湾
     'VN' => 'vi-VN,vi;q=0.9,en;q=0.8',  // 越南
+    'PH' => 'en-PH,fil-PH;q=0.9,en;q=0.8,fil;q=0.7',  // 菲律宾
+    'BD' => 'bn-BD,bn;q=0.9,en;q=0.8',  // 孟加拉国
+    'LK' => 'si-LK,si;q=0.9,ta-LK;q=0.8,en;q=0.7',  // 斯里兰卡
+    'KH' => 'km-KH,km;q=0.9,en;q=0.8',  // 柬埔寨
+    'MM' => 'my-MM,my;q=0.9,en;q=0.8',  // 缅甸
+    'NP' => 'ne-NP,ne;q=0.9,en;q=0.8',  // 尼泊尔
+    'PK' => 'ur-PK,ur;q=0.9,en;q=0.8',  // 巴基斯坦
+    'MN' => 'mn-MN,mn;q=0.9,en;q=0.8',  // 蒙古
+    'KZ' => 'kk-KZ,kk;q=0.9,ru;q=0.8,en;q=0.7',  // 哈萨克斯坦
+    'UZ' => 'uz-UZ,uz;q=0.9,ru;q=0.8,en;q=0.7',  // 乌兹别克斯坦
+    'GE' => 'ka-GE,ka;q=0.9,en;q=0.8',  // 格鲁吉亚
+    'AM' => 'hy-AM,hy;q=0.9,en;q=0.8',  // 亚美尼亚
+    'AZ' => 'az-AZ,az;q=0.9,en;q=0.8',  // 阿塞拜疆
     
     // 大洋洲
     'AU' => 'en-AU,en;q=0.9',  // 澳大利亚
@@ -69,9 +93,18 @@ return [
     'JO' => 'ar-JO,ar;q=0.9,en;q=0.8',  // 约旦
     'KW' => 'ar-KW,ar;q=0.9,en;q=0.8',  // 科威特
     'QA' => 'ar-QA,ar;q=0.9,en;q=0.8',  // 卡塔尔
+    'IQ' => 'ar-IQ,ar;q=0.9,en;q=0.8',  // 伊拉克
+    'IR' => 'fa-IR,fa;q=0.9,en;q=0.8',  // 伊朗
+    'LB' => 'ar-LB,ar;q=0.9,fr-LB;q=0.8,en;q=0.7',  // 黎巴嫩
     
     // 非洲
     'ZA' => 'en-ZA,en;q=0.9,af;q=0.8',  // 南非
     'MA' => 'ar-MA,ar;q=0.9,fr;q=0.8,en;q=0.7',  // 摩洛哥
     'NG' => 'en-NG,en;q=0.9',  // 尼日利亚
+    'DZ' => 'ar-DZ,ar;q=0.9,fr;q=0.8,en;q=0.7',  // 阿尔及利亚
+    'KE' => 'sw-KE,sw;q=0.9,en-KE;q=0.8,en;q=0.7',  // 肯尼亚
+    'TN' => 'ar-TN,ar;q=0.9,fr;q=0.8,en;q=0.7',  // 突尼斯
+    'GH' => 'en-GH,en;q=0.9',  // 加纳
+    'ET' => 'am-ET,am;q=0.9,en;q=0.8',  // 埃塞俄比亚
+    
 ];

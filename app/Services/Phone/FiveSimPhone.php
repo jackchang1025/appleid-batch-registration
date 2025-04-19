@@ -11,6 +11,8 @@ use Weijiajia\Saloonphp\FiveSim\Enums\Product;
 use libphonenumber\PhoneNumberFormat;
 use Weijiajia\Saloonphp\FiveSim\Enums\OrderStatus;
 use Weijiajia\SaloonphpAppleClient\Exception\Phone\PhoneException;
+use Weijiajia\Saloonphp\FiveSim\Exception\BuyNumberException;
+use App\Services\Integrations\Phone\Exception\GetPhoneCodeException;
 
 class FiveSimPhone implements PhoneDepository
 {
@@ -38,16 +40,30 @@ class FiveSimPhone implements PhoneDepository
             throw new \RuntimeException('Country code not found');
         }
 
-        $response = $this->connect()->resource()->buyNumber($countryCode, Operator::ANY_OPERATOR->value, Product::APPLE->value);
+        for ($i = 0; $i <= 5; $i++) {
+            
+            sleep($i * 5);
 
-        $phoneService = $this->phoneNumberFactory->create($response->json('phone'), [$country->getAlpha2Code()]);
+            try {
 
-        return new Phone(
-            id: $response->json('id'),
-            phone: $phoneService->format(PhoneNumberFormat::NATIONAL),
-            countryCode: $phoneService->getCountry(),
-            countryDialCode: $phoneService->getCountryCode(),
-        );
+                $response = $this->connect()
+                    ->resource()
+                    ->buyNumber($countryCode, Operator::ANY_OPERATOR->value, Product::APPLE->value);
+
+                $phoneService = $this->phoneNumberFactory->create($response->json('phone'), [$country->getAlpha2Code()]);
+
+                return new Phone(
+                    id: $response->json('id'),
+                    phone: $phoneService->format(PhoneNumberFormat::NATIONAL),
+                    countryCode: $phoneService->getCountry(),
+                    countryDialCode: $phoneService->getCountryCode(),
+                );
+            } catch (BuyNumberException $e) {
+
+            }
+        }
+
+        throw new PhoneException('手机号码购买失败');
     }
 
     public function getPhoneCode(Phone $phone): string
@@ -59,17 +75,16 @@ class FiveSimPhone implements PhoneDepository
             $reponse =  $this->connect()->resource()->checkOrder($phone->id());
 
             if (!in_array($reponse->status(), [OrderStatus::RECEIVED, OrderStatus::PENDING])) {
-                throw new PhoneException('Phone status is not received or pending: ' . $reponse->status());
+                throw new GetPhoneCodeException('Phone status is not received or pending: ' . $reponse->status()->value);
             }
 
             $code = $reponse->getLatestSms()?->code;
             if ($code) {
                 return $code;
             }
-
         }
 
-        throw new PhoneException('Phone code not found');
+        throw new GetPhoneCodeException('Phone code not found');
     }
 
     public function canPhone(Phone $phone)
