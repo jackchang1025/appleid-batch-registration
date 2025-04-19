@@ -76,7 +76,11 @@ class FiveSimPhone implements PhoneDepository
     {
         $reponse =  $this->connect()->resource()->checkOrder($phone->id());
 
-        if (in_array($reponse->status(), [OrderStatus::RECEIVED, OrderStatus::PENDING])) {
+        if ($reponse->status() === OrderStatus::RECEIVED) {
+            return $this->connect()->resource()->cancelOrder($phone->id());
+        }
+
+        if ($reponse->status() === OrderStatus::PENDING && $reponse->sms->toCollection()->isEmpty()) {
             return $this->connect()->resource()->cancelOrder($phone->id());
         }
 
